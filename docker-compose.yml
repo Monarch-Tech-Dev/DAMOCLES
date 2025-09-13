@@ -1,0 +1,162 @@
+version: '3.8'
+
+services:
+  # Database Services
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: damocles_db
+      POSTGRES_USER: damocles_user
+      POSTGRES_PASSWORD: damocles_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./services/user-service/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U damocles_user"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Blockchain Services
+  cardano-node:
+    image: inputoutput/cardano-node:latest
+    environment:
+      NETWORK: testnet
+    ports:
+      - "3001:3001"
+    volumes:
+      - cardano_data:/opt/cardano/data
+    command: ["run"]
+
+  ipfs:
+    image: ipfs/go-ipfs:latest
+    ports:
+      - "4001:4001"  # P2P
+      - "5001:5001"  # API
+      - "8080:8080"  # Gateway
+    volumes:
+      - ipfs_data:/data/ipfs
+
+  # Application Services
+  user-service:
+    build: ./services/user-service
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://damocles_user:damocles_password@postgres:5432/damocles_db
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=dev-secret-key
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/user-service:/app
+      - /app/node_modules
+
+  gdpr-engine:
+    build: ./services/gdpr-engine
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://damocles_user:damocles_password@postgres:5432/damocles_db
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/gdpr-engine:/app
+
+  analysis-ai:
+    build: ./services/analysis-ai
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql://damocles_user:damocles_password@postgres:5432/damocles_db
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/analysis-ai:/app
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  settlement-service:
+    build: ./services/settlement-service
+    ports:
+      - "8003:8003"
+    environment:
+      - DATABASE_URL=postgresql://damocles_user:damocles_password@postgres:5432/damocles_db
+      - CARDANO_NODE_URL=http://cardano-node:3001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      cardano-node:
+        condition: service_started
+    volumes:
+      - ./services/settlement-service:/app
+
+  # Frontend
+  web:
+    build: ./apps/web
+    ports:
+      - "3001:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+      - NEXT_PUBLIC_CARDANO_NETWORK=testnet
+    depends_on:
+      - user-service
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+
+  # Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana:/etc/grafana/provisioning
+
+volumes:
+  postgres_data:
+  redis_data:
+  cardano_data:
+  ipfs_data:
+  grafana_data:

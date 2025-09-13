@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String   @id @default(cuid())
+  personalNumberHash    String   @unique @map("personal_number_hash")
+  email                 String   @unique
+  phoneNumber           String?  @map("phone_number")
+  riskScore             Decimal? @map("risk_score") @db.Decimal(3, 2)
+  shieldTier            String   @default("bronze") @map("shield_tier")
+  tokenBalance          Decimal  @default(0) @map("token_balance") @db.Decimal(18, 6)
+  onboardingStatus      String   @default("PENDING") @map("onboarding_status")
+  isActive              Boolean  @default(true) @map("is_active")
+  lastLoginAt           DateTime? @map("last_login_at")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  debts                 Debt[]
+  gdprRequests          GdprRequest[]
+  settlements           Settlement[]
+  tokenTransactions     TokenTransaction[]
+
+  @@map("users")
+}
+
+model Creditor {
+  id                    String   @id @default(cuid())
+  name                  String
+  organizationNumber    String?  @unique @map("organization_number")
+  type                  String   // 'inkasso', 'bnpl', 'bank', etc
+  privacyEmail          String?  @map("privacy_email")
+  violationScore        Decimal  @default(0) @map("violation_score") @db.Decimal(5, 2)
+  totalViolations       Int      @default(0) @map("total_violations")
+  averageSettlementRate Decimal? @map("average_settlement_rate") @db.Decimal(3, 2)
+  isActive              Boolean  @default(true) @map("is_active")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  debts                 Debt[]
+  gdprRequests          GdprRequest[]
+  violations            Violation[]
+
+  @@map("creditors")
+}
+
+model Debt {
+  id               String   @id @default(cuid())
+  userId           String   @map("user_id")
+  creditorId       String   @map("creditor_id")
+  originalAmount   Decimal  @map("original_amount") @db.Decimal(12, 2)
+  currentAmount    Decimal  @map("current_amount") @db.Decimal(12, 2)
+  status           String   // 'active', 'negotiating', 'settled'
+  accountNumber    String?  @map("account_number")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user             User     @relation(fields: [userId], references: [id])
+  creditor         Creditor @relation(fields: [creditorId], references: [id])
+  settlements      Settlement[]
+
+  @@map("debts")
+}
+
+model GdprRequest {
+  id                  String    @id @default(cuid())
+  userId              String    @map("user_id")
+  creditorId          String    @map("creditor_id")
+  referenceId         String    @unique @map("reference_id")
+  content             String?
+  status              String    // 'draft', 'sent', 'responded', 'escalated'
+  sentAt              DateTime? @map("sent_at")
+  responseDue         DateTime? @map("response_due")
+  responseReceivedAt  DateTime? @map("response_received_at")
+  trackingPixelViewed Boolean   @default(false) @map("tracking_pixel_viewed")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  user                User      @relation(fields: [userId], references: [id])
+  creditor            Creditor  @relation(fields: [creditorId], references: [id])
+  violations          Violation[]
+  responses           GdprResponse[]
+
+  @@map("gdpr_requests")
+}
+
+model GdprResponse {
+  id              String   @id @default(cuid())
+  requestId       String   @map("request_id")
+  content         Bytes?
+  extractedData   Json?    @map("extracted_data")
+  format          String   // 'pdf', 'email', 'json'
+  receivedAt      DateTime @default(now()) @map("received_at")
+
+  request         GdprRequest @relation(fields: [requestId], references: [id])
+
+  @@map("gdpr_responses")
+}
+
+model Violation {
+  id              String   @id @default(cuid())
+  gdprRequestId   String?  @map("gdpr_request_id")
+  creditorId      String   @map("creditor_id")
+  type            String
+  severity        String   // 'low', 'medium', 'high', 'critical'
+  confidence      Decimal  @db.Decimal(3, 2)
+  evidence        String
+  legalReference  String   @map("legal_reference")
+  estimatedDamage Decimal  @map("estimated_damage") @db.Decimal(12, 2)
+  blockchainHash  String?  @map("blockchain_hash")
+  ipfsHash        String?  @map("ipfs_hash")
+  status          String   @default("PENDING") // 'PENDING', 'VERIFIED', 'DISPUTED'
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  gdprRequest     GdprRequest? @relation(fields: [gdprRequestId], references: [id])
+  creditor        Creditor     @relation(fields: [creditorId], references: [id])
+
+  @@map("violations")
+}
+
+model Settlement {
+  id                    String    @id @default(cuid())
+  userId                String    @map("user_id")
+  debtId                String    @map("debt_id")
+  originalAmount        Decimal   @map("original_amount") @db.Decimal(12, 2)
+  settledAmount         Decimal   @map("settled_amount") @db.Decimal(12, 2)
+  savedAmount           Decimal   @map("saved_amount") @db.Decimal(12, 2)
+  platformFee           Decimal   @map("platform_fee") @db.Decimal(12, 2)
+  status                String    // 'proposed', 'negotiating', 'accepted', 'rejected', 'completed'
+  smartContractAddress  String?   @map("smart_contract_address")
+  transactionHash       String?   @map("transaction_hash")
+  proposedAt            DateTime  @default(now()) @map("proposed_at")
+  completedAt           DateTime? @map("completed_at")
+
+  user                  User      @relation(fields: [userId], references: [id])
+  debt                  Debt      @relation(fields: [debtId], references: [id])
+
+  @@map("settlements")
+}
+
+model TokenTransaction {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  type            String   // 'mining', 'staking', 'reward', 'purchase', 'settlement'
+  amount          Decimal  @db.Decimal(18, 6)
+  transactionHash String?  @map("transaction_hash")
+  status          String   // 'pending', 'confirmed', 'failed'
+  metadata        Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user            User     @relation(fields: [userId], references: [id])
+
+  @@map("token_transactions")
+}

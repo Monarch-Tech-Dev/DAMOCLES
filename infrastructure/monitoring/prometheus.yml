@@ -1,0 +1,69 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "rules/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # User Service
+  - job_name: 'user-service'
+    static_configs:
+      - targets: ['user-service:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # GDPR Engine
+  - job_name: 'gdpr-engine'
+    static_configs:
+      - targets: ['gdpr-engine:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Settlement Service  
+  - job_name: 'settlement-service'
+    static_configs:
+      - targets: ['settlement-service:8003']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Web Application
+  - job_name: 'web-app'
+    static_configs:
+      - targets: ['web:3000']
+    metrics_path: '/_next/static/chunks/polyfills'
+    scrape_interval: 30s
+
+  # PostgreSQL
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+
+  # Redis
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  # Cardano Node
+  - job_name: 'cardano-node'
+    static_configs:
+      - targets: ['cardano-node:12798']
+    scrape_interval: 30s
+
+  # IPFS
+  - job_name: 'ipfs'
+    static_configs:
+      - targets: ['ipfs:5001']
+    metrics_path: '/debug/metrics/prometheus'
+    scrape_interval: 30s
