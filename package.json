@@ -18,7 +18,7 @@
     "dev": "concurrently \"npm run dev:web\" \"npm run dev:user-service\" \"npm run dev:gdpr-engine\"",
     "dev:web": "cd apps/web && npm run dev",
     "dev:user-service": "cd services/user-service && npm run dev",
-    "dev:gdpr-engine": "cd services/gdpr-engine && python -m uvicorn main:app --reload --port 8001",
+    "dev:gdpr-engine": "cd services/gdpr-engine && source venv/bin/activate && python -m uvicorn main:app --reload --port 8001",
     "build": "npm run build:web && npm run build:services",
     "build:web": "cd apps/web && npm run build",
     "build:services": "npm run build:user-service && npm run build:settlement-service",
@@ -43,7 +43,7 @@
     "eslint": "^8.45.0",
     "jest": "^29.6.0",
     "prettier": "^3.0.0",
-    "typescript": "^5.1.0"
+    "typescript": "^5.1.6"
   },
   "engines": {
     "node": ">=18.0.0",

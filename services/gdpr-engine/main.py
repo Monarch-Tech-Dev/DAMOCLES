@@ -228,7 +228,7 @@ async def get_user_violations(
         
         return {"violations": violations}
         
-    } except Exception as e:
+    except Exception as e:
         logger.error(f"Error fetching violations: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
