@@ -3,13 +3,13 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { PrismaClient } from '@prisma/client';
-import { Redis } from 'redis';
+import { createClient } from 'redis';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const prisma = new PrismaClient();
-const redis = Redis.createClient({ url: process.env.REDIS_URL });
+const redis = createClient({ url: process.env.REDIS_URL });
 
 const fastify = Fastify({
   logger: {
