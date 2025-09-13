@@ -1,0 +1,17 @@
+{
+  "deployment_type": "FOUNDER_TOKEN_GENESIS",
+  "network": "testnet",
+  "founder_address": "***REMOVED***",
+  "founder_allocation": 50000000,
+  "founder_percentage": 5.0,
+  "total_supply": 1000000000,
+  "token_policy_id": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+  "token_name": "SWORD",
+  "contracts": {
+    "genesis_minting": "/Users/king/Desktop/damocles-platform/smart-contracts/compiled-scripts/founder-genesis.plutus",
+    "founder_vesting": "/Users/king/Desktop/damocles-platform/smart-contracts/compiled-scripts/founder-vesting.plutus", 
+    "founder_staking": "/Users/king/Desktop/damocles-platform/smart-contracts/compiled-scripts/founder-staking.plutus"
+  },
+  "deployment_date": "2025-09-13T01:01:05Z",
+  "status": "READY_TO_DEPLOY"
+}

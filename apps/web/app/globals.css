@@ -1,0 +1,170 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  --damocles-primary: #1a1b3a;
+  --damocles-secondary: #2d2e5f;
+  --damocles-accent: #6366f1;
+  --damocles-gold: #fbbf24;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Loading animations */
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+.shimmer {
+  animation: shimmer 1.5s ease-in-out infinite;
+  background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+  background-size: 800px 104px;
+}
+
+/* Custom components */
+.btn-primary {
+  @apply bg-damocles-accent text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-damocles-accent focus:ring-offset-2;
+}
+
+.btn-secondary {
+  @apply bg-damocles-gray-200 text-damocles-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-damocles-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-damocles-gray-400 focus:ring-offset-2;
+}
+
+.btn-danger {
+  @apply bg-damocles-danger text-white px-6 py-3 rounded-lg font-medium hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-damocles-danger focus:ring-offset-2;
+}
+
+.card {
+  @apply bg-white rounded-xl shadow-sm border border-damocles-gray-200 p-6;
+}
+
+.input-field {
+  @apply block w-full px-3 py-2 border border-damocles-gray-300 rounded-lg shadow-sm placeholder-damocles-gray-400 focus:outline-none focus:ring-2 focus:ring-damocles-accent focus:border-transparent;
+}
+
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-success {
+  @apply badge bg-green-100 text-green-800;
+}
+
+.badge-warning {
+  @apply badge bg-yellow-100 text-yellow-800;
+}
+
+.badge-danger {
+  @apply badge bg-red-100 text-red-800;
+}
+
+.badge-info {
+  @apply badge bg-blue-100 text-blue-800;
+}
+
+/* Status indicators */
+.status-dot {
+  @apply inline-block w-2 h-2 rounded-full mr-2;
+}
+
+.status-active {
+  @apply status-dot bg-damocles-success;
+}
+
+.status-pending {
+  @apply status-dot bg-damocles-warning;
+}
+
+.status-error {
+  @apply status-dot bg-damocles-danger;
+}
+
+/* Progress bars */
+.progress-bar {
+  @apply w-full bg-damocles-gray-200 rounded-full h-2;
+}
+
+.progress-fill {
+  @apply h-2 bg-damocles-accent rounded-full transition-all duration-500 ease-out;
+}
+
+/* Sword effect animation */
+@keyframes sword-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(251, 191, 36, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+  }
+}
+
+.sword-active {
+  animation: sword-glow 2s ease-in-out infinite;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}

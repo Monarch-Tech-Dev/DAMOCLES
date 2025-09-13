@@ -1,0 +1,52 @@
+{
+  "name": "damocles-platform",
+  "version": "1.0.0",
+  "description": "Decentralized Automated Debt Protection Platform",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "install:all": "npm install && npm run install:services",
+    "install:services": "npm run install:user-service && npm run install:gdpr-engine && npm run install:analysis-ai && npm run install:settlement-service",
+    "install:user-service": "cd services/user-service && npm install",
+    "install:gdpr-engine": "cd services/gdpr-engine && pip install -r requirements.txt",
+    "install:analysis-ai": "cd services/analysis-ai && pip install -r requirements.txt",
+    "install:settlement-service": "cd services/settlement-service && cargo build",
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:user-service\" \"npm run dev:gdpr-engine\"",
+    "dev:web": "cd apps/web && npm run dev",
+    "dev:user-service": "cd services/user-service && npm run dev",
+    "dev:gdpr-engine": "cd services/gdpr-engine && python -m uvicorn main:app --reload --port 8001",
+    "build": "npm run build:web && npm run build:services",
+    "build:web": "cd apps/web && npm run build",
+    "build:services": "npm run build:user-service && npm run build:settlement-service",
+    "build:user-service": "cd services/user-service && npm run build",
+    "build:settlement-service": "cd services/settlement-service && cargo build --release",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "npm run test:web && npm run test:services",
+    "test:web": "cd apps/web && npm test",
+    "test:services": "cd services/user-service && npm test",
+    "test:integration": "jest --config jest.integration.config.js",
+    "migrate:all": "npm run migrate:postgres && npm run migrate:redis",
+    "migrate:postgres": "cd services/user-service && npm run migrate",
+    "migrate:redis": "echo 'Redis migration placeholder'",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "format": "prettier --write \"**/*.{js,ts,tsx,json,md}\"",
+    "lint": "eslint \"**/*.{js,ts,tsx}\" --fix"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "concurrently": "^8.2.0",
+    "eslint": "^8.45.0",
+    "jest": "^29.6.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

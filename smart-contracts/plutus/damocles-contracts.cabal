@@ -1,0 +1,100 @@
+cabal-version:      3.0
+name:               damocles-contracts
+version:            1.0.0
+synopsis:           DAMOCLES smart contracts for debt protection
+description:        Plutus smart contracts for the DAMOCLES decentralized debt protection platform
+license:            MIT
+license-file:       LICENSE
+author:             DAMOCLES DAO
+maintainer:         tech@damocles.no
+category:           Blockchain
+build-type:         Simple
+
+common project-config
+  default-language:     Haskell2010
+  default-extensions:   NoImplicitPrelude
+                       OverloadedStrings
+                       TemplateHaskell
+                       ScopedTypeVariables
+                       MultiParamTypeClasses
+                       DataKinds
+                       TypeApplications
+                       TypeOperators
+                       TypeFamilies
+                       FlexibleContexts
+                       FlexibleInstances
+                       DeriveGeneric
+                       DeriveAnyClass
+                       DerivingStrategies
+                       ImportQualifiedPost
+
+  ghc-options:          -Wall
+                       -Wcompat
+                       -Wincomplete-record-updates
+                       -Wincomplete-uni-patterns
+                       -Wpartial-fields
+                       -Wredundant-constraints
+                       -Wunused-packages
+                       -fobject-code
+                       -fno-ignore-interface-pragmas
+                       -fno-omit-interface-pragmas
+
+library
+  import:             project-config
+  hs-source-dirs:     src
+  exposed-modules:    Damocles.Evidence
+                     Damocles.Token
+                     Damocles.Settlement
+                     Damocles.Utils
+  
+  build-depends:      base ^>=4.14,
+                     plutus-core,
+                     plutus-ledger-api,
+                     plutus-tx,
+                     plutus-tx-plugin,
+                     plutus-script-utils,
+                     plutus-contract,
+                     plutus-ledger,
+                     plutus-ledger-constraints,
+                     aeson,
+                     bytestring,
+                     containers,
+                     text,
+                     serialise
+
+executable damocles-cli
+  import:             project-config
+  main-is:            Main.hs
+  hs-source-dirs:     app
+  
+  build-depends:      base,
+                     damocles-contracts,
+                     plutus-ledger-api,
+                     plutus-tx,
+                     cardano-api,
+                     cardano-cli,
+                     aeson,
+                     aeson-pretty,
+                     bytestring,
+                     optparse-applicative,
+                     text
+
+test-suite damocles-tests
+  import:             project-config
+  type:               exitcode-stdio-1.0
+  main-is:            Main.hs
+  hs-source-dirs:     test
+  other-modules:      Test.Evidence
+                     Test.Token
+                     Test.Settlement
+  
+  build-depends:      base,
+                     damocles-contracts,
+                     plutus-core,
+                     plutus-ledger-api,
+                     plutus-tx,
+                     plutus-contract,
+                     plutus-ledger,
+                     tasty,
+                     tasty-hunit,
+                     tasty-quickcheck
