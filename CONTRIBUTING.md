@@ -233,4 +233,4 @@ By contributing to DAMOCLES, you agree that your contributions will be licensed 
 
 **Together, we're building technology that empowers consumers and ensures fair treatment. Every contribution, no matter how small, helps create a more transparent and just financial system.**
 
-*Last updated: September 2024*
+*Last updated: December 2024*
