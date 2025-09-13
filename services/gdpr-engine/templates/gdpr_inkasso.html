@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDPR Forespørsel - Inkassoselskap</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #dc2626;">GDPR Forespørsel - Inkassoselskap</h2>
+        
+        <p><strong>Dato:</strong> {{ date }}</p>
+        <p><strong>Referanse:</strong> {{ reference_id }}</p>
+        
+        <p><strong>Til: {{ creditor_name }}</strong><br>
+        {% if organization_number %}Org.nr: {{ organization_number }}<br>{% endif %}
+        E-post: {{ contact_email }}</p>
+        
+        <p><strong>Fra: {{ user_name }}</strong><br>
+        E-post: {{ user_email }}</p>
+        
+        <hr style="margin: 30px 0;">
+        
+        <h3>GDPR Forespørsel - Spesiell Focus på Inkassovirksomhet</h3>
+        
+        <p><strong style="color: #dc2626;">VIKTIG:</strong> Som inkassoselskap behandler dere særlig sensitive personopplysninger. Denne forespørselen krever spesiell oppmerksomhet i henhold til GDPR og Inkassoloven.</p>
+        
+        <h4>1. Fullstendig informasjon om gjelden</h4>
+        <ul>
+            <li>Opprinnelig kreditor og gjeldsbeløp</li>
+            <li>Dato for når gjelden ble overført til dere</li>
+            <li>Komplett oversikt over gebyrer og renter</li>
+            <li>Juridisk grunnlag for hver kostnad</li>
+            <li>Beregningsgrunnlag for alle tillegg</li>
+        </ul>
+        
+        <h4>2. Behandlingsaktiviteter</h4>
+        <ul>
+            <li>Alle kommunikasjonslogger (brev, e-post, SMS, telefon)</li>
+            <li>Kredittvurderinger og scoringsdata</li>
+            <li>Deling av informasjon med tredjeparter</li>
+            <li>Registreringer i kredittreferanseregistre</li>
+            <li>Automatiserte beslutningsprosesser</li>
+        </ul>
+        
+        <h4>3. Compliance med Inkassoloven</h4>
+        <p>Vennligst bekreft at dere overholder:</p>
+        <ul>
+            <li>§ 10 - Forbud mot urimelig purring</li>
+            <li>§ 11 - Krav til inkassovarsel</li>
+            <li>§ 14 - Begrensninger i gebyrer</li>
+            <li>§ 15 - Dokumentasjonsplikt</li>
+        </ul>
+        
+        <h4>4. Databehandleravtaler</h4>
+        <p>Oppgi hvilke databehandleravtaler som gjelder min informasjon, inkludert:</p>
+        <ul>
+            <li>Kredittreferanseselskaper</li>
+            <li>IT-leverandører</li>
+            <li>Andre inkassoselskaper</li>
+            <li>Advokater og rettsapparatet</li>
+        </ul>
+        
+        <h4>5. Automatiserte beslutninger</h4>
+        <p>Gi detaljert informasjon om:</p>
+        <ul>
+            <li>Automatisk behandling av mitt krav</li>
+            <li>Scoringsalgoritmer som er brukt</li>
+            <li>Profilering for betalingsevne</li>
+            <li>Automatiserte oppfølgingsprosesser</li>
+        </ul>
+        
+        {% if account_number and account_number != 'Ukjent' %}
+        <h4>6. Kontoopplysninger</h4>
+        <p>Gjeld registrert på konto/referanse: {{ account_number }}</p>
+        {% endif %}
+        
+        <h4>7. Sletting og oppbevaring</h4>
+        <p>Oppgi:</p>
+        <ul>
+            <li>Oppbevaringstid for mine personopplysninger</li>
+            <li>Kriterier for automatisk sletting</li>
+            <li>Rutiner for manuell sletting på forespørsel</li>
+        </ul>
+        
+        <h4>8. Juridiske rettigheter</h4>
+        <p>Bekreft at jeg har blitt informert om:</p>
+        <ul>
+            <li>Rett til å bestride gjelden</li>
+            <li>Rett til å kreve dokumentasjon</li>
+            <li>Rett til betalingsavtale</li>
+            <li>Rett til å klage til Forbrukertilsynet</li>
+        </ul>
+        
+        <p><strong style="color: #dc2626;">FRIST:</strong> I henhold til GDPR forventer jeg svar innen {{ legal_deadline }} dager. Forsinkelse kan medføre klage til Datatilsynet og Forbrukertilsynet.</p>
+        
+        <p>Med vennlig hilsen,<br>
+        {{ user_name }}</p>
+        
+        <hr style="margin: 30px 0;">
+        
+        <p style="font-size: 12px; color: #666;">
+            <strong>Juridisk grunnlag:</strong><br>
+            - GDPR Artikkel 15 - Retten til informasjon<br>
+            - Inkassoloven § 15 - Dokumentasjonsplikt<br>
+            - Forbrukerkjøpsloven<br>
+            - Finansavtaleloven
+        </p>
+        
+        <p style="font-size: 10px; color: #666;">
+            Generert av DAMOCLES forbrukerbeskyttelsesplattform
+        </p>
+    </div>
+</body>
+</html>

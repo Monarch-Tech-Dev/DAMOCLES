@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDPR Forespørsel - Artikkel 15</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #2c5282;">GDPR Forespørsel - Artikkel 15 (Rett til Informasjon)</h2>
+        
+        <p><strong>Dato:</strong> {{ date }}</p>
+        <p><strong>Referanse:</strong> {{ reference_id }}</p>
+        
+        <p><strong>Til: {{ creditor_name }}</strong><br>
+        {% if organization_number %}Org.nr: {{ organization_number }}<br>{% endif %}
+        E-post: {{ contact_email }}</p>
+        
+        <p><strong>Fra: {{ user_name }}</strong><br>
+        E-post: {{ user_email }}</p>
+        
+        <hr style="margin: 30px 0;">
+        
+        <h3>Forespørsel om tilgang til personopplysninger</h3>
+        
+        <p>I henhold til Artikkel 15 i EUs Personvernforordning (GDPR) ber jeg herved om følgende informasjon om behandling av mine personopplysninger:</p>
+        
+        <h4>1. Bekreftelse på behandling av personopplysninger</h4>
+        <p>Vennligst bekreft om dere behandler personopplysninger om meg.</p>
+        
+        <h4>2. Tilgang til personopplysninger</h4>
+        <p>Hvis dere behandler personopplysninger om meg, ber jeg om en kopi av alle personopplysninger som behandles, samt følgende informasjon:</p>
+        
+        <ul>
+            <li>Formålene med behandlingen</li>
+            <li>Kategoriene av personopplysninger som behandles</li>
+            <li>Mottakerne eller kategoriene av mottakere som personopplysningene er eller vil bli utlevert til</li>
+            <li>Det planlagte tidsrommet for lagring av personopplysningene</li>
+            <li>Informasjon om automatisert beslutningstaking, inkludert profilering</li>
+            <li>Informasjon om retten til å be om retting, sletting eller begrensning</li>
+            <li>Retten til å klage til tilsynsmyndigheten</li>
+            <li>Kilden til personopplysningene hvis de ikke er innhentet fra meg direkte</li>
+        </ul>
+        
+        <h4>3. Kontoopplysninger</h4>
+        {% if account_number and account_number != 'Ukjent' %}
+        <p>Mine kontoopplysninger hos dere: {{ account_number }}</p>
+        {% else %}
+        <p>Vennligst inkluder alle konti eller avtaler knyttet til mitt navn og personnummer.</p>
+        {% endif %}
+        
+        <h4>4. Leveringsformat</h4>
+        <p>Jeg ønsker informasjonen levert elektronisk i et strukturert, vanlig anvendt og maskinlesbart format (JSON, Excel eller PDF).</p>
+        
+        <h4>5. Frist</h4>
+        <p>I henhold til GDPR Artikkel 12(3) forventer jeg svar innen <strong>{{ legal_deadline }} dager</strong> fra mottakelse av denne forespørselen.</p>
+        
+        <h4>6. Identifikasjon</h4>
+        <p>For å verifisere min identitet, kan jeg levere nødvendig dokumentasjon på forespørsel. Vennligst la meg vite hvilken type identifikasjon dere krever.</p>
+        
+        <h4>7. Kontaktinformasjon</h4>
+        <p>For eventuelle spørsmål om denne forespørselen, vennligst kontakt meg på {{ user_email }}.</p>
+        
+        <p>Jeg ser frem til å motta den forespurte informasjonen innen fristen.</p>
+        
+        <p>Med vennlig hilsen,<br>
+        {{ user_name }}</p>
+        
+        <hr style="margin: 30px 0;">
+        
+        <p style="font-size: 12px; color: #666;">
+            <strong>Juridisk grunnlag:</strong><br>
+            - GDPR Artikkel 15 - Retten til informasjon<br>
+            - Personopplysningsloven § 18 - Retten til informasjon<br>
+            - Forbrukerkjøpsloven § 24 - Informasjonsplikt
+        </p>
+        
+        <p style="font-size: 12px; color: #666;">
+            <strong>Merknad:</strong> Denne forespørselen er generert automatisk av DAMOCLES-plattformen for forbrukerbeskyttelse. 
+            For spørsmål om forespørselen, vennligst kontakt bruker direkte på oppgitt e-postadresse.
+        </p>
+    </div>
+</body>
+</html>

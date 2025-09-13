@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDPR Forespørsel - Bank</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1e40af;">GDPR Forespørsel - Finansinstitusjon</h2>
+        
+        <p><strong>Dato:</strong> {{ date }}</p>
+        <p><strong>Referanse:</strong> {{ reference_id }}</p>
+        
+        <p><strong>Til: {{ creditor_name }}</strong><br>
+        {% if organization_number %}Org.nr: {{ organization_number }}<br>{% endif %}
+        E-post: {{ contact_email }}</p>
+        
+        <p><strong>Fra: {{ user_name }}</strong><br>
+        E-post: {{ user_email }}</p>
+        
+        <hr style="margin: 30px 0;">
+        
+        <h3>GDPR Forespørsel - Finansielle Tjenester</h3>
+        
+        <p>Som finansinstitusjon behandler dere omfattende finansielle personopplysninger underlagt særlige regulatoriske krav. Denne forespørselen omfatter alle aspekter av min kundeforhold.</p>
+        
+        <h4>1. Kundeforhold og kontoopplysninger</h4>
+        <ul>
+            <li>Alle konti, lån og finansielle produkter</li>
+            <li>Kontoutskrifter og transaksjonshistorikk</li>
+            <li>Rentesatser, gebyrer og vilkårsendringer</li>
+            <li>Kommunikasjonshistorikk (brev, e-post, møter, telefonsamtaler)</li>
+        </ul>
+        
+        <h4>2. Kredittvurdering og scoring</h4>
+        <ul>
+            <li>Alle kredittvurderinger utført</li>
+            <li>Scoringsmodeller og algoritmer benyttet</li>
+            <li>Data hentet fra kredittreferanseselskaper</li>
+            <li>Interne risikoklassifiseringer</li>
+            <li>Beslutningsgrunnlag for kredittilbud eller avslag</li>
+        </ul>
+        
+        <h4>3. Automatiserte beslutningsprosesser</h4>
+        <p>Gi detaljert informasjon om:</p>
+        <ul>
+            <li>AI og algoritmer brukt i kundebehandling</li>
+            <li>Automatisert profilering og segmentering</li>
+            <li>Betalingsevnevurderinger</li>
+            <li>Produktanbefalingsalgoritmer</li>
+            <li>Svindeldeteksjonssystemer</li>
+        </ul>
+        
+        <h4>4. Datadeling og tredjeparter</h4>
+        <p>Oppgi hvilke data som er delt med:</p>
+        <ul>
+            <li>Kredittreferanseselskaper (Experian, Bisnode, etc.)</li>
+            <li>Forsikringsselskaper</li>
+            <li>Samarbeidende finansinstitusjoner</li>
+            <li>IT-leverandører og databehandlere</li>
+            <li>Myndigheter (skattemyndigheter, politiets økokrim, etc.)</li>
+        </ul>
+        
+        <h4>5. Compliance med finansregulering</h4>
+        <p>Bekreft overholdelse av:</p>
+        <ul>
+            <li>Finansavtaleloven</li>
+            <li>Hvitvaskingsloven</li>
+            <li>MiFID II (for investeringstjenester)</li>
+            <li>Forbrukerkjøpsloven</li>
+            <li>Forsikringsavtaleloven (hvis aktuelt)</li>
+        </ul>
+        
+        {% if account_number and account_number != 'Ukjent' %}
+        <h4>6. Kontoopplysninger</h4>
+        <p>Mine kontoer hos dere: {{ account_number }}</p>
+        {% endif %}
+        
+        <h4>7. Markedsføring og profilering</h4>
+        <ul>
+            <li>Markedsføringsaktiviteter rettet mot meg</li>
+            <li>Behavioural tracking og analyse</li>
+            <li>Segmentering for produktsalg</li>
+            <li>Kundetilfredshetsmålinger</li>
+        </ul>
+        
+        <h4>8. Dataoppbevaring og sikkerhet</h4>
+        <ul>
+            <li>Oppbevaringstider for ulike datatyper</li>
+            <li>Sikkerhetstiltak for mine data</li>
+            <li>Eventuelle datainnbrudd som har berørt mine opplysninger</li>
+            <li>Geografisk lagring av data</li>
+        </ul>
+        
+        <h4>9. Leveringsformat</h4>
+        <p>Jeg ønsker dataene levert i strukturert format (JSON, Excel eller CSV) for enkel analyse og portabilitet i henhold til GDPR Artikkel 20.</p>
+        
+        <p><strong style="color: #1e40af;">FRIST:</strong> Jeg forventer fullstendig respons innen {{ legal_deadline }} dager i henhold til GDPR.</p>
+        
+        <p>Ved manglende respons vil saken bli eskalert til Datatilsynet og Finanstilsynet.</p>
+        
+        <p>Med vennlig hilsen,<br>
+        {{ user_name }}</p>
+        
+        <hr style="margin: 30px 0;">
+        
+        <p style="font-size: 12px; color: #666;">
+            <strong>Juridisk grunnlag:</strong><br>
+            - GDPR Artikkel 15 og 20 - Rett til informasjon og dataportabilitet<br>
+            - Finansavtaleloven § 47 - Informasjonsplikt<br>
+            - Personopplysningsloven
+        </p>
+        
+        <p style="font-size: 10px; color: #666;">
+            Generert av DAMOCLES forbrukerbeskyttelsesplattform for finansiell transparens
+        </p>
+    </div>
+</body>
+</html>
