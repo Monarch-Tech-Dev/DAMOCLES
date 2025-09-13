@@ -16,6 +16,11 @@ export function Header() {
     { name: 'Priser', href: '/pricing' },
     { name: 'Om oss', href: '/about' },
   ]
+  
+  const userNavigation = [
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Mine gjeld', href: '/dashboard/debts' },
+  ]
 
   return (
     <header className="fixed top-0 w-full bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50">
@@ -34,15 +39,27 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="text-gray-600 hover:text-damocles-accent transition-colors duration-200 font-medium"
-              >
-                {item.name}
-              </Link>
-            ))}
+            {user ? (
+              userNavigation.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="text-gray-600 hover:text-damocles-accent transition-colors duration-200 font-medium"
+                >
+                  {item.name}
+                </Link>
+              ))
+            ) : (
+              navigation.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="text-gray-600 hover:text-damocles-accent transition-colors duration-200 font-medium"
+                >
+                  {item.name}
+                </Link>
+              ))
+            )}
           </div>
 
           {/* User Actions */}
@@ -111,16 +128,29 @@ export function Header() {
             className="md:hidden bg-white border-t border-gray-200"
           >
             <div className="px-4 py-2 space-y-1">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="block px-3 py-2 text-gray-600 hover:text-damocles-accent hover:bg-gray-50 rounded-lg transition-colors duration-200 font-medium"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item.name}
-                </Link>
-              ))}
+              {user ? (
+                userNavigation.map((item) => (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className="block px-3 py-2 text-gray-600 hover:text-damocles-accent hover:bg-gray-50 rounded-lg transition-colors duration-200 font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.name}
+                  </Link>
+                ))
+              ) : (
+                navigation.map((item) => (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className="block px-3 py-2 text-gray-600 hover:text-damocles-accent hover:bg-gray-50 rounded-lg transition-colors duration-200 font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.name}
+                  </Link>
+                ))
+              )}
               
               <div className="pt-4 border-t border-gray-200">
                 {user ? (
