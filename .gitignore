@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+*/node_modules/
+__pycache__/
+*.pyc
+target/
+Cargo.lock
+.cargo/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Build outputs
+dist/
+build/
+out/
+*.log
+
+# Database
+*.db
+*.sqlite
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Blockchain
+cardano-cli-*/
+db/
+logs/
+socket/
+
+# AI/ML
+models/
+*.h5
+*.pkl
+*.joblib
+
+# Docker
+docker-compose.override.yml
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+secrets/
+
+# Temporary files
+tmp/
+temp/
+*.tmp

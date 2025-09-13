@@ -1,0 +1,40 @@
+{
+  "certificate_type": "DAMOCLES_FOUNDER_VERIFICATION",
+  "issued_to": "***REMOVED***",
+  "issued_at": "2025-09-13T03:01:05.099396",
+  "verification_data": {
+    "founder_verification": {
+      "address": "***REMOVED***",
+      "verification_date": "2025-09-13T03:01:05.099361",
+      "network": "testnet",
+      "status": "PENDING"
+    },
+    "token_allocation": {
+      "expected_tokens": 50000000,
+      "actual_tokens": 0,
+      "expected_percentage": 5.0,
+      "actual_percentage": 0.0,
+      "allocation_complete": false
+    },
+    "wallet_status": {
+      "ada_balance": 1500.0,
+      "utxo_count": 2,
+      "can_transact": true
+    },
+    "founder_privileges": {
+      "genesis_minting_rights": true,
+      "enhanced_governance": true,
+      "veto_power": true,
+      "staking_rewards": "60% APY",
+      "vesting_schedule": "20% immediate, 20% every 6 months"
+    },
+    "platform_ownership": {
+      "total_supply": 1000000000,
+      "founder_share": 0,
+      "ownership_percentage": 0.0,
+      "voting_power": "Enhanced (founder privileges)"
+    }
+  },
+  "statement": "This certificate verifies that the holder of the specified address is the official founder of the DAMOCLES protocol with full founder privileges and token allocation.",
+  "signature": "Verified by DAMOCLES verification system"
+}
