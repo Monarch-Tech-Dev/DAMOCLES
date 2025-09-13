@@ -58,15 +58,9 @@ export async function authRoutes(fastify: FastifyInstance) {
         { expiresIn: '7d' }
       );
       
-      reply.setCookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-      });
-      
       return reply.send({
         token,
+        refreshToken,
         user: {
           id: user.id,
           email: user.email,
@@ -120,15 +114,9 @@ export async function authRoutes(fastify: FastifyInstance) {
         { expiresIn: '7d' }
       );
       
-      reply.setCookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000
-      });
-      
       return reply.send({
         token,
+        refreshToken,
         user: {
           id: user.id,
           email: user.email,
@@ -149,7 +137,7 @@ export async function authRoutes(fastify: FastifyInstance) {
   // Refresh token
   fastify.post('/refresh', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const refreshToken = request.cookies.refreshToken;
+      const { refreshToken } = request.body as { refreshToken: string };
       if (!refreshToken) {
         return reply.status(401).send({ error: 'No refresh token' });
       }
@@ -179,7 +167,6 @@ export async function authRoutes(fastify: FastifyInstance) {
   
   // Logout
   fastify.post('/logout', async (request: FastifyRequest, reply: FastifyReply) => {
-    reply.clearCookie('refreshToken');
     return reply.send({ message: 'Logged out successfully' });
   });
 }
