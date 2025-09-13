@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDPR Forespørsel - BNPL</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #7c3aed;">GDPR Forespørsel - Buy Now Pay Later (BNPL)</h2>
+        
+        <p><strong>Dato:</strong> {{ date }}</p>
+        <p><strong>Referanse:</strong> {{ reference_id }}</p>
+        
+        <p><strong>Til: {{ creditor_name }}</strong><br>
+        {% if organization_number %}Org.nr: {{ organization_number }}<br>{% endif %}
+        E-post: {{ contact_email }}</p>
+        
+        <p><strong>Fra: {{ user_name }}</strong><br>
+        E-post: {{ user_email }}</p>
+        
+        <hr style="margin: 30px 0;">
+        
+        <h3>GDPR Forespørsel - BNPL Tjenester</h3>
+        
+        <p>Som leverandør av Buy Now Pay Later tjenester behandler dere sensitive forbrukerdata og kreditinformasjon. Denne forespørselen dekker alle aspekter av min bruk av deres tjeneste.</p>
+        
+        <h4>1. Kjøp og betalingshistorikk</h4>
+        <ul>
+            <li>Alle kjøp utført gjennom deres tjeneste</li>
+            <li>Betalingsplan og betalingshistorikk</li>
+            <li>Forsinkede betalinger og gebyrer</li>
+            <li>Kreditgrenser og tilgjengelige kredittramme</li>
+            <li>Tilbakebetalinger og refusjoner</li>
+        </ul>
+        
+        <h4>2. Handelspartnere og butikker</h4>
+        <ul>
+            <li>Liste over alle butikker der jeg har brukt deres tjeneste</li>
+            <li>Informasjon delt med handelspartnere om mine kjøp</li>
+            <li>Produktkategorier og kjøpsmønstre analysert</li>
+            <li>Merchant-spesifikke tilbud og rabatter</li>
+        </ul>
+        
+        <h4>3. Kredittvurdering ved BNPL</h4>
+        <ul>
+            <li>Øyeblikkelig kredittvurdering ved kjøp</li>
+            <li>Data brukt i beslutningsalgoritmer</li>
+            <li>Risikomodeller og scoringsalgoritmer</li>
+            <li>Årsaker til eventuelle avslag på kreditt</li>
+            <li>Endringer i kredittvurdering over tid</li>
+        </ul>
+        
+        <h4>4. Automatiserte beslutningsprosesser</h4>
+        <p>Detaljert informasjon om:</p>
+        <ul>
+            <li>AI-algoritmer for kredittvurdering</li>
+            <li>Real-time fraud detection systemer</li>
+            <li>Automatisk kreditttildeling og grenser</li>
+            <li>Betalingspåminnelser og inkassoprosesser</li>
+            <li>Personaliserte tilbud og markedsføring</li>
+        </ul>
+        
+        <h4>5. App og digital sporing</h4>
+        <ul>
+            <li>Mobilapp bruksdata og navigasjon</li>
+            <li>Device fingerprinting og teknisk informasjon</li>
+            <li>Lokaliseringsdata og geolokasjon</li>
+            <li>Push notifications sendt til meg</li>
+            <li>In-app kjøpsadferd og preferanser</li>
+        </ul>
+        
+        <h4>6. Sosiale medier og tredjepartsdata</h4>
+        <ul>
+            <li>Data hentet fra sosiale medier profiler</li>
+            <li>Tredjepartsdata brukt til profilering</li>
+            <li>Cross-device tracking og identifikasjon</li>
+            <li>Demografiske og psykografiske data</li>
+        </ul>
+        
+        {% if account_number and account_number != 'Ukjent' %}
+        <h4>7. Kontoopplysninger</h4>
+        <p>Min konto/bruker-ID: {{ account_number }}</p>
+        {% endif %}
+        
+        <h4>8. Markedsføring og personalisering</h4>
+        <ul>
+            <li>Personaliserte produktanbefalinger</li>
+            <li>Målrettede reklamekampanjer</li>
+            <li>E-post og SMS markedsføring sendt</li>
+            <li>Segmentering og kundegrupper</li>
+            <li>Predictive analytics på kjøpsadferd</li>
+        </ul>
+        
+        <h4>9. Datadeling med tredjeparter</h4>
+        <p>Informasjon om datadeling med:</p>
+        <ul>
+            <li>Kredittreferanseselskaper</li>
+            <li>Markedsføringspartnere</li>
+            <li>Teknologileverandører</li>
+            <li>Analytics og tracking tjenester</li>
+            <li>Handelspartnere og butikker</li>
+        </ul>
+        
+        <h4>10. Compliance med forbrukerlover</h4>
+        <p>Bekreft overholdelse av:</p>
+        <ul>
+            <li>Forbrukerkjøpsloven</li>
+            <li>Markedsføringsloven</li>
+            <li>Finansavtaleloven (der relevant)</li>
+            <li>E-handelsdirektivet</li>
+        </ul>
+        
+        <h4>11. Leveringsformat</h4>
+        <p>Jeg ønsker dataene i maskinlesbart format (JSON/CSV) inkludert alle metadata og tidsstempler.</p>
+        
+        <p><strong style="color: #7c3aed;">FRIST:</strong> Jeg forventer fullstendig respons innen {{ legal_deadline }} dager. Utsettelse kan medføre klage til Datatilsynet og Forbrukertilsynet.</p>
+        
+        <p>Med vennlig hilsen,<br>
+        {{ user_name }}</p>
+        
+        <hr style="margin: 30px 0;">
+        
+        <p style="font-size: 12px; color: #666;">
+            <strong>Juridisk grunnlag:</strong><br>
+            - GDPR Artikkel 15 og 20 - Rett til informasjon og dataportabilitet<br>
+            - Forbrukerkjøpsloven<br>
+            - Markedsføringsloven § 13 - Uønsket markedsføring
+        </p>
+        
+        <p style="font-size: 10px; color: #666;">
+            Generert av DAMOCLES for økt transparens i BNPL-tjenester
+        </p>
+    </div>
+</body>
+</html>

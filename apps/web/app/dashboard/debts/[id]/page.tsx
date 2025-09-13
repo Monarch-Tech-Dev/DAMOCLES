@@ -467,10 +467,12 @@ export default function DebtDetailPage() {
               <h3 className="font-semibold mb-4">Handlinger</h3>
               
               <div className="space-y-3">
-                <Button className="w-full" variant="outline">
-                  <DocumentTextIcon className="w-4 h-4 mr-2" />
-                  GDPR-forespørsel
-                </Button>
+                <Link href={`/dashboard/debts/${debt.id}/gdpr`}>
+                  <Button className="w-full" variant="outline">
+                    <DocumentTextIcon className="w-4 h-4 mr-2" />
+                    GDPR-forespørsel
+                  </Button>
+                </Link>
                 
                 <Button className="w-full" variant="outline">
                   <ChatBubbleLeftRightIcon className="w-4 h-4 mr-2" />
