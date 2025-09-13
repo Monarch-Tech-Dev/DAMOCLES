@@ -3,21 +3,14 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { PrismaClient } from '@prisma/client';
-import { createClient } from 'redis';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const prisma = new PrismaClient();
-const redis = createClient({ url: process.env.REDIS_URL });
 
 const fastify = Fastify({
-  logger: {
-    level: process.env.LOG_LEVEL || 'info',
-    transport: {
-      target: 'pino-pretty'
-    }
-  }
+  logger: process.env.NODE_ENV === 'production' ? false : true
 });
 
 // Register plugins
@@ -38,7 +31,6 @@ fastify.register(rateLimit, {
 fastify.get('/health', async () => {
   try {
     await prisma.$queryRaw`SELECT 1`;
-    await redis.ping();
     return { status: 'healthy', service: 'user-service' };
   } catch (error) {
     fastify.log.error(error);
@@ -50,10 +42,12 @@ fastify.get('/health', async () => {
 import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
 import { debtRoutes } from './routes/debts';
+import { creditorRoutes } from './routes/creditors';
 
 fastify.register(authRoutes, { prefix: '/api/auth' });
 fastify.register(userRoutes, { prefix: '/api/users' });
 fastify.register(debtRoutes, { prefix: '/api/debts' });
+fastify.register(creditorRoutes, { prefix: '/api/creditors' });
 
 // Error handling
 fastify.setErrorHandler((error, request, reply) => {
@@ -83,7 +77,6 @@ fastify.setErrorHandler((error, request, reply) => {
 const gracefulShutdown = async () => {
   await fastify.close();
   await prisma.$disconnect();
-  await redis.disconnect();
   process.exit(0);
 };
 
@@ -93,7 +86,6 @@ process.on('SIGTERM', gracefulShutdown);
 // Start server
 const start = async () => {
   try {
-    await redis.connect();
     await fastify.listen({ 
       port: parseInt(process.env.USER_SERVICE_PORT || '3000'), 
       host: '0.0.0.0' 
