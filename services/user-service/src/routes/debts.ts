@@ -6,7 +6,7 @@ import { authenticateUser } from '../middleware/auth';
 const prisma = new PrismaClient();
 
 const AddDebtSchema = z.object({
-  creditorId: z.string().cuid(),
+  creditorId: z.string(),
   originalAmount: z.number().positive(),
   currentAmount: z.number().positive(),
   accountNumber: z.string().optional()
