@@ -1,0 +1,38 @@
+                    GNU AFFERO GENERAL PUBLIC LICENSE
+                       Version 3, 19 November 2007
+
+ Copyright (C) 2024 DAMOCLES Platform Contributors
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as published
+ by the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+ IMPORTANT NOTICE - WHY AGPL-3.0:
+ 
+ This license was specifically chosen to protect users from predatory 
+ financial institutions. The AGPL ensures:
+ 
+ 1. ANY use of this code requires full source disclosure
+ 2. Debt collectors cannot create proprietary versions
+ 3. All improvements must benefit the community
+ 4. Network use (SaaS) requires source code release
+ 5. Patent protection for all users
+ 
+ This is a FEATURE, not a bug. We want financial institutions to be
+ unable to use this code against consumers.
+ 
+ Additional terms under Section 7:
+ - This software may not be used to harm consumers
+ - This software may not be used to circumvent consumer protection laws
+ - This software may not be used to violate GDPR or privacy rights
+ 
+ Full license text: https://www.gnu.org/licenses/agpl-3.0.html
