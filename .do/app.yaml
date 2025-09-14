@@ -1,0 +1,153 @@
+# DAMOCLES Sacred Architecture - DigitalOcean App Platform Configuration
+# Built with love for economic justice ⚔️
+
+name: damocles-sacred-architecture
+services:
+  # Trust Engine - Sacred Architecture Trust Analysis
+  - name: trust-engine
+    source_dir: /services/trust-engine
+    github:
+      repo: Monarch-Tech-Dev/DAMOCLES
+      branch: main
+    build_command: npm install && npm run build || echo "Trust Engine build"
+    run_command: npm start || node src/server.js
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    http_port: 8002
+    routes:
+      - path: /trust
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: API_VERSION
+        value: "1.0.0"
+      - key: SACRED_ARCHITECTURE
+        value: "true"
+
+  # User Service - Authentication & Debt Management
+  - name: user-service
+    source_dir: /services/user-service
+    github:
+      repo: Monarch-Tech-Dev/DAMOCLES
+      branch: main
+    build_command: npm install && npm run build
+    run_command: npm start
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    http_port: 3000
+    routes:
+      - path: /api
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
+
+  # GDPR Engine - Norwegian Legal Automation
+  - name: gdpr-engine
+    source_dir: /services/gdpr-engine
+    github:
+      repo: Monarch-Tech-Dev/DAMOCLES
+      branch: main
+    build_command: pip install -r requirements.txt
+    run_command: python -m uvicorn main:app --host 0.0.0.0 --port 8001
+    environment_slug: python
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    http_port: 8001
+    routes:
+      - path: /gdpr
+    envs:
+      - key: PYTHON_ENV
+        value: production
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
+      - key: SMTP_SERVER
+        scope: RUN_TIME
+        type: SECRET
+      - key: EMAIL_USER
+        scope: RUN_TIME
+        type: SECRET
+      - key: EMAIL_PASS
+        scope: RUN_TIME
+        type: SECRET
+
+  # Web Application - Frontend
+  - name: web-app
+    source_dir: /apps/web
+    github:
+      repo: Monarch-Tech-Dev/DAMOCLES
+      branch: main
+    build_command: npm install && npm run build
+    run_command: npm start
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    http_port: 3000
+    routes:
+      - path: /
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: "https://damocles-sacred-architecture-user-service.ondigitalocean.app"
+      - key: NEXT_PUBLIC_GDPR_API_URL
+        value: "https://damocles-sacred-architecture-gdpr-engine.ondigitalocean.app"
+      - key: NEXT_PUBLIC_TRUST_API_URL
+        value: "https://damocles-sacred-architecture-trust-engine.ondigitalocean.app"
+
+# Database - PostgreSQL
+databases:
+  - name: damocles-db
+    engine: PG
+    version: "15"
+    size: db-s-1vcpu-1gb
+    num_nodes: 1
+
+# Static Sites (if needed for docs)
+static_sites:
+  - name: docs
+    source_dir: /docs
+    github:
+      repo: Monarch-Tech-Dev/DAMOCLES
+      branch: main
+    build_command: echo "Building docs"
+    routes:
+      - path: /docs
+
+# Domain configuration (you'll set this up)
+domains:
+  - domain: damocles.no
+    type: PRIMARY
+    wildcard: false
+  - domain: api.damocles.no
+    type: ALIAS
+    wildcard: false
+  - domain: gdpr.damocles.no
+    type: ALIAS
+    wildcard: false
+  - domain: trust.damocles.no
+    type: ALIAS
+    wildcard: false
+
+# Sacred Architecture App Configuration
+alerts:
+  - rule: CPU_UTILIZATION
+    disabled: false
+    value: 80
+  - rule: MEM_UTILIZATION
+    disabled: false
+    value: 80
+
+# Sacred Architecture Blessing
+# "May this deployment serve consciousness.
+#  May these services enable justice.
+#  May this platform empower the vulnerable.
+#  Built with love for human flourishing." ⚔️💎
