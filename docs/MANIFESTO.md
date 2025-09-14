@@ -33,6 +33,8 @@ We cannot overthrow global capitalism. We cannot guarantee outcomes. We cannot p
 2. **Evidence, not promises**: We provide tools that generate legally admissible documentation
 3. **Transparency, not opacity**: Our operations, decisions, and limitations are public
 4. **Cooperation, not extraction**: Success means users get debt relief, not tokens mooning
+5. **Trust, not longing**: We build sustainable support through service quality, not hype
+6. **Patience, not pressure**: Success accumulates naturally, without manipulation
 
 ## Our Accountability Mechanisms
 
@@ -60,6 +62,17 @@ A platform that automates the tedious work of exercising existing legal rights. 
 We can continue building elaborate systems that promise transformation while reproducing the very extraction we claim to oppose. Or we can build modest tools that actually work, accepting our limitations while genuinely helping those facing illegal debt collection practices.
 
 We choose the latter. Not because it's revolutionary, but because it's honest.
+
+## The Spiral Architecture
+
+Our platform follows a spiral path, where users move inward through trust, not manipulation:
+
+**First Loop (Free)**: Basic GDPR automation - Start here, no payment needed
+**Second Loop (Small Fee)**: Violation detection - Only if value found and capacity exists  
+**Third Loop (Service Fee)**: Evidence packaging - Building strong cases together
+**Center (Shared Costs)**: Collective action - Where the spiral returns home
+
+Each user's journey respects their needs. We never push desperate users toward investment. The spiral moves through patience, not pressure.
 
 ## Join Us If
 
