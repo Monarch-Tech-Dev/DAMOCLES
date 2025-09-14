@@ -1,0 +1,45 @@
+{
+  "name": "@damocles/trust-engine",
+  "version": "1.0.0",
+  "description": "Sacred Architecture Trust Engine with Kindness Algorithm and TrustScore calculations",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "trust",
+    "algorithm",
+    "kindness",
+    "sacred-architecture",
+    "consumer-protection",
+    "gdpr",
+    "legal"
+  ],
+  "author": "DAMOCLES Platform",
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "fastify": "^4.24.3",
+    "@fastify/cors": "^8.4.0",
+    "@fastify/helmet": "^11.1.1",
+    "@fastify/rate-limit": "^9.1.0",
+    "zod": "^3.22.4",
+    "winston": "^3.11.0",
+    "date-fns": "^2.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.2",
+    "ts-node-dev": "^2.0.0",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.8",
+    "eslint": "^8.54.0",
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "@typescript-eslint/parser": "^6.12.0"
+  }
+}
