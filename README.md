@@ -21,13 +21,15 @@ DAMOCLES is the world's first **automated consumer protection platform** that en
 - **🔥 Network Effects**: Every new user strengthens consumer protection
 - **📈 Token Appreciation**: Value rises with successful resolutions AND platform improvements
 
-## 🎯 **Mission: Economic Justice Through Transparency**
+## 🎯 **Mission: Technology as Accountability, Not Extraction**
 
 **Transform debt collection from opacity to accountability through:**
 - **Automated GDPR enforcement** with immutable evidence storage
-- **AI-powered violation detection** and compliance monitoring
-- **Mass settlement automation** ensuring fair outcomes for consumers  
+- **Mathematical contradiction detection** and compliance monitoring
+- **Evidence-based settlement tools** ensuring fair outcomes for consumers  
 - **Community-owned platform** immune to corporate capture
+
+> **Read our full [Manifesto](docs/MANIFESTO.md)**: *Where accountability meets technology, without the extraction.*
 
 ## 🏗️ **Platform Architecture**
 
@@ -194,7 +196,7 @@ YEAR 3 (Aggressive):
 ## 👑 **FOUNDER INFORMATION**
 
 **🗡️ Founder Address:** 
-`***REMOVED***`
+`addr1q82l2xf222f965h247nqrd6luhplqw9770r6sed7thlc4srlv4gzct3njfv8z2lnh540s0vngk4gnquxghxp835nn74szyuu2a`
 
 **💎 Token Allocation:** 50,000,000 SWORD (5% total supply)
 **⏰ Vesting:** 36 months with performance milestones
