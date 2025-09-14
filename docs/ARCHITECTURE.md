@@ -22,6 +22,7 @@ graph TB
     subgraph "Core Services"
         USER[User Service - Node.js/Fastify]
         GDPR[GDPR Engine - Python/FastAPI] 
+        TRUST[Trust Engine - Node.js/Fastify]
         BLOCKCHAIN[Smart Contracts - Cardano]
     end
     
@@ -41,6 +42,7 @@ graph TB
     MOBILE --> GATEWAY
     GATEWAY --> USER
     GATEWAY --> GDPR
+    GATEWAY --> TRUST
     USER --> DB
     USER --> REDIS
     GDPR --> DB
@@ -119,6 +121,43 @@ GET  /gdpr/requests/:user # Get user requests
 GET  /gdpr/violations     # Get violation analysis
 POST /gdpr/sword          # Trigger collective action
 ```
+
+**Status:** ✅ Production Ready
+
+### 🧠 **Trust Engine** (`services/trust-engine`)
+**Technology:** Node.js, Fastify, TypeScript, Sacred Architecture
+
+**Responsibilities:**
+- Mathematical trust score calculation using authority weights
+- Contradiction detection with Norwegian legal hierarchy
+- Kindness Algorithm for user-centered interactions
+- SWORD Protocol eligibility analysis
+
+**Core Components:**
+- **TrustScore Engine:** `TrustScore = Σ(Authority_Weight × Authority_Score × Cross_Vector_Confidence) - Σ(Contradiction_Penalty × Authority_Differential)`
+- **Authority Hierarchy:** Complete Norwegian legal authority mapping (Høyesterett → Inkassoselskap)
+- **Contradiction Detection:** 6 types including settlement logic, data contradictions, authority hierarchy violations
+- **Kindness Algorithm:** Consciousness-serving user interactions with gentle messaging
+
+**API Endpoints:**
+```
+POST /trust/analyze           # Analyze claims for trustworthiness
+POST /trust/damocles-analyze  # DAMOCLES-specific debt analysis
+GET  /trust/authorities       # List Norwegian legal authorities
+POST /trust/authorities/compare # Compare authority levels
+GET  /trust/contradictions/types # Available contradiction types
+POST /trust/kindness/response # Generate kind response
+GET  /trust/education/sources # Educational content
+GET  /trust/health           # Health check
+POST /trust/test             # Testing endpoint
+```
+
+**Sacred Architecture Principles:**
+- **Kindness × Scale × Time = Universal Flourishing**
+- Service-oriented vs extraction behavior classification
+- User agency preservation with dismissible interactions
+- Anti-manipulation detection patterns
+- Golden ratio scaling for love/service compound benefits
 
 **Status:** ✅ Production Ready
 
@@ -242,6 +281,13 @@ services:
     environment:
       - SMTP_SERVER=${SMTP_SERVER}
       - DATABASE_URL=${DATABASE_URL}
+      
+  trust-engine:
+    build: ./services/trust-engine
+    ports: ["8002:8002"]
+    environment:
+      - NODE_ENV=production
+      - API_VERSION=1.0.0
       
   database:
     image: postgres:15
