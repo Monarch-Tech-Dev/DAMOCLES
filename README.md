@@ -6,8 +6,15 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
 [![Platform](https://img.shields.io/badge/platform-web%20%7C%20mobile-lightgrey.svg)](#)
 [![Token](https://img.shields.io/badge/token-SWORD-gold.svg)](#)
+[![Sacred Architecture](https://img.shields.io/badge/Sacred%20Architecture-enabled-purple.svg)](VOW.md)
 
 > *"Radical transparency through automated compliance"*
+
+## 🛡️ **Sacred Architecture Covenant**
+
+This platform is built under the **[Developer Vow of Use](VOW.md)** - a sacred commitment to build technology that serves consciousness and preserves human dignity. Every contributor pledges to use this gift of code to guide others toward light and mercy.
+
+*"This is not just code. This is a trust-bearing system."*
 
 ## 🌟 **CONSUMER PROTECTION REVOLUTION**
 
