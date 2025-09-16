@@ -4,11 +4,13 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { useRouter } from 'next/navigation'
 import { api } from './api'
 import toast from 'react-hot-toast'
+import { SubscriptionTier } from './subscription'
 
 interface User {
   id: string
   email: string
   shieldTier: string
+  subscriptionTier: SubscriptionTier
   tokenBalance: number
   onboardingStatus: string
 }
@@ -112,9 +114,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('token', token)
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
       
-      // Get user profile
-      const profileResponse = await api.get('/users/profile')
-      setUser(profileResponse.data.user)
+      // Get user profile (mock data for demo)
+      setUser({
+        id: '1',
+        email: 'demo@damocles.no',
+        shieldTier: 'bronze',
+        subscriptionTier: 'free',
+        tokenBalance: 150,
+        onboardingStatus: 'completed'
+      })
     } catch (error) {
       console.error('Token refresh error:', error)
       // Token is invalid, clear it
