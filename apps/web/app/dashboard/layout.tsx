@@ -21,12 +21,13 @@ import { cn } from '@/lib/utils'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
-  { name: 'Mine gjeld', href: '/debt', icon: FileText },
-  { name: 'GDPR-forespørsler', href: '/gdpr', icon: Shield },
-  { name: 'Oppgjør', href: '/settlements', icon: TrendingUp },
-  { name: 'SWORD Tokens', href: '/tokens', icon: Coins },
-  { name: 'Profil', href: '/profile', icon: User },
-  { name: 'Innstillinger', href: '/settings', icon: Settings },
+  { name: 'Mine gjeld', href: '/dashboard/debts', icon: FileText },
+  { name: 'PDI Health Check', href: '/dashboard/pdi', icon: Shield },
+  { name: 'Recoveries', href: '/dashboard/recoveries', icon: TrendingUp },
+  { name: 'Documents', href: '/dashboard/documents', icon: FileText },
+  { name: 'Subscription', href: '/dashboard/subscription', icon: Coins },
+  { name: 'Profil', href: '/dashboard/profile', icon: User },
+  { name: 'Innstillinger', href: '/dashboard/settings', icon: Settings },
 ]
 
 export default function DashboardLayout({
@@ -43,33 +44,33 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+        <div
+          className="fixed inset-0 z-40 bg-black bg-opacity-30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-slate-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
+        "fixed inset-y-0 left-0 z-50 w-64 bg-white/95 backdrop-blur-md border-r border-slate-200/50 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between p-4 border-b border-slate-700">
+          <div className="flex items-center justify-between p-4 border-b border-slate-200/50">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-orange-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
                 <Shield className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">DAMOCLES</span>
+              <span className="text-xl font-bold text-slate-900">DAMOCLES</span>
             </div>
             <Button
               variant="ghost"
               size="sm"
-              className="lg:hidden text-slate-400"
+              className="lg:hidden text-slate-600 hover:bg-slate-100"
               onClick={() => setSidebarOpen(false)}
             >
               <X className="h-5 w-5" />
@@ -77,16 +78,16 @@ export default function DashboardLayout({
           </div>
 
           {/* User info */}
-          <div className="p-4 border-b border-slate-700">
+          <div className="p-4 border-b border-slate-200/50">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
                 <User className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="text-sm font-medium text-white">
+                <p className="text-sm font-medium text-slate-900">
                   {user?.email?.split('@')[0] || 'Bruker'}
                 </p>
-                <p className="text-xs text-slate-400 capitalize">
+                <p className="text-xs text-slate-600 capitalize">
                   {user?.shieldTier || 'bronze'} shield
                 </p>
               </div>
@@ -102,10 +103,10 @@ export default function DashboardLayout({
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    "flex items-center space-x-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-red-500 text-white"
-                      : "text-slate-300 hover:bg-slate-700 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   )}
                   onClick={() => setSidebarOpen(false)}
                 >
@@ -117,11 +118,11 @@ export default function DashboardLayout({
           </nav>
 
           {/* Logout */}
-          <div className="p-4 border-t border-slate-700">
+          <div className="p-4 border-t border-slate-200/50">
             <Button
               onClick={handleLogout}
               variant="ghost"
-              className="w-full justify-start text-slate-300 hover:bg-slate-700 hover:text-white"
+              className="w-full justify-start text-slate-700 hover:bg-slate-100 hover:text-slate-900"
             >
               <LogOut className="h-5 w-5 mr-3" />
               Logg ut
@@ -133,20 +134,20 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Mobile header */}
-        <div className="lg:hidden flex items-center justify-between p-4 bg-slate-800 border-b border-slate-700">
+        <div className="lg:hidden flex items-center justify-between p-4 bg-white/95 backdrop-blur-md border-b border-slate-200/50 shadow-sm">
           <Button
             variant="ghost"
             size="sm"
-            className="text-slate-400"
+            className="text-slate-600 hover:bg-slate-100"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="h-5 w-5" />
           </Button>
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-orange-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
               <Shield className="h-5 w-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-white">DAMOCLES</span>
+            <span className="text-lg font-bold text-slate-900">DAMOCLES</span>
           </div>
           <div className="w-10" /> {/* Spacer for balance */}
         </div>
