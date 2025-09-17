@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -25,6 +25,9 @@ model User {
   gdprRequests          GdprRequest[]
   settlements           Settlement[]
   tokenTransactions     TokenTransaction[]
+  pdiProfile            PDIProfile?
+  authorizations        UserAuthorization[]
+  platformEmails        PlatformEmail[]
 
   @@map("users")
 }
@@ -45,6 +48,8 @@ model Creditor {
   debts                 Debt[]
   gdprRequests          GdprRequest[]
   violations            Violation[]
+  collectiveIntelligence CollectiveIntelligence?
+  platformEmails        PlatformEmail[]
 
   @@map("creditors")
 }
@@ -146,7 +151,7 @@ model Settlement {
 model TokenTransaction {
   id              String   @id @default(cuid())
   userId          String   @map("user_id")
-  type            String   // 'mining', 'staking', 'reward', 'purchase', 'settlement'
+  type            String   // 'mining', 'staking', 'reward', 'purchase', 'settlement', 'pdi_tracking', 'pdi_improvement'
   amount          Float
   transactionHash String?  @map("transaction_hash")
   status          String   // 'pending', 'confirmed', 'failed'
@@ -156,4 +161,239 @@ model TokenTransaction {
   user            User     @relation(fields: [userId], references: [id])
 
   @@map("token_transactions")
+}
+
+// PDI (Personal Debt Index) Models
+model PDIProfile {
+  id                   String   @id @default(cuid())
+  userId               String   @unique @map("user_id")
+  currentScore         Int      @map("current_score") // 0-100
+  scoreCategory        String   @map("score_category") // 'healthy', 'caution', 'risky', 'critical'
+  lastCalculated       DateTime @map("last_calculated")
+  calculationVersion   String   @map("calculation_version") @default("1.0.0")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  user                 User         @relation(fields: [userId], references: [id])
+  metrics              PDIMetric[]
+  inputs               PDIInput[]
+  history              PDIHistory[]
+  alerts               PDIAlert[]
+
+  @@map("pdi_profiles")
+}
+
+model PDIMetric {
+  id           String   @id @default(cuid())
+  profileId    String   @map("profile_id")
+  metricType   String   @map("metric_type") // 'dti', 'dsr', 'credit_utilization', 'debt_to_assets', 'debt_growth'
+  metricValue  Float    @map("metric_value")
+  metricScore  Int      @map("metric_score") // 0-20
+  calculatedAt DateTime @default(now()) @map("calculated_at")
+
+  profile      PDIProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("pdi_metrics")
+}
+
+model PDIInput {
+  id                    String   @id @default(cuid())
+  profileId             String   @map("profile_id")
+  monthlyIncome         Float    @map("monthly_income")
+  totalDebt             Float    @map("total_debt")
+  monthlyDebtPayments   Float    @map("monthly_debt_payments")
+  availableCredit       Float    @map("available_credit")
+  creditUsed            Float    @map("credit_used")
+  totalAssets           Float    @map("total_assets")
+  previousMonthDebt     Float?   @map("previous_month_debt")
+  inputDate             DateTime @default(now()) @map("input_date")
+
+  profile               PDIProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("pdi_inputs")
+}
+
+model PDIHistory {
+  id            String   @id @default(cuid())
+  profileId     String   @map("profile_id")
+  score         Int
+  scoreCategory String   @map("score_category")
+  metrics       String   // JSON string of metrics
+  recordedAt    DateTime @default(now()) @map("recorded_at")
+
+  profile       PDIProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("pdi_history")
+}
+
+model PDIAlert {
+  id                       String    @id @default(cuid())
+  profileId                String    @map("profile_id")
+  alertType                String    @map("alert_type") // 'score_critical', 'rapid_decline', 'metric_warning', 'improvement'
+  alertMessage             String    @map("alert_message")
+  triggerValue             Float?    @map("trigger_value")
+  damoclesActionTriggered  Boolean   @default(false) @map("damocles_action_triggered")
+  actionId                 String?   @map("action_id") // References GDPR request or other actions
+  createdAt                DateTime  @default(now()) @map("created_at")
+  acknowledgedAt           DateTime? @map("acknowledged_at")
+
+  profile                  PDIProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("pdi_alerts")
+}
+
+model PDIRegionalData {
+  id                  String   @id @default(cuid())
+  regionCode          String   @map("region_code")
+  regionName          String   @map("region_name")
+  countryCode         String   @map("country_code")
+  averagePDI          Float?   @map("average_pdi")
+  totalProfiles       Int      @default(0) @map("total_profiles")
+  criticalPercentage  Float?   @map("critical_percentage")
+  lastUpdated         DateTime @default(now()) @map("last_updated")
+
+  @@unique([regionCode, countryCode])
+  @@map("pdi_regional_data")
+}
+
+// Learning Evolution Models
+model LearningEvent {
+  id                  String    @id @default(cuid())
+  eventType           String    @map("event_type") // 'gdpr_sent', 'response_received', 'admission_found', 'settlement_reached'
+  userId              String    @map("user_id")
+  creditorId          String    @map("creditor_id")
+  strategy            String
+  success             Boolean
+  admissionText       String?   @map("admission_text")
+  pdiImpact           Float?    @map("pdi_impact")
+  recoveryAmount      Decimal?  @map("recovery_amount")
+  responseTimeHours   Float?    @map("response_time_hours")
+  violationType       String?   @map("violation_type")
+  metadata            String?   // JSON
+  timestamp           DateTime  @default(now())
+
+  @@map("learning_events")
+}
+
+model ResponsePattern {
+  id                    String   @id @default(cuid())
+  creditorId            String   @map("creditor_id")
+  triggerPhrase         String   @map("trigger_phrase")
+  successRate           Float    @map("success_rate")
+  admissionType         String   @map("admission_type")
+  sampleCount           Int      @map("sample_count")
+  averageResponseTime   Float    @map("average_response_time")
+  lastUpdated           DateTime @updatedAt @map("last_updated")
+
+  @@unique([creditorId, triggerPhrase])
+  @@map("response_patterns")
+}
+
+model CollectiveIntelligence {
+  id                  String   @id @default(cuid())
+  creditorId          String   @unique @map("creditor_id")
+  violationPattern    String   @map("violation_pattern")
+  affectedUsers       Int      @map("affected_users")
+  totalHarm           Decimal  @map("total_harm")
+  evidenceStrength    String   @map("evidence_strength") // 'weak', 'moderate', 'strong', 'conclusive'
+  classActionEligible Boolean  @map("class_action_eligible")
+  winningStrategies   String   @map("winning_strategies") // JSON array
+  averagePdiImpact    Float    @map("average_pdi_impact")
+  lastUpdated         DateTime @updatedAt @map("last_updated")
+
+  creditor            Creditor @relation(fields: [creditorId], references: [id])
+
+  @@map("collective_intelligence")
+}
+
+model ClassAction {
+  id                String    @id @default(cuid())
+  referenceId       String    @unique @map("reference_id")
+  creditorId        String    @map("creditor_id")
+  title             String
+  description       String
+  affectedUserIds   String    @map("affected_user_ids") // JSON array
+  totalHarm         Decimal   @map("total_harm")
+  evidencePackage   String    @map("evidence_package") // JSON
+  status            String    // 'initiated', 'gathering', 'filed', 'in_progress', 'settled', 'won', 'lost'
+  blockchainHash    String?   @map("blockchain_hash")
+  ipfsHash          String?   @map("ipfs_hash")
+  legalCounsel      String?   @map("legal_counsel")
+  settlementAmount  Decimal?  @map("settlement_amount")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  filedAt           DateTime? @map("filed_at")
+  settledAt         DateTime? @map("settled_at")
+
+  @@map("class_actions")
+}
+
+// Platform Communication Models
+model UserAuthorization {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  creditorId      String?   @map("creditor_id") // If null, applies to all creditors
+  scope           String[]  // ['send_gdpr', 'receive_responses', 'follow_up']
+  platformEmail   String    @map("platform_email") // user-12345@damocles.no
+  replyToEmail    String    @map("reply_to_email") // responses@damocles.no
+  ccUserEmail     Boolean   @map("cc_user_email") @default(true)
+  validUntil      DateTime  @map("valid_until")
+  isActive        Boolean   @map("is_active") @default(true)
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, creditorId])
+  @@map("user_authorizations")
+}
+
+model PlatformEmail {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  creditorId      String    @map("creditor_id")
+  direction       String    // 'outbound' | 'inbound'
+  fromEmail       String    @map("from_email")
+  toEmail         String    @map("to_email")
+  ccEmails        String[]  @map("cc_emails")
+  subject         String
+  bodyHtml        String    @map("body_html")
+  bodyText        String    @map("body_text")
+  templateUsed    String?   @map("template_used")
+  userApproved    Boolean   @map("user_approved") @default(false)
+  status          String    // 'draft', 'pending_approval', 'approved', 'sent', 'delivered', 'responded', 'failed'
+  sentAt          DateTime? @map("sent_at")
+  deliveredAt     DateTime? @map("delivered_at")
+  respondedAt     DateTime? @map("responded_at")
+  trackingId      String    @unique @map("tracking_id")
+  messageId       String?   @unique @map("message_id")
+  inReplyTo       String?   @map("in_reply_to")
+  references      String?   @map("references")
+  metadata        String?   // JSON - parsing results, strategy, etc.
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user            User      @relation(fields: [userId], references: [id])
+  creditor        Creditor  @relation(fields: [creditorId], references: [id])
+  parsing         EmailParsing?
+
+  @@map("platform_emails")
+}
+
+model EmailParsing {
+  id                  String    @id @default(cuid())
+  platformEmailId     String    @unique @map("platform_email_id")
+  admissions          String[]  // Detected admissions
+  violations          String[]  // Detected violations
+  refundOffers        String[]  @map("refund_offers")
+  newDocuments        String[]  @map("new_documents")
+  legalThreats        String[]  @map("legal_threats")
+  escalationTriggers  String[]  @map("escalation_triggers")
+  sentiment           String    // 'positive', 'neutral', 'negative', 'hostile'
+  requiresHumanReview Boolean   @map("requires_human_review") @default(false)
+  confidence          Float     @default(0.0)
+  parsedAt            DateTime  @default(now()) @map("parsed_at")
+
+  platformEmail       PlatformEmail @relation(fields: [platformEmailId], references: [id])
+
+  @@map("email_parsing")
 }

@@ -1,0 +1,46 @@
+{
+  "name": "learning-engine",
+  "version": "1.0.0",
+  "description": "DAMOCLES Learning Evolution Engine - Collective Intelligence System",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx src/server.ts",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "damocles",
+    "learning",
+    "ai",
+    "collective-intelligence",
+    "pattern-recognition",
+    "strategy-optimization"
+  ],
+  "author": "DAMOCLES Platform",
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^5.6.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "prisma": "^5.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "@types/express": "^4.17.17",
+    "@types/cors": "^2.8.13",
+    "typescript": "^5.2.2",
+    "tsx": "^4.1.0",
+    "eslint": "^8.51.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.0",
+    "@typescript-eslint/parser": "^6.7.0",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
