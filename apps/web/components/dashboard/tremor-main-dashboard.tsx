@@ -9,13 +9,11 @@ import {
   Flex,
   ProgressBar,
   BadgeDelta,
-  Grid,
   AreaChart,
   BarChart,
   DonutChart,
   CategoryBar,
   Badge,
-  Button,
   Callout,
   List,
   ListItem,
@@ -31,6 +29,9 @@ import {
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { FeatureLocked } from '@/components/subscription/premium-gate';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import styles from '@/app/dashboard.module.css';
 
 // Mock data for the dashboard
 const mockUserStats = {
@@ -98,68 +99,68 @@ export function TremorMainDashboard() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className={cn(styles.mainContent, "dashboard-content")}>
       {/* Welcome Header */}
-      <div className="space-y-2">
-        <Title>Velkommen til DAMOCLES</Title>
-        <Text>Your comprehensive debt protection and financial health dashboard</Text>
+      <div className="space-y-2 mb-8">
+        <Title className={styles.title}>Velkommen til DAMOCLES</Title>
+        <Text className={styles.subtitle}>Your comprehensive debt protection and financial health dashboard</Text>
       </div>
 
       {/* Quick Stats Grid */}
-      <Grid numItems={1} numItemsSm={2} numItemsLg={4} className="gap-6">
-        <Card>
+      <div className={`${styles.metricGrid} mb-8`}>
+        <Card className={styles.metricCard}>
           <Flex alignItems="start">
-            <div>
-              <Text>PDI Score</Text>
-              <Metric>{mockUserStats.pdiScore}</Metric>
-              <BadgeDelta deltaType="decrease" size="xs">
+            <div className="w-full">
+              <Text className={styles.metricLabel}>PDI Score</Text>
+              <Metric className={styles.metricValue}>{mockUserStats.pdiScore}</Metric>
+              <BadgeDelta deltaType="decrease" size="xs" className={styles.metricChange}>
                 -3 vs last month
               </BadgeDelta>
+              <ProgressBar
+                value={mockUserStats.pdiScore}
+                color={getScoreColor(mockUserStats.pdiScore)}
+                className="mt-3"
+              />
             </div>
           </Flex>
-          <ProgressBar
-            value={mockUserStats.pdiScore}
-            color={getScoreColor(mockUserStats.pdiScore)}
-            className="mt-3"
-          />
         </Card>
 
-        <Card>
+        <Card className={styles.metricCard}>
           <Flex alignItems="start">
-            <div>
-              <Text>SWORD Tokens</Text>
-              <Metric>{mockUserStats.tokenBalance.toLocaleString()}</Metric>
-              <BadgeDelta deltaType="increase" size="xs">
+            <div className="w-full">
+              <Text className={styles.metricLabel}>SWORD Tokens</Text>
+              <Metric className={styles.metricValue}>{mockUserStats.tokenBalance.toLocaleString()}</Metric>
+              <BadgeDelta deltaType="increase" size="xs" className={styles.metricChange}>
                 +25 this month
               </BadgeDelta>
             </div>
           </Flex>
         </Card>
 
-        <Card>
+        <Card className={styles.metricCard}>
           <Flex alignItems="start">
-            <div>
-              <Text>Total Saved</Text>
-              <Metric>{mockUserStats.totalSaved.toLocaleString()} NOK</Metric>
-              <BadgeDelta deltaType="increase" size="xs">
+            <div className="w-full">
+              <Text className={styles.metricLabel}>Total Saved</Text>
+              <Metric className={styles.metricValue}>{mockUserStats.totalSaved.toLocaleString()} NOK</Metric>
+              <BadgeDelta deltaType="increase" size="xs" className={styles.metricChange}>
                 +5,200 this month
               </BadgeDelta>
             </div>
           </Flex>
         </Card>
 
-        <Card>
+        <Card className={styles.metricCard}>
           <Flex alignItems="start">
-            <div>
-              <Text>Active Protections</Text>
-              <Metric>{mockUserStats.activeDebts}</Metric>
-              <Text className="text-xs text-gray-500">
+            <div className="w-full">
+              <Text className={styles.metricLabel}>Active Protections</Text>
+              <Metric className={styles.metricValue}>{mockUserStats.activeDebts}</Metric>
+              <Text className={`${styles.metricLabel} text-xs`}>
                 {mockUserStats.totalViolations} violations detected
               </Text>
             </div>
           </Flex>
         </Card>
-      </Grid>
+      </div>
 
       {/* Protection Status Alert */}
       {mockUserStats.pdiScore < 50 && (
@@ -174,11 +175,11 @@ export function TremorMainDashboard() {
       )}
 
       {/* Charts Section */}
-      <Grid numItems={1} numItemsLg={2} className="gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Debt Reduction Trend */}
-        <Card>
-          <Title>Debt Portfolio Overview</Title>
-          <Text>Monthly debt levels and violation detection</Text>
+        <Card className={styles.chartContainer}>
+          <Title className={styles.title}>Debt Portfolio Overview</Title>
+          <Text className={styles.subtitle}>Monthly debt levels and violation detection</Text>
           <AreaChart
             className="h-72 mt-4"
             data={mockDebtData}
@@ -203,7 +204,7 @@ export function TremorMainDashboard() {
                   <ShieldCheckIcon className="w-12 h-12 mx-auto" />
                   <Text>Premium Feature</Text>
                   <Link href="/dashboard/subscription">
-                    <Button size="sm">Upgrade Now</Button>
+                    <Button className="text-sm">Upgrade Now</Button>
                   </Link>
                 </div>
               </div>
@@ -223,10 +224,10 @@ export function TremorMainDashboard() {
             />
           </Card>
         </FeatureLocked>
-      </Grid>
+      </div>
 
       {/* Recent Activity and Quick Actions */}
-      <Grid numItems={1} numItemsLg={2} className="gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activity */}
         <Card>
           <Title>Recent Activity</Title>
@@ -258,45 +259,41 @@ export function TremorMainDashboard() {
           <div className="space-y-3">
             <Link href="/dashboard/pdi">
               <Button
-                size="lg"
                 variant="secondary"
-                className="w-full justify-start"
-                icon={ChartBarIcon}
+                className="w-full justify-start flex items-center space-x-2 p-4"
               >
-                Update PDI Assessment
+                <ChartBarIcon className="h-5 w-5" />
+                <span>Update PDI Assessment</span>
               </Button>
             </Link>
 
             <Link href="/dashboard/debts/add">
               <Button
-                size="lg"
                 variant="secondary"
-                className="w-full justify-start"
-                icon={PlusIcon}
+                className="w-full justify-start flex items-center space-x-2 p-4"
               >
-                Add New Debt
+                <PlusIcon className="h-5 w-5" />
+                <span>Add New Debt</span>
               </Button>
             </Link>
 
             <Link href="/dashboard/debts">
               <Button
-                size="lg"
                 variant="secondary"
-                className="w-full justify-start"
-                icon={EyeIcon}
+                className="w-full justify-start flex items-center space-x-2 p-4"
               >
-                Review Debt Portfolio
+                <EyeIcon className="h-5 w-5" />
+                <span>Review Debt Portfolio</span>
               </Button>
             </Link>
 
             <Link href="/dashboard/recoveries">
               <Button
-                size="lg"
                 variant="secondary"
-                className="w-full justify-start"
-                icon={CurrencyDollarIcon}
+                className="w-full justify-start flex items-center space-x-2 p-4"
               >
-                Recovery Dashboard
+                <CurrencyDollarIcon className="h-5 w-5" />
+                <span>Recovery Dashboard</span>
               </Button>
             </Link>
           </div>
@@ -318,12 +315,12 @@ export function TremorMainDashboard() {
             </Text>
           </div>
         </Card>
-      </Grid>
+      </div>
 
       {/* Metrics Overview */}
-      <Card>
-        <Title>Financial Health Metrics</Title>
-        <Grid numItems={1} numItemsSm={2} numItemsLg={4} className="gap-6 mt-6">
+      <Card className={styles.chartContainer}>
+        <Title className={styles.title}>Financial Health Metrics</Title>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
           <div>
             <Text>Debt Reduction Progress</Text>
             <Metric>15.2%</Metric>
@@ -367,7 +364,7 @@ export function TremorMainDashboard() {
             />
             <Text className="text-xs text-gray-500 mt-1">of registered debts</Text>
           </div>
-        </Grid>
+        </div>
       </Card>
     </div>
   );
