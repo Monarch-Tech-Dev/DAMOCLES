@@ -198,10 +198,10 @@ export function TremorMainDashboard() {
             <Card>
               <Title>Protection Activity</Title>
               <Text>Upgrade to Premium for advanced monitoring and violation detection</Text>
-              <div className="h-72 mt-6 flex items-center justify-center bg-slate-50 rounded-lg">
-                <div className="text-center space-y-2">
-                  <ShieldCheckIcon className="w-12 h-12 text-slate-400 mx-auto" />
-                  <Text className="text-slate-500">Premium Feature</Text>
+              <div className="h-72 mt-6 flex items-center justify-center">
+                <div className="text-center space-y-4">
+                  <ShieldCheckIcon className="w-12 h-12 mx-auto" />
+                  <Text>Premium Feature</Text>
                   <Link href="/dashboard/subscription">
                     <Button size="sm">Upgrade Now</Button>
                   </Link>
