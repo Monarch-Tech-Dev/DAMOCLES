@@ -74,19 +74,19 @@ body {
 }
 
 .btn-secondary {
-  @apply bg-damocles-gray-200 text-damocles-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-damocles-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-damocles-gray-400 focus:ring-offset-2;
+  @apply bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2;
 }
 
 .btn-danger {
-  @apply bg-damocles-danger text-white px-6 py-3 rounded-lg font-medium hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-damocles-danger focus:ring-offset-2;
+  @apply bg-red-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
 }
 
 .card {
-  @apply bg-white rounded-xl shadow-sm border border-damocles-gray-200 p-6;
+  @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
 }
 
 .input-field {
-  @apply block w-full px-3 py-2 border border-damocles-gray-300 rounded-lg shadow-sm placeholder-damocles-gray-400 focus:outline-none focus:ring-2 focus:ring-damocles-accent focus:border-transparent;
+  @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-damocles-accent focus:border-transparent;
 }
 
 .badge {
@@ -115,20 +115,20 @@ body {
 }
 
 .status-active {
-  @apply status-dot bg-damocles-success;
+  @apply status-dot bg-green-500;
 }
 
 .status-pending {
-  @apply status-dot bg-damocles-warning;
+  @apply status-dot bg-yellow-500;
 }
 
 .status-error {
-  @apply status-dot bg-damocles-danger;
+  @apply status-dot bg-red-500;
 }
 
 /* Progress bars */
 .progress-bar {
-  @apply w-full bg-damocles-gray-200 rounded-full h-2;
+  @apply w-full bg-gray-200 rounded-full h-2;
 }
 
 .progress-fill {
@@ -147,6 +147,66 @@ body {
 
 .sword-active {
   animation: sword-glow 2s ease-in-out infinite;
+}
+
+/* Enhanced Text Contrast and Visibility */
+.tremor-Card-root {
+  @apply bg-white border border-slate-200 shadow-sm;
+}
+
+.tremor-Title-root {
+  @apply text-slate-900 font-semibold;
+}
+
+.tremor-Text-root {
+  @apply text-slate-700;
+}
+
+.tremor-Metric-root {
+  @apply text-slate-900 font-bold;
+}
+
+/* Ensure readable text on light backgrounds */
+.bg-blue-50 .tremor-Text-root {
+  @apply text-slate-800;
+}
+
+.bg-gray-50 .tremor-Text-root {
+  @apply text-slate-800;
+}
+
+.bg-slate-50 .tremor-Text-root {
+  @apply text-slate-800;
+}
+
+/* Override any white text that might be invisible */
+.text-white {
+  color: white !important;
+}
+
+.text-slate-900 {
+  color: #0f172a !important;
+}
+
+.text-slate-800 {
+  color: #1e293b !important;
+}
+
+.text-slate-700 {
+  color: #334155 !important;
+}
+
+.text-slate-600 {
+  color: #475569 !important;
+}
+
+/* Dashboard specific improvements */
+.dashboard-content {
+  @apply text-slate-800;
+}
+
+.dashboard-content .tremor-Text-root {
+  @apply text-slate-700;
 }
 
 /* Dark mode */

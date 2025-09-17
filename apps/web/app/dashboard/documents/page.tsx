@@ -5,7 +5,6 @@ import {
   Card,
   Title,
   Text,
-  Button,
   Badge,
   Flex,
   Grid,
@@ -26,6 +25,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { PremiumGate, FeatureLocked } from '@/components/subscription/premium-gate'
+import { Button } from '@/components/ui/button'
 
 interface DocumentTemplate {
   id: string
