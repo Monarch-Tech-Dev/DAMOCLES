@@ -12,7 +12,6 @@ import {
   BarChart,
   DonutChart,
   Badge,
-  Button,
   ProgressBar,
   Callout,
   Table,
@@ -32,6 +31,7 @@ import {
   Download,
   Eye,
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/auth-context'
 import { PremiumGate, FeatureLocked } from '@/components/subscription/premium-gate'
 

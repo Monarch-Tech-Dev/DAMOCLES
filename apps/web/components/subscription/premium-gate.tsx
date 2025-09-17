@@ -1,7 +1,8 @@
 'use client'
 
 import React from 'react'
-import { Card, Title, Text, Button, Badge } from '@tremor/react'
+import { Card, Title, Text, Badge } from '@tremor/react'
+import { Button } from '@/components/ui/button'
 import { Crown, Lock, ArrowUpCircle } from 'lucide-react'
 import Link from 'next/link'
 import { SubscriptionTier, SubscriptionFeatures, hasFeature, getFeatureDescription } from '@/lib/subscription'
@@ -58,9 +59,9 @@ export function PremiumGate({
         {showUpgrade && (
           <div className="space-y-3">
             <Link href="/dashboard/subscription">
-              <Button>
-                <ArrowUpCircle className="w-4 h-4 mr-2" />
-                Upgrade to {tierNames[requiredTier]}
+              <Button className="flex items-center space-x-2">
+                <ArrowUpCircle className="w-4 h-4" />
+                <span>Upgrade to {tierNames[requiredTier]}</span>
               </Button>
             </Link>
             <Text className="text-xs">

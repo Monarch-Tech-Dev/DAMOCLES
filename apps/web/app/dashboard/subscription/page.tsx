@@ -5,7 +5,6 @@ import {
   Card,
   Title,
   Text,
-  Button,
   Badge,
   Flex,
   Grid,
@@ -19,6 +18,7 @@ import {
   X,
   ArrowUpCircle,
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface SubscriptionTier {
   name: string
