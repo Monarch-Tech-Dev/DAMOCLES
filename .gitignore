@@ -248,17 +248,28 @@ docs/private/
 # Custom application secrets
 config/secrets.yml
 config/credentials.yml
+.local-secrets/
+.private/
 # Cardano wallet files - CRITICAL SECURITY
 *.vkey
-*.skey  
+*.skey
 *.addr
 testnet-wallet/
 mainnet-wallet/
 *wallet*/
+*wallet.json
+testnet-wallet.json
+mainnet-wallet.json
 deployment-results.json
 sword-mint-tx.*
+*-deployment.json
+*-testnet-deployment.json
+*-mainnet-deployment.json
 compiled/
 keys/
 addresses/
 wallets/
+cardano-data/
+policy.*
+payment.*
 
