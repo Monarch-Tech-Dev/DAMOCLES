@@ -37,21 +37,20 @@ export function PremiumGate({
   }
 
   return (
-    <Card className="relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-blue-50/30 backdrop-blur-sm rounded-lg" />
-      <div className="relative p-6 text-center space-y-4">
+    <Card>
+      <div className="p-6 text-center space-y-4">
         <div className="flex justify-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center">
             <Crown className="w-8 h-8 text-white" />
           </div>
         </div>
 
         <div className="space-y-2">
-          <Badge color="blue" className="mx-auto">
+          <Badge color="blue">
             {tierNames[requiredTier]} Feature
           </Badge>
-          <Title className="text-xl">{title || `${tierNames[requiredTier]} Required`}</Title>
-          <Text className="text-slate-600 max-w-md mx-auto">
+          <Title>{title || `${tierNames[requiredTier]} Required`}</Title>
+          <Text>
             {description || getFeatureDescription(feature)}
           </Text>
         </div>
@@ -59,12 +58,12 @@ export function PremiumGate({
         {showUpgrade && (
           <div className="space-y-3">
             <Link href="/dashboard/subscription">
-              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0">
+              <Button>
                 <ArrowUpCircle className="w-4 h-4 mr-2" />
                 Upgrade to {tierNames[requiredTier]}
               </Button>
             </Link>
-            <Text className="text-xs text-slate-500">
+            <Text className="text-xs">
               Unlock advanced features and automated protection
             </Text>
           </div>
@@ -93,22 +92,20 @@ export function FeatureLocked({ userTier, feature, children, fallback }: Feature
   }
 
   return (
-    <div className="relative">
-      <div className="absolute inset-0 bg-slate-100/50 backdrop-blur-sm rounded-lg z-10 flex items-center justify-center">
-        <div className="bg-white rounded-lg p-4 shadow-lg text-center space-y-2">
-          <Lock className="w-6 h-6 text-slate-400 mx-auto" />
-          <Text className="text-sm text-slate-600 font-medium">Premium Feature</Text>
-          <Link href="/dashboard/subscription">
-            <Button size="xs" variant="outline">
-              Upgrade
-            </Button>
-          </Link>
+    <Card>
+      <div className="p-6 text-center space-y-4">
+        <Lock className="w-8 h-8 text-slate-400 mx-auto" />
+        <div className="space-y-2">
+          <Title>Premium Feature</Title>
+          <Text>This feature requires a premium subscription</Text>
         </div>
+        <Link href="/dashboard/subscription">
+          <Button>
+            Upgrade Now
+          </Button>
+        </Link>
       </div>
-      <div className="opacity-30 pointer-events-none">
-        {children}
-      </div>
-    </div>
+    </Card>
   )
 }
 
