@@ -1,134 +1,108 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { ArrowRightIcon, ShieldCheckIcon, SwordIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-damocles-primary via-damocles-secondary to-indigo-900 text-white">
-      {/* Background pattern */}
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
-      
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
-        <div className="text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="mb-8"
-          >
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <ShieldCheckIcon className="h-8 w-8 text-damocles-gold" />
-              <span className="text-sm font-semibold text-damocles-gold uppercase tracking-wide">
-                DAMOCLES Platform
-              </span>
-              <SwordIcon className="h-8 w-8 text-damocles-gold" />
-            </div>
-            
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-              Every User{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-damocles-gold to-yellow-400">
-                Protected
-              </span>
-            </h1>
-            
-            <p className="text-xl sm:text-2xl text-gray-300 mb-2">
-              Every Violation{' '}
-              <span className="text-damocles-gold font-semibold">Recorded</span>
-            </p>
-            
-            <p className="text-xl sm:text-2xl text-gray-300 mb-8">
-              Every Sword{' '}
-              <span className="text-damocles-gold font-semibold">Ready</span>
-            </p>
-          </motion.div>
-          
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="max-w-3xl mx-auto text-lg sm:text-xl text-gray-300 mb-10 leading-relaxed"
-          >
-            DAMOCLES transforms individual vulnerability into collective strength. 
-            Use GDPR rights, smart contracts, and blockchain technology to combat 
-            predatory lending practices in Norway.
-          </motion.p>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-          >
-            <Link
-              href="/auth/register"
-              className="inline-flex items-center px-8 py-4 bg-damocles-gold text-damocles-primary font-semibold rounded-lg hover:bg-yellow-400 transition-colors duration-200 shadow-lg hover:shadow-xl"
-            >
-              Start din beskyttelse
-              <ArrowRightIcon className="ml-2 h-5 w-5" />
-            </Link>
-            
-            <Link
-              href="/how-it-works"
-              className="inline-flex items-center px-8 py-4 border-2 border-white/20 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors duration-200"
-            >
-              Slik fungerer det
-            </Link>
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.6 }}
-            className="mt-16 text-sm text-gray-400"
-          >
-            <p>Bygget på Cardano • GDPR-kompatibel • Open Source</p>
-          </motion.div>
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Subtle geometric background */}
+      <div className="absolute inset-0 opacity-40">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200/30 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200/30 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-96 h-96 bg-slate-200/30 rounded-full blur-3xl"></div>
+      </div>
+
+      {/* Minimal grid pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.03)_1px,transparent_1px)] bg-[size:48px_48px]"></div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+        {/* Modern badge */}
+        <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-white/80 backdrop-blur-sm rounded-full border border-slate-200 shadow-sm">
+          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+          <span className="text-sm font-medium text-slate-700">Active Protection</span>
+          <div className="px-2 py-1 bg-blue-100 rounded-md text-xs font-semibold text-blue-700">GDPR Ready</div>
         </div>
-        
-        {/* Stats preview */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-          className="mt-20 grid grid-cols-1 sm:grid-cols-3 gap-8 text-center"
-        >
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-            <div className="text-3xl sm:text-4xl font-bold text-damocles-gold mb-2">
-              500k+
-            </div>
-            <div className="text-gray-300">
-              Nordmenn i gjeldsituasjon
-            </div>
+
+        {/* Modern heading */}
+        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight tracking-tight">
+          <span className="block text-slate-900 mb-2">DAMOCLES</span>
+          <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-slate-700">
+            Defend Against Illegal Debt Collection
+          </span>
+        </h1>
+
+        {/* Modern subtitle */}
+        <p className="text-xl sm:text-2xl text-slate-600 mb-8 font-medium leading-relaxed">
+          Automated debt defense using{' '}
+          <span className="text-slate-900 font-semibold">GDPR rights</span> and{' '}
+          <span className="text-blue-600 font-semibold">violation detection</span>
+        </p>
+
+        {/* Modern description */}
+        <p className="max-w-2xl mx-auto text-lg text-slate-500 mb-12 leading-relaxed">
+          Take control of your debt with legal automation tools that detect illegal fees,
+          send GDPR requests, and track your debt health through our PDI system.
+        </p>
+
+        {/* Modern CTA buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+          <Link
+            href="/auth/register"
+            className="group relative px-8 py-4 bg-blue-600 rounded-xl font-semibold text-white transition-all duration-200 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/25"
+          >
+            Check My Debt
+          </Link>
+
+          <Link
+            href="/about"
+            className="px-8 py-4 bg-white border border-slate-200 rounded-xl font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 shadow-sm"
+          >
+            Learn More
+          </Link>
+        </div>
+
+        {/* Modern stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 max-w-4xl mx-auto">
+          <div className="text-center">
+            <div className="text-3xl lg:text-4xl font-bold text-slate-900 mb-2">€2.4M</div>
+            <div className="text-sm text-slate-500 uppercase tracking-wide font-medium">Recovered for Users</div>
           </div>
-          
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-            <div className="text-3xl sm:text-4xl font-bold text-damocles-gold mb-2">
-              30-70%
-            </div>
-            <div className="text-gray-300">
-              Ulovlige gebyrer over kostnad
-            </div>
+          <div className="text-center">
+            <div className="text-3xl lg:text-4xl font-bold text-slate-900 mb-2">15,000+</div>
+            <div className="text-sm text-slate-500 uppercase tracking-wide font-medium">Violations Detected</div>
           </div>
-          
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-            <div className="text-3xl sm:text-4xl font-bold text-damocles-gold mb-2">
-              100%
-            </div>
-            <div className="text-gray-300">
-              Transparent og demokratisk
-            </div>
+          <div className="text-center">
+            <div className="text-3xl lg:text-4xl font-bold text-slate-900 mb-2">8,500</div>
+            <div className="text-sm text-slate-500 uppercase tracking-wide font-medium">Protected Users</div>
           </div>
-        </motion.div>
+          <div className="text-center">
+            <div className="text-3xl lg:text-4xl font-bold text-slate-900 mb-2">24/7</div>
+            <div className="text-sm text-slate-500 uppercase tracking-wide font-medium">Automated Protection</div>
+          </div>
+        </div>
+
+        {/* Modern tech badges */}
+        <div className="flex flex-wrap justify-center gap-3 mt-16">
+          <div className="px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-slate-200 text-sm text-slate-600 font-medium shadow-sm">
+            Cardano Blockchain
+          </div>
+          <div className="px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-slate-200 text-sm text-slate-600 font-medium shadow-sm">
+            GDPR Compliant
+          </div>
+          <div className="px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-slate-200 text-sm text-slate-600 font-medium shadow-sm">
+            Automated Protection
+          </div>
+          <div className="px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-slate-200 text-sm text-slate-600 font-medium shadow-sm">
+            Legal Compliance
+          </div>
+        </div>
       </div>
-      
-      {/* Decorative elements */}
-      <div className="absolute top-1/2 left-4 transform -translate-y-1/2">
-        <div className="w-1 h-32 bg-gradient-to-b from-transparent via-damocles-gold to-transparent opacity-50" />
-      </div>
-      <div className="absolute top-1/2 right-4 transform -translate-y-1/2">
-        <div className="w-1 h-32 bg-gradient-to-b from-transparent via-damocles-gold to-transparent opacity-50" />
+
+      {/* Clean scroll indicator */}
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+        <div className="w-6 h-10 border-2 border-slate-300 rounded-full flex justify-center bg-white/50 backdrop-blur-sm">
+          <div className="w-1 h-3 bg-slate-500 rounded-full mt-2 animate-bounce"></div>
+        </div>
       </div>
     </section>
   )
