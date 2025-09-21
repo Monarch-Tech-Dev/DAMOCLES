@@ -273,3 +273,28 @@ cardano-data/
 policy.*
 payment.*
 
+docs/TOKEN_ACTIVATION_STRATEGY.md
+
+# Internal Business Documents (DO NOT COMMIT TO OPEN SOURCE)
+docs/TOKEN_ACTIVATION_STRATEGY.md
+**/INTERNAL_*.md
+**/STRATEGY_*.md
+**/CONFIDENTIAL_*.md
+**/MARKETING_*.md
+**/BUSINESS_*.md
+**/CAMPAIGN_*.md
+**/PLAN_*.md
+**/*_PLAN.md
+**/*_STRATEGY.md
+**/*_MARKETING.md
+**/*_BUSINESS.md
+**/*_CAMPAIGN.md
+**/*_ROADMAP.md
+
+# Deployment keys and sensitive configs
+**/*_DEPLOYMENT.md
+**/*testnet*.md
+**/*mainnet*.md
+create-testnet-wallet.js
+deploy-sword-now.js
+real-testnet-deployment.js
