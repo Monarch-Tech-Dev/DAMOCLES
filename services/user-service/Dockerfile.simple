@@ -1,0 +1,25 @@
+# Simple Dockerfile for User Service Development
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Install Prisma CLI globally
+RUN npm install -g prisma
+
+# Create .env if it doesn't exist
+RUN touch .env
+
+# Expose port
+EXPOSE 3001
+
+# Generate Prisma client and start
+CMD ["sh", "-c", "npx prisma generate && npm run dev"]

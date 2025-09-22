@@ -173,15 +173,41 @@ export const creditorAPI = {
     api.get(`/stats/creditor/${creditorId}`),
 }
 
+export const pdiAPI = {
+  calculate: (data: {
+    income: number
+    expenses: number
+    debts: number
+    assets: number
+    region: string
+  }) => api.post('/pdi/calculate', data),
+
+  getHistory: () => api.get('/pdi/history'),
+
+  getLatest: () => api.get('/pdi/latest'),
+
+  getBreakdown: () => api.get('/pdi/breakdown'),
+}
+
+export const paymentAPI = {
+  createCheckoutSession: () => api.post('/payment/create-checkout-session'),
+
+  getSubscription: () => api.get('/payment/subscription'),
+
+  cancelSubscription: () => api.delete('/payment/subscription'),
+
+  getBillingHistory: () => api.get('/payment/history'),
+}
+
 export const tokenAPI = {
   getBalance: () => api.get('/token/balance'),
-  
+
   stake: (amount: number, lockTime: number) =>
     api.post('/token/stake', { amount, lockTime }),
-  
+
   unstake: (stakeId: string) =>
     api.post('/token/unstake', { stakeId }),
-  
+
   getTransactions: (params?: {
     type?: string
     limit?: number
