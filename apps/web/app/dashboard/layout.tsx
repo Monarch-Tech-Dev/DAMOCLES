@@ -3,7 +3,7 @@
 import { useAuth } from '@/lib/auth-context'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { 
+import {
   Home,
   FileText,
   Shield,
@@ -13,7 +13,9 @@ import {
   LogOut,
   Menu,
   X,
-  User
+  User,
+  UserCog,
+  CreditCard
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -24,6 +26,7 @@ const navigation = [
   { name: 'Mine gjeld', href: '/dashboard/debts', icon: FileText },
   { name: 'PDI Health Check', href: '/dashboard/pdi', icon: Shield },
   { name: 'Recoveries', href: '/dashboard/recoveries', icon: TrendingUp },
+  { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
   { name: 'Documents', href: '/dashboard/documents', icon: FileText },
   { name: 'Subscription', href: '/dashboard/subscription', icon: Coins },
   { name: 'Profil', href: '/dashboard/profile', icon: User },
@@ -39,12 +42,17 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
 
+  // Check if user has admin access
+  const isAdmin = user?.role === 'admin' ||
+                  user?.email?.includes('admin') ||
+                  user?.isAdmin === true
+
   const handleLogout = () => {
     logout()
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -54,8 +62,8 @@ export default function DashboardLayout({
       )}
 
       {/* Sidebar */}
-      <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-white/95 backdrop-blur-md border-r border-slate-200/50 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
+      <aside className={cn(
+        "fixed inset-y-0 left-0 z-50 w-64 bg-white/95 backdrop-blur-md border-r border-slate-200/50 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:relative lg:flex lg:flex-col lg:w-64",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex flex-col h-full">
@@ -95,7 +103,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = pathname === item.href
               return (
@@ -117,6 +125,21 @@ export default function DashboardLayout({
             })}
           </nav>
 
+          {/* Admin Panel Access - Only for Admin Users */}
+          {isAdmin && (
+            <div className="p-4 border-t border-slate-200/50">
+              <Link href="/admin">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-slate-700 hover:bg-red-50 hover:text-red-700"
+                >
+                  <UserCog className="h-5 w-5 mr-3" />
+                  Admin Panel
+                </Button>
+              </Link>
+            </div>
+          )}
+
           {/* Logout */}
           <div className="p-4 border-t border-slate-200/50">
             <Button
@@ -129,12 +152,12 @@ export default function DashboardLayout({
             </Button>
           </div>
         </div>
-      </div>
+      </aside>
 
-      {/* Main content */}
-      <div className="lg:pl-64">
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
-        <div className="lg:hidden flex items-center justify-between p-4 bg-white/95 backdrop-blur-md border-b border-slate-200/50 shadow-sm">
+        <header className="lg:hidden flex items-center justify-between p-4 bg-white/95 backdrop-blur-md border-b border-slate-200/50 shadow-sm sticky top-0 z-30">
           <Button
             variant="ghost"
             size="sm"
@@ -150,11 +173,13 @@ export default function DashboardLayout({
             <span className="text-lg font-bold text-slate-900">DAMOCLES</span>
           </div>
           <div className="w-10" /> {/* Spacer for balance */}
-        </div>
+        </header>
 
         {/* Page content */}
-        <main>
-          {children}
+        <main className="flex-1 overflow-auto">
+          <div className="w-full max-w-none">
+            {children}
+          </div>
         </main>
       </div>
     </div>

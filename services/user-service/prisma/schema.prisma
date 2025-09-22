@@ -28,6 +28,8 @@ model User {
   pdiProfile            PDIProfile?
   authorizations        UserAuthorization[]
   platformEmails        PlatformEmail[]
+  invoices              Invoice[]
+  payments              Payment[]
 
   @@map("users")
 }
@@ -59,15 +61,20 @@ model Debt {
   userId           String   @map("user_id")
   creditorId       String   @map("creditor_id")
   originalAmount   Float    @map("original_amount")
-  currentAmount    Float    @map("current_amount")
-  status           String   // 'active', 'negotiating', 'settled'
-  accountNumber    String?  @map("account_number")
+  currentAmount          Float    @map("current_amount")
+  recoveredAmount        Float?   @map("recovered_amount")
+  status                 String   // 'active', 'negotiating', 'settled', 'recovered'
+  platformFeeStatus      String?  @map("platform_fee_status") // 'pending', 'paid', 'waived'
+  platformFeePaidAt      DateTime? @map("platform_fee_paid_at")
+  accountNumber          String?  @map("account_number")
+  description            String?
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   user             User     @relation(fields: [userId], references: [id])
   creditor         Creditor @relation(fields: [creditorId], references: [id])
   settlements      Settlement[]
+  invoices         Invoice[]
 
   @@map("debts")
 }
@@ -396,4 +403,50 @@ model EmailParsing {
   platformEmail       PlatformEmail @relation(fields: [platformEmailId], references: [id])
 
   @@map("email_parsing")
+}
+
+model Invoice {
+  id                  String    @id @default(cuid())
+  userId              String    @map("user_id")
+  caseId              String    @map("case_id") // Debt ID
+  recoveryAmount      Float     @map("recovery_amount")
+  platformFee         Float     @map("platform_fee") // 25% of recovery
+  vatAmount           Float     @map("vat_amount") // 25% VAT on platform fee
+  processingFee       Float     @map("processing_fee") // Payment processing fee
+  totalDue            Float     @map("total_due") // platformFee + vat + processing
+  status              String    @default("pending") // 'pending', 'paid', 'overdue', 'cancelled'
+  description         String?
+  dueDate             DateTime  @map("due_date")
+  paidAt              DateTime? @map("paid_at")
+  paymentId           String?   @unique @map("payment_id") // Stripe/Vipps payment ID
+  generatedAt         DateTime  @default(now()) @map("generated_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  user                User      @relation(fields: [userId], references: [id])
+  debt                Debt      @relation(fields: [caseId], references: [id])
+  payments            Payment[]
+
+  @@map("invoices")
+}
+
+model Payment {
+  id                  String    @id @default(cuid())
+  invoiceId           String    @map("invoice_id")
+  userId              String    @map("user_id")
+  amount              Float
+  method              String    // 'stripe', 'vipps', 'bank_transfer'
+  status              String    @default("processing") // 'processing', 'completed', 'failed', 'refunded'
+  externalId          String?   @unique @map("external_id") // Stripe/Vipps payment ID
+  phoneNumber         String?   @map("phone_number") // For Vipps payments
+  description         String?
+  metadata            String?   // JSON metadata
+  processedAt         DateTime? @map("processed_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  invoice             Invoice   @relation(fields: [invoiceId], references: [id])
+  user                User      @relation(fields: [userId], references: [id])
+
+  @@map("payments")
 }

@@ -7,13 +7,13 @@ import { motion } from 'framer-motion'
 import {
   ArrowLeftIcon,
   MagnifyingGlassIcon,
-  ExclamationTriangleIcon,
   PlusIcon
 } from '@heroicons/react/24/outline'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Label } from '@/components/ui/Label'
-import { Card } from '@/components/ui/Card'
+import { ExclamationTriangleIcon } from '@heroicons/react/24/solid'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card } from '@/components/ui/card'
 import toast from 'react-hot-toast'
 
 interface Creditor {
@@ -61,15 +61,58 @@ export default function AddDebtPage() {
   const searchCreditors = async (searchTerm: string = '') => {
     setSearchingCreditors(true)
     try {
-      const params = new URLSearchParams()
-      if (searchTerm) params.append('search', searchTerm)
-      params.append('limit', '20')
-      
-      const response = await fetch(`http://localhost:3000/api/creditors?${params}`)
-      if (response.ok) {
-        const data = await response.json()
-        setCreditors(data.creditors)
+      // Mock creditor data for demonstration
+      const mockCreditors: Creditor[] = [
+        {
+          id: '1',
+          name: 'DNB Bank',
+          organizationNumber: '984851006',
+          type: 'bank',
+          violationScore: 15,
+          averageSettlementRate: 0.85,
+          _count: { debts: 234 }
+        },
+        {
+          id: '2',
+          name: 'Nordea',
+          organizationNumber: '920058817',
+          type: 'bank',
+          violationScore: 22,
+          averageSettlementRate: 0.78,
+          _count: { debts: 189 }
+        },
+        {
+          id: '3',
+          name: 'Inkasso AS',
+          organizationNumber: '912345678',
+          type: 'debt_collector',
+          violationScore: 45,
+          averageSettlementRate: 0.62,
+          _count: { debts: 456 }
+        },
+        {
+          id: '4',
+          name: 'Credit Corp Norge',
+          organizationNumber: '987654321',
+          type: 'credit_company',
+          violationScore: 38,
+          averageSettlementRate: 0.71,
+          _count: { debts: 123 }
+        }
+      ]
+
+      // Filter based on search term
+      let filteredCreditors = mockCreditors
+      if (searchTerm) {
+        filteredCreditors = mockCreditors.filter(creditor =>
+          creditor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          creditor.organizationNumber?.includes(searchTerm)
+        )
       }
+
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300))
+      setCreditors(filteredCreditors)
     } catch (error) {
       console.error('Error searching creditors:', error)
     } finally {
@@ -79,11 +122,46 @@ export default function AddDebtPage() {
 
   const fetchCreditorTypes = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/creditors/types')
-      if (response.ok) {
-        const data = await response.json()
-        setCreditorTypes(data.types)
-      }
+      // Mock creditor types for demonstration
+      const mockTypes: CreditorType[] = [
+        {
+          value: 'bank',
+          label: 'Bank',
+          description: 'Traditional banking institution'
+        },
+        {
+          value: 'credit_company',
+          label: 'Kredittselskap',
+          description: 'Credit and financing company'
+        },
+        {
+          value: 'debt_collector',
+          label: 'Inkassoselskap',
+          description: 'Debt collection agency'
+        },
+        {
+          value: 'insurance',
+          label: 'Forsikring',
+          description: 'Insurance company'
+        },
+        {
+          value: 'telecom',
+          label: 'Telekom',
+          description: 'Telecommunications provider'
+        },
+        {
+          value: 'utility',
+          label: 'Forsyning',
+          description: 'Utility company (power, water, etc.)'
+        },
+        {
+          value: 'other',
+          label: 'Annet',
+          description: 'Other type of creditor'
+        }
+      ]
+
+      setCreditorTypes(mockTypes)
     } catch (error) {
       console.error('Error fetching creditor types:', error)
     }
@@ -113,35 +191,23 @@ export default function AddDebtPage() {
 
     setLoading(true)
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('http://localhost:3000/api/creditors', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: newCreditorName,
-          organizationNumber: newCreditorOrgNumber || undefined,
-          type: newCreditorType,
-          privacyEmail: newCreditorEmail || undefined
-        })
-      })
+      // Mock creditor creation - simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
 
-      if (response.ok) {
-        const data = await response.json()
-        setSelectedCreditor(data.creditor)
-        setShowNewCreditorForm(false)
-        setStep(2)
-        toast.success('Ny kreditor opprettet')
-      } else {
-        const error = await response.json()
-        if (response.status === 409) {
-          toast.error('Kreditor eksisterer allerede')
-        } else {
-          toast.error(error.error || 'Feil ved opprettelse av kreditor')
-        }
+      const newCreditor: Creditor = {
+        id: Date.now().toString(),
+        name: newCreditorName,
+        organizationNumber: newCreditorOrgNumber || undefined,
+        type: newCreditorType,
+        violationScore: 0,
+        averageSettlementRate: 0,
+        _count: { debts: 0 }
       }
+
+      setSelectedCreditor(newCreditor)
+      setShowNewCreditorForm(false)
+      setStep(2)
+      toast.success('Ny kreditor opprettet')
     } catch (error) {
       toast.error('Feil ved opprettelse av kreditor')
     } finally {
@@ -157,28 +223,11 @@ export default function AddDebtPage() {
 
     setLoading(true)
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('http://localhost:3000/api/debts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          creditorId: selectedCreditor.id,
-          originalAmount: parseFloat(originalAmount),
-          currentAmount: parseFloat(currentAmount),
-          accountNumber: accountNumber || undefined
-        })
-      })
+      // Mock debt submission - simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
 
-      if (response.ok) {
-        toast.success('Gjeld lagt til')
-        router.push('/dashboard/debts')
-      } else {
-        const error = await response.json()
-        toast.error(error.error || 'Feil ved opprettelse av gjeld')
-      }
+      toast.success('Gjeld lagt til')
+      router.push('/dashboard/debts')
     } catch (error) {
       toast.error('Feil ved opprettelse av gjeld')
     } finally {
