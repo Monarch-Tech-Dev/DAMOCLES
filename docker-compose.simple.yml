@@ -1,0 +1,91 @@
+# Simple Docker Compose for DAMOCLES Development
+# This is a minimal setup for quick deployment
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: damocles-db
+    environment:
+      POSTGRES_DB: damocles
+      POSTGRES_USER: damocles_user
+      POSTGRES_PASSWORD: damocles_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U damocles_user -d damocles"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: damocles-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Frontend (Next.js)
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile.simple
+    container_name: damocles-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://damocles_user:damocles_password@postgres:5432/damocles
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
+
+  # User Service API
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile.simple
+    container_name: damocles-user-service
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=postgresql://damocles_user:damocles_password@postgres:5432/damocles
+      - JWT_SECRET=development-jwt-secret-change-in-production
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/user-service:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: damocles-network
