@@ -2,131 +2,59 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { 
-  PlusIcon, 
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  ClockIcon
-} from '@heroicons/react/24/outline'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
-import { Card } from '@/components/ui/Card'
+import {
+  Plus,
+  Search,
+  Filter,
+  AlertTriangle,
+  CheckCircle,
+  Clock
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 
-interface Creditor {
-  id: string
-  name: string
-  type: string
-  violationScore: number
-  averageSettlementRate: number
-}
-
-interface Debt {
-  id: string
-  originalAmount: number
-  currentAmount: number
-  status: string
-  accountNumber?: string
-  createdAt: string
-  creditor: Creditor
-  settlements?: Array<{
-    id: string
-    status: string
-    settledAmount?: number
-    savedAmount?: number
-  }>
-  _count: {
-    settlements: number
+// Mock debt data for demonstration
+const mockDebts = [
+  {
+    id: 1,
+    creditor: 'Bank ABC',
+    amount: 250000,
+    status: 'active',
+    type: 'Boliglån',
+    lastPayment: '2024-01-15'
+  },
+  {
+    id: 2,
+    creditor: 'Credit Company XYZ',
+    amount: 45000,
+    status: 'negotiating',
+    type: 'Kredittkort',
+    lastPayment: '2024-01-10'
   }
-}
+]
 
 export default function DebtsPage() {
-  const [debts, setDebts] = useState<Debt[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('')
+  const [debts, setDebts] = useState(mockDebts)
 
-  const fetchDebts = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      const params = new URLSearchParams()
-      if (statusFilter) params.append('status', statusFilter)
-      
-      const response = await fetch(`http://localhost:3000/api/debts?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        setDebts(data.debts)
-      }
-    } catch (error) {
-      console.error('Error fetching debts:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchDebts()
-  }, [statusFilter])
-
+  // Filter debts based on search term
   const filteredDebts = debts.filter(debt =>
-    debt.creditor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    debt.accountNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+    debt.creditor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    debt.type.toLowerCase().includes(searchTerm.toLowerCase())
   )
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-red-100 text-red-800'
-      case 'negotiating': return 'bg-yellow-100 text-yellow-800'
-      case 'settled': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active': return <ExclamationTriangleIcon className="w-4 h-4" />
-      case 'negotiating': return <ClockIcon className="w-4 h-4" />
-      case 'settled': return <CheckCircleIcon className="w-4 h-4" />
-      default: return null
-    }
-  }
-
-  const getTotalAmount = () => {
-    return filteredDebts.reduce((sum, debt) => sum + debt.currentAmount, 0)
-  }
-
-  const getStatusCounts = () => {
-    return {
-      active: debts.filter(d => d.status === 'active').length,
-      negotiating: debts.filter(d => d.status === 'negotiating').length,
-      settled: debts.filter(d => d.status === 'settled').length
-    }
-  }
-
-  const statusCounts = getStatusCounts()
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-damocles-gray-50 p-4">
-        <div className="max-w-7xl mx-auto">
+      <div className="p-6">
+        <div className="max-w-6xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="h-8 bg-white/60 rounded-xl w-1/4 mb-6"></div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-24 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-32 bg-gray-200 rounded"></div>
+                <div key={i} className="h-24 bg-white/60 rounded-2xl"></div>
               ))}
             </div>
           </div>
@@ -136,224 +64,164 @@ export default function DebtsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-damocles-gray-50 p-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="p-6">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 space-y-4 sm:space-y-0">
           <div>
-            <h1 className="text-3xl font-bold text-damocles-primary">Mine Gjeld</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Mine Gjeld</h1>
+            <p className="text-slate-600 mt-2">
               Administrer og spor dine gjeldsposter
             </p>
           </div>
           <Link href="/dashboard/debts/add">
-            <Button className="bg-damocles-accent hover:bg-indigo-700">
-              <PlusIcon className="w-4 h-4 mr-2" />
+            <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm">
+              <Plus className="w-4 h-4 mr-2" />
               Legg til gjeld
             </Button>
           </Link>
         </div>
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Totalt Gjeld</p>
-                <p className="text-2xl font-bold text-damocles-primary">
-                  {getTotalAmount().toLocaleString('no-NO', { 
-                    style: 'currency', 
-                    currency: 'NOK' 
-                  })}
-                </p>
-              </div>
-              <ExclamationTriangleIcon className="w-8 h-8 text-red-500" />
-            </div>
-          </Card>
-          
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Aktive</p>
-                <p className="text-2xl font-bold text-red-600">{statusCounts.active}</p>
-              </div>
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-            </div>
-          </Card>
-          
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Under forhandling</p>
-                <p className="text-2xl font-bold text-yellow-600">{statusCounts.negotiating}</p>
-              </div>
-              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-            </div>
-          </Card>
-          
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Løst</p>
-                <p className="text-2xl font-bold text-green-600">{statusCounts.settled}</p>
-              </div>
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+        {/* Search and Filter */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
             <Input
-              placeholder="Søk etter kreditor eller kontonummer..."
+              placeholder="Søk etter gjeld..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 bg-white/80 backdrop-blur-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
-          
-          <div className="flex gap-2">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-damocles-accent focus:border-transparent"
-            >
-              <option value="">Alle statuser</option>
-              <option value="active">Aktive</option>
-              <option value="negotiating">Under forhandling</option>
-              <option value="settled">Løst</option>
-            </select>
-          </div>
+          <Button variant="outline" className="bg-white/80 backdrop-blur-sm border-slate-200 hover:bg-slate-50">
+            <Filter className="w-4 h-4 mr-2" />
+            Filter
+          </Button>
         </div>
 
-        {/* Debts List */}
-        {filteredDebts.length === 0 ? (
-          <Card className="p-8 text-center">
-            <div className="mb-4">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Ingen gjeld funnet</h3>
-            <p className="text-gray-500 mb-6">
-              {searchTerm || statusFilter 
-                ? "Ingen gjeld matcher dine søkekriterier." 
-                : "Du har ikke lagt til noen gjeld ennå."
-              }
-            </p>
-            <Link href="/dashboard/debts/add">
-              <Button>Legg til din første gjeld</Button>
-            </Link>
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+          <Card className="bg-white/80 backdrop-blur-sm border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Totalt Gjeld</p>
+                  <p className="text-2xl font-bold text-slate-900">
+                    {debts.reduce((sum, debt) => sum + debt.amount, 0).toLocaleString()} NOK
+                  </p>
+                </div>
+                <AlertTriangle className="w-8 h-8 text-red-500" />
+              </div>
+            </CardContent>
           </Card>
-        ) : (
+
+          <Card className="bg-white/80 backdrop-blur-sm border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Aktive</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {debts.filter(debt => debt.status === 'active').length}
+                  </p>
+                </div>
+                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Under forhandling</p>
+                  <p className="text-2xl font-bold text-yellow-600">
+                    {debts.filter(debt => debt.status === 'negotiating').length}
+                  </p>
+                </div>
+                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">Løst</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {debts.filter(debt => debt.status === 'resolved').length}
+                  </p>
+                </div>
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Debt List */}
+        {filteredDebts.length > 0 ? (
           <div className="space-y-4">
-            {filteredDebts.map((debt, index) => (
-              <motion.div
-                key={debt.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Card className="p-6 hover:shadow-lg transition-shadow">
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            {filteredDebts.map((debt) => (
+              <Card key={debt.id} className="bg-white/80 backdrop-blur-sm border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <CardContent className="p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
                     <div className="flex-1">
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
-                          <h3 className="text-lg font-semibold text-damocles-primary">
-                            {debt.creditor.name}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge className={`text-xs ${getStatusColor(debt.status)}`}>
-                              <span className="flex items-center gap-1">
-                                {getStatusIcon(debt.status)}
-                                {debt.status === 'active' && 'Aktiv'}
-                                {debt.status === 'negotiating' && 'Forhandler'}
-                                {debt.status === 'settled' && 'Løst'}
-                              </span>
-                            </Badge>
-                            <Badge className="bg-gray-100 text-gray-800 text-xs">
-                              {debt.creditor.type}
-                            </Badge>
-                          </div>
-                        </div>
-                        
-                        <div className="text-right">
-                          <p className="text-sm text-gray-500">Gjeldende beløp</p>
-                          <p className="text-xl font-bold text-damocles-primary">
-                            {debt.currentAmount.toLocaleString('no-NO', {
-                              style: 'currency',
-                              currency: 'NOK'
-                            })}
-                          </p>
-                        </div>
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-lg font-semibold text-slate-900">{debt.creditor}</h3>
+                        <Badge variant={debt.status === 'active' ? 'destructive' : debt.status === 'negotiating' ? 'default' : 'secondary'}>
+                          {debt.status === 'active' ? 'Aktiv' : debt.status === 'negotiating' ? 'Forhandling' : 'Løst'}
+                        </Badge>
                       </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <p className="text-gray-500">Opprinnelig beløp</p>
-                          <p className="font-semibold">
-                            {debt.originalAmount.toLocaleString('no-NO', {
-                              style: 'currency',
-                              currency: 'NOK'
-                            })}
-                          </p>
-                        </div>
-                        
-                        <div>
-                          <p className="text-gray-500">Kontonummer</p>
-                          <p className="font-semibold">{debt.accountNumber || 'N/A'}</p>
-                        </div>
-                        
-                        <div>
-                          <p className="text-gray-500">Opprettet</p>
-                          <p className="font-semibold">
-                            {new Date(debt.createdAt).toLocaleDateString('no-NO')}
-                          </p>
-                        </div>
-                        
-                        <div>
-                          <p className="text-gray-500">Forhandlinger</p>
-                          <p className="font-semibold">{debt._count.settlements}</p>
-                        </div>
-                      </div>
-
-                      {/* Creditor Risk Info */}
-                      <div className="mt-4 pt-4 border-t border-gray-200">
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-4">
-                            <div>
-                              <span className="text-gray-500">Overtredelsescore:</span>
-                              <span className={`ml-2 font-semibold ${
-                                debt.creditor.violationScore > 40 ? 'text-red-600' :
-                                debt.creditor.violationScore > 20 ? 'text-yellow-600' :
-                                'text-green-600'
-                              }`}>
-                                {debt.creditor.violationScore}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500">Gjennomsnittlig oppgjør:</span>
-                              <span className="ml-2 font-semibold text-green-600">
-                                {(debt.creditor.averageSettlementRate * 100).toFixed(0)}%
-                              </span>
-                            </div>
-                          </div>
-                          
-                          <Link href={`/dashboard/debts/${debt.id}`}>
-                            <Button variant="outline" size="sm">
-                              Vis detaljer
-                            </Button>
-                          </Link>
-                        </div>
+                      <p className="text-slate-600 text-sm">{debt.type}</p>
+                      <p className="text-xs text-slate-500 mt-1">Siste betaling: {debt.lastPayment}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-slate-900">
+                        {debt.amount.toLocaleString()} NOK
+                      </p>
+                      <div className="flex space-x-2 mt-2">
+                        <Link href={`/dashboard/debts/${debt.id}`}>
+                          <Button size="sm" variant="outline">Se detaljer</Button>
+                        </Link>
                       </div>
                     </div>
                   </div>
-                </Card>
-              </motion.div>
+                </CardContent>
+              </Card>
             ))}
           </div>
+        ) : searchTerm ? (
+          <Card className="bg-white/80 backdrop-blur-sm border-slate-200 shadow-sm">
+            <CardContent className="p-8 text-center">
+              <div className="mb-4">
+                <Search className="mx-auto h-12 w-12 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-medium text-slate-900 mb-2">Ingen resultater funnet</h3>
+              <p className="text-slate-600 mb-6">
+                Prøv et annet søkebegrep eller fjern filtrene.
+              </p>
+              <Button variant="outline" onClick={() => setSearchTerm('')}>
+                Fjern søk
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="bg-white/80 backdrop-blur-sm border-slate-200 shadow-sm">
+            <CardContent className="p-8 text-center">
+              <div className="mb-4">
+                <svg className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-slate-900 mb-2">Ingen gjeld funnet</h3>
+              <p className="text-slate-600 mb-6">
+                Du har ikke lagt til noen gjeld ennå.
+              </p>
+              <Link href="/dashboard/debts/add">
+                <Button className="bg-blue-600 hover:bg-blue-700">Legg til din første gjeld</Button>
+              </Link>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>
