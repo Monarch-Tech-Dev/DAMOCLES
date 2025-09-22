@@ -5,13 +5,13 @@ const nextConfig = {
   output: 'standalone',
   
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
     NEXT_PUBLIC_CARDANO_NETWORK: process.env.NEXT_PUBLIC_CARDANO_NETWORK || 'testnet',
     NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version || '1.0.0',
   },
-  
+
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
     return [
       {
         source: '/api/:path*',

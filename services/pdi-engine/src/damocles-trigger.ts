@@ -1,0 +1,264 @@
+import { PrismaClient } from '@prisma/client';
+import { PDIScore, PDIMetrics } from './types';
+
+export interface DamoclesAction {
+  id: string;
+  userId: string;
+  trigger: 'pdi_critical' | 'pdi_decline' | 'metric_critical';
+  pdiScore: number;
+  templateIds: string[];
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  metadata: any;
+  status: 'queued' | 'processing' | 'completed' | 'failed';
+  createdAt: Date;
+}
+
+export class DamoclesTriggerService {
+  private prisma: PrismaClient;
+
+  constructor(prismaClient?: PrismaClient) {
+    this.prisma = prismaClient || new PrismaClient();
+  }
+
+  /**
+   * Trigger DAMOCLES protection based on PDI score
+   */
+  async triggerProtection(userId: string, pdiScore: PDIScore): Promise<DamoclesAction | null> {
+    if (!pdiScore.damoclesActionRequired) {
+      return null;
+    }
+
+    // Determine trigger priority and templates based on metrics
+    const { priority, templateIds, triggerType } = this.analyzeTriggerRequirements(pdiScore);
+
+    // Create GDPR request
+    const gdprRequest = await this.createGdprRequest(userId, {
+      trigger: triggerType,
+      pdiScore: pdiScore.score,
+      metrics: pdiScore.metrics,
+      priority,
+      templates: templateIds
+    });
+
+    // Create alert in PDI system
+    const profile = await this.prisma.pDIProfile.findUnique({
+      where: { userId }
+    });
+
+    if (profile) {
+      await this.prisma.pDIAlert.create({
+        data: {
+          profileId: profile.id,
+          alertType: 'score_critical',
+          alertMessage: `PDI Score ${pdiScore.score} triggered automatic DAMOCLES protection`,
+          triggerValue: pdiScore.score,
+          damoclesActionTriggered: true,
+          actionId: gdprRequest.id
+        }
+      });
+    }
+
+    // Award bonus SWORD tokens
+    await this.awardTokens(userId, 500, 'pdi_damocles_trigger');
+
+    // Create action record
+    const action: DamoclesAction = {
+      id: gdprRequest.id,
+      userId,
+      trigger: triggerType,
+      pdiScore: pdiScore.score,
+      templateIds,
+      priority,
+      metadata: {
+        metrics: pdiScore.metrics,
+        recommendations: pdiScore.recommendations,
+        calculatedAt: pdiScore.calculatedAt
+      },
+      status: 'queued',
+      createdAt: new Date()
+    };
+
+    return action;
+  }
+
+  private analyzeTriggerRequirements(pdiScore: PDIScore): {
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    templateIds: string[];
+    triggerType: 'pdi_critical' | 'pdi_decline' | 'metric_critical';
+  } {
+    const { score, metrics } = pdiScore;
+    let priority: 'low' | 'medium' | 'high' | 'critical' = 'medium';
+    const templateIds: string[] = [];
+    let triggerType: 'pdi_critical' | 'pdi_decline' | 'metric_critical' = 'pdi_critical';
+
+    // Determine priority based on score
+    if (score < 20) {
+      priority = 'critical';
+    } else if (score < 30) {
+      priority = 'high';
+    } else if (score < 40) {
+      priority = 'medium';
+    }
+
+    // Select templates based on critical metrics
+    if (metrics.dsr.category === 'critical') {
+      templateIds.push('excessive_fees_challenge');
+      templateIds.push('payment_plan_request');
+      templateIds.push('financial_hardship_notice');
+      triggerType = 'metric_critical';
+    }
+
+    if (metrics.creditUtilization.category === 'critical') {
+      templateIds.push('credit_limit_review');
+      templateIds.push('interest_rate_challenge');
+      templateIds.push('credit_report_dispute');
+    }
+
+    if (metrics.debtGrowth.value > 10) {
+      templateIds.push('fee_waiver_request');
+      templateIds.push('account_audit_demand');
+      templateIds.push('debt_validation_request');
+    }
+
+    if (metrics.debtToAssets.category === 'critical') {
+      templateIds.push('asset_protection_notice');
+      templateIds.push('insolvency_warning');
+      templateIds.push('creditor_negotiation_request');
+    }
+
+    if (metrics.dti.category === 'critical') {
+      templateIds.push('income_verification_challenge');
+      templateIds.push('debt_consolidation_request');
+    }
+
+    // Default templates if none selected
+    if (templateIds.length === 0) {
+      templateIds.push('general_gdpr_request');
+      templateIds.push('account_information_request');
+    }
+
+    return { priority, templateIds, triggerType };
+  }
+
+  private async createGdprRequest(userId: string, context: any): Promise<any> {
+    // This would integrate with the existing GDPR service
+    // For now, we'll create a mock request structure
+
+    const referenceId = `PDI-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // In a real implementation, this would call the GDPR service
+    const gdprRequest = {
+      id: referenceId,
+      userId,
+      referenceId,
+      trigger: context.trigger,
+      pdiScore: context.pdiScore,
+      metrics: context.metrics,
+      templates: context.templates,
+      priority: context.priority,
+      status: 'queued',
+      createdAt: new Date(),
+      autoGenerated: true,
+      source: 'pdi_trigger'
+    };
+
+    // Here you would actually create the GDPR request in the database
+    // and queue it for processing
+    console.log('PDI Triggered GDPR Request:', gdprRequest);
+
+    return gdprRequest;
+  }
+
+  private async awardTokens(userId: string, amount: number, type: string): Promise<void> {
+    // This would integrate with the token transaction system
+    console.log(`Awarding ${amount} SWORD tokens to user ${userId} for ${type}`);
+
+    // In a real implementation, this would create a token transaction
+    // await this.prisma.tokenTransaction.create({
+    //   data: {
+    //     userId,
+    //     type,
+    //     amount,
+    //     status: 'confirmed',
+    //     metadata: JSON.stringify({ source: 'pdi_trigger' })
+    //   }
+    // });
+  }
+
+  /**
+   * Get trigger history for a user
+   */
+  async getTriggerHistory(userId: string): Promise<any[]> {
+    // This would query the actual GDPR requests triggered by PDI
+    const profile = await this.prisma.pDIProfile.findUnique({
+      where: { userId },
+      include: {
+        alerts: {
+          where: { damoclesActionTriggered: true },
+          orderBy: { createdAt: 'desc' },
+          take: 10
+        }
+      }
+    });
+
+    return profile?.alerts || [];
+  }
+
+  /**
+   * Check if user has recent triggers (prevent spam)
+   */
+  async hasRecentTrigger(userId: string, hours: number = 24): Promise<boolean> {
+    const cutoffTime = new Date(Date.now() - hours * 60 * 60 * 1000);
+
+    const profile = await this.prisma.pDIProfile.findUnique({
+      where: { userId },
+      include: {
+        alerts: {
+          where: {
+            damoclesActionTriggered: true,
+            createdAt: { gte: cutoffTime }
+          },
+          take: 1
+        }
+      }
+    });
+
+    return (profile?.alerts.length || 0) > 0;
+  }
+
+  /**
+   * Get trigger analytics
+   */
+  async getTriggerAnalytics(): Promise<any> {
+    const totalTriggers = await this.prisma.pDIAlert.count({
+      where: { damoclesActionTriggered: true }
+    });
+
+    const recentTriggers = await this.prisma.pDIAlert.count({
+      where: {
+        damoclesActionTriggered: true,
+        createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } // Last 7 days
+      }
+    });
+
+    const triggersByType = await this.prisma.pDIAlert.groupBy({
+      by: ['alertType'],
+      where: { damoclesActionTriggered: true },
+      _count: { alertType: true }
+    });
+
+    const criticalUsers = await this.prisma.pDIProfile.count({
+      where: { currentScore: { lt: 40 } }
+    });
+
+    return {
+      totalTriggers,
+      recentTriggers,
+      triggersByType,
+      criticalUsers,
+      triggerRate: criticalUsers > 0 ? (totalTriggers / criticalUsers * 100) : 0
+    };
+  }
+}
+
+export default DamoclesTriggerService;
