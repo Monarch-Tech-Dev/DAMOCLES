@@ -18,7 +18,7 @@
 }
 
 .mainContent {
-  margin-left: 256px;
+  margin: auto;
   flex: 1;
   padding: 2rem;
   max-width: 1400px;
