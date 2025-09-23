@@ -18,8 +18,10 @@ import {
   CreditCard
 } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useLoading } from '@/lib/use-loading'
+import { SimpleLoader } from '@/components/ui/simple-loader'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -41,6 +43,8 @@ export default function DashboardLayout({
   const { user, logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
+  const { isLoading, startLoading } = useLoading()
 
   // Check if user has admin access
   const isAdmin = user?.role === 'admin' ||
@@ -51,8 +55,17 @@ export default function DashboardLayout({
     logout()
   }
 
+  const handleNavClick = (href: string) => {
+    if (pathname === href) return
+    startLoading()
+    setSidebarOpen(false)
+    router.push(href)
+  }
+
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <SimpleLoader isVisible={isLoading} />
+      
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -107,20 +120,19 @@ export default function DashboardLayout({
             {navigation.map((item) => {
               const isActive = pathname === item.href
               return (
-                <Link
+                <button
                   key={item.name}
-                  href={item.href}
+                  onClick={() => handleNavClick(item.href)}
                   className={cn(
-                    "flex items-center space-x-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                    "w-full flex items-center space-x-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive
                       ? "bg-blue-600 text-white shadow-sm"
                       : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   )}
-                  onClick={() => setSidebarOpen(false)}
                 >
                   <item.icon className="h-5 w-5" />
                   <span>{item.name}</span>
-                </Link>
+                </button>
               )
             })}
           </nav>
@@ -128,15 +140,14 @@ export default function DashboardLayout({
           {/* Admin Panel Access - Only for Admin Users */}
           {isAdmin && (
             <div className="p-4 border-t border-slate-200/50">
-              <Link href="/admin">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-slate-700 hover:bg-red-50 hover:text-red-700"
-                >
-                  <UserCog className="h-5 w-5 mr-3" />
-                  Admin Panel
-                </Button>
-              </Link>
+              <Button
+                onClick={() => handleNavClick('/admin')}
+                variant="ghost"
+                className="w-full justify-start text-slate-700 hover:bg-red-50 hover:text-red-700"
+              >
+                <UserCog className="h-5 w-5 mr-3" />
+                Admin Panel
+              </Button>
             </div>
           )}
 
@@ -177,7 +188,7 @@ export default function DashboardLayout({
 
         {/* Page content */}
         <main className="flex-1 overflow-auto">
-          <div className="w-full max-w-none">
+          <div className="w-full max-w-none transition-opacity duration-300">
             {children}
           </div>
         </main>
