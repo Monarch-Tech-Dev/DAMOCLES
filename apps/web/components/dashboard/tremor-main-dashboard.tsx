@@ -71,6 +71,24 @@ const mockProtectionStats = [
 export function TremorMainDashboard() {
   const { user } = useAuth()
   const userTier = user?.subscriptionTier || 'free'
+
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'God morgen'
+    if (hour < 18) return 'God ettermiddag'
+    return 'God kveld'
+  }
+
+  const getWelcomeMessage = () => {
+    if (!user?.name) return 'Velkommen til DAMOCLES'
+    
+    // Extract first name (everything before first space)
+    const firstName = user.name.split(' ')[0]
+    const greeting = getTimeBasedGreeting()
+    
+    return `${greeting}, ${firstName}!`
+  }
+
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'emerald';
     if (score >= 65) return 'green';
@@ -102,8 +120,15 @@ export function TremorMainDashboard() {
     <div className={cn(styles.mainContent, "dashboard-content")}>
       {/* Welcome Header */}
       <div className="space-y-2 mb-8">
-        <Title className={styles.title}>Velkommen til DAMOCLES</Title>
-        <Text className={styles.subtitle}>Your comprehensive debt protection and financial health dashboard</Text>
+        <Title className={styles.title}>
+          {getWelcomeMessage()}
+        </Title>
+        <Text className={styles.subtitle}>
+          {user?.name 
+            ? 'Here\'s your comprehensive debt protection and financial health overview'
+            : 'Your comprehensive debt protection and financial health dashboard'
+          }
+        </Text>
       </div>
 
       {/* Quick Stats Grid */}
