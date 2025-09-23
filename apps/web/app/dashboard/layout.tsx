@@ -106,7 +106,7 @@ export default function DashboardLayout({
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-900">
-                  {user?.email?.split('@')[0] || 'Bruker'}
+                  {user?.name || user?.email?.split('@')[0] || 'Bruker'}
                 </p>
                 <p className="text-xs text-slate-600 capitalize">
                   {user?.shieldTier || 'bronze'} shield
