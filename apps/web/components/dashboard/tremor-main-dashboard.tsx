@@ -190,7 +190,7 @@ export function TremorMainDashboard() {
       {/* Protection Status Alert */}
       {mockUserStats.pdiScore < 50 && (
         <Callout
-          className="mt-4"
+          className="mb-8"
           title="Enhanced Protection Recommended"
           color="orange"
         >
@@ -252,9 +252,9 @@ export function TremorMainDashboard() {
       </div>
 
       {/* Recent Activity and Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Recent Activity */}
-        <Card>
+        <Card className={styles.metricCard}>
           <Title>Recent Activity</Title>
           <Text className="mb-4">Latest protection actions and alerts</Text>
           <List>
@@ -278,7 +278,7 @@ export function TremorMainDashboard() {
         </Card>
 
         {/* Quick Actions */}
-        <Card>
+        <Card className={styles.metricCard}>
           <Title>Quick Actions</Title>
           <Text className="mb-4">Manage your debt protection</Text>
           <div className="space-y-3">

@@ -93,7 +93,7 @@ export function FeatureLocked({ userTier, feature, children, fallback }: Feature
   }
 
   return (
-    <Card>
+    <Card className="border border-1 round">
       <div className="p-6 text-center space-y-4">
         <Lock className="w-8 h-8 text-slate-400 mx-auto" />
         <div className="space-y-2">
