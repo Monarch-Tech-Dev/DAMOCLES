@@ -26,6 +26,8 @@ import {
 import { useAuth } from '@/lib/auth-context'
 import { PremiumGate, FeatureLocked } from '@/components/subscription/premium-gate'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import styles from '@/app/dashboard.module.css'
 
 interface DocumentTemplate {
   id: string
@@ -175,7 +177,7 @@ export default function DocumentsPage() {
     getComplexityBadge: (complexity: string) => React.ReactNode
   }) {
     return (
-      <Card className="relative">
+      <Card className={styles.metricCard + " relative"}>
         <div className="p-6 space-y-4">
           <div className="flex justify-between items-start">
             <div className="flex-1">
@@ -235,9 +237,9 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className={cn(styles.mainContent, "documents-content")}>
       {/* Header */}
-      <div className="space-y-2">
+      <div className="space-y-2 mb-8">
         <Title>Document Generation</Title>
         <Text>Generate professional legal documents for your debt protection cases</Text>
       </div>
@@ -247,13 +249,14 @@ export default function DocumentsPage() {
         title="Document Service Revenue"
         icon={DollarSign}
         color="blue"
+        className="mb-8"
       >
         Professional document generation services ranging from €25-€200 per document.
         Free GDPR requests for Premium subscribers.
       </Callout>
 
       {/* Filter */}
-      <Card>
+      <Card className={styles.metricCard + " mb-8"}>
         <Flex className="space-x-4">
           <div className="flex-1">
             <Text className="mb-2">Filter by Category</Text>
@@ -269,9 +272,9 @@ export default function DocumentsPage() {
       </Card>
 
       {/* Document Templates */}
-      <div className="space-y-4">
+      <div className="space-y-4 mb-8">
         <Title className="text-lg">Available Document Templates</Title>
-        <Grid numItems={1} numItemsLg={2} className="gap-6">
+        <Grid numItems={1} numItemsLg={2} className="gap-6 mb-8">
           {filteredTemplates.map((template) => {
             // GDPR requests are free for Premium users, but require Premium for automation
             const requiresPremium = template.id === 'gdpr-request' && template.price === 0
@@ -287,6 +290,7 @@ export default function DocumentsPage() {
                   title="Pro Feature Required"
                   description={`${template.name} requires Pro subscription for full legal automation capabilities.`}
                   requiredTier="pro"
+                  className={styles.metricCard}
                 >
                   <DocumentCard template={template} generating={generating} selectedDocument={selectedDocument} handleGenerateDocument={handleGenerateDocument} getComplexityBadge={getComplexityBadge} />
                 </PremiumGate>
@@ -299,8 +303,9 @@ export default function DocumentsPage() {
                   key={template.id}
                   userTier={userTier}
                   feature="documentGeneration"
+                  className={styles.metricCard}
                   fallback={
-                    <Card className="relative opacity-75">
+                    <Card className={styles.metricCard + " relative opacity-75"}>
                       <div className="p-6 space-y-4">
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
@@ -342,7 +347,7 @@ export default function DocumentsPage() {
       </div>
 
       {/* Recent Documents */}
-      <Card>
+      <Card className={styles.metricCard + " mb-8"}>
         <Title>Recent Documents</Title>
         <div className="space-y-3 mt-4">
           {recentDocuments.map((doc) => (
@@ -370,7 +375,7 @@ export default function DocumentsPage() {
 
       {/* Document Statistics */}
       <Grid numItems={1} numItemsLg={3} className="gap-6">
-        <Card>
+        <Card className={styles.metricCard}>
           <Flex alignItems="start">
             <div>
               <Text>Documents Generated</Text>
@@ -381,7 +386,7 @@ export default function DocumentsPage() {
           </Flex>
         </Card>
 
-        <Card>
+        <Card className={styles.metricCard}>
           <Flex alignItems="start">
             <div>
               <Text>Revenue Generated</Text>
@@ -392,7 +397,7 @@ export default function DocumentsPage() {
           </Flex>
         </Card>
 
-        <Card>
+        <Card className={styles.metricCard}>
           <Flex alignItems="start">
             <div>
               <Text>Success Rate</Text>
