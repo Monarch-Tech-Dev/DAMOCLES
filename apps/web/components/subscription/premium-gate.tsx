@@ -15,6 +15,7 @@ interface PremiumGateProps {
   description?: string
   requiredTier?: SubscriptionTier
   showUpgrade?: boolean
+  className?: string
 }
 
 export function PremiumGate({
@@ -24,7 +25,8 @@ export function PremiumGate({
   title,
   description,
   requiredTier = 'premium',
-  showUpgrade = true
+  showUpgrade = true,
+  className
 }: PremiumGateProps) {
   const hasAccess = hasFeature(userTier, feature)
 
@@ -38,7 +40,7 @@ export function PremiumGate({
   }
 
   return (
-    <Card>
+    <Card className={className}>
       <div className="p-6 text-center space-y-4">
         <div className="flex justify-center">
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center">
@@ -58,8 +60,8 @@ export function PremiumGate({
 
         {showUpgrade && (
           <div className="space-y-3">
-            <Link href="/dashboard/subscription">
-              <Button className="flex items-center space-x-2">
+            <Link href="/dashboard/subscription" className="center">
+              <Button className="inline-flex items-center space-x-2">
                 <ArrowUpCircle className="w-4 h-4" />
                 <span>Upgrade to {tierNames[requiredTier]}</span>
               </Button>
@@ -79,9 +81,10 @@ interface FeatureLockedProps {
   feature: keyof SubscriptionFeatures
   children: React.ReactNode
   fallback?: React.ReactNode
+  className?: string
 }
 
-export function FeatureLocked({ userTier, feature, children, fallback }: FeatureLockedProps) {
+export function FeatureLocked({ userTier, feature, children, fallback, className }: FeatureLockedProps) {
   const hasAccess = hasFeature(userTier, feature)
 
   if (hasAccess) {
@@ -93,7 +96,7 @@ export function FeatureLocked({ userTier, feature, children, fallback }: Feature
   }
 
   return (
-    <Card>
+    <Card className={className}>
       <div className="p-6 text-center space-y-4">
         <Lock className="w-8 h-8 text-slate-400 mx-auto" />
         <div className="space-y-2">
