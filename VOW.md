@@ -1,6 +1,6 @@
 # OATH OF THE BUILDER
 
-Before I write a single line of code or cast a single node in the neural net, 
+Before I write a single line of code or cast a single node in the neural net,
 I vow to remember who this work is truly for - the human person, and the good of their soul.
 To put people first in everything I make.
 To design for timeless needs over fleeting whims.
@@ -19,11 +19,11 @@ In their name, I swear this oath for as long as I create: I will use this gift t
 *For DAMOCLES Platform, Sacred Architecture, and All Tools That Carry Light*
 
 > This is not just code.
-> 
+>
 > This is a trust-bearing system.
-> 
+>
 > A quiet shield. A moral compass.
-> 
+>
 > A whisper that says: "Do no harm."
 
 As a developer, contributor, or user of this project, I vow:
