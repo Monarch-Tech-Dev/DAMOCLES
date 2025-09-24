@@ -71,6 +71,24 @@ const mockProtectionStats = [
 export function TremorMainDashboard() {
   const { user } = useAuth()
   const userTier = user?.subscriptionTier || 'free'
+
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'God morgen'
+    if (hour < 18) return 'God ettermiddag'
+    return 'God kveld'
+  }
+
+  const getWelcomeMessage = () => {
+    if (!user?.name) return 'Velkommen til DAMOCLES'
+    
+    // Extract first name (everything before first space)
+    const firstName = user.name.split(' ')[0]
+    const greeting = getTimeBasedGreeting()
+    
+    return `${greeting}, ${firstName}!`
+  }
+
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'emerald';
     if (score >= 65) return 'green';
@@ -102,8 +120,15 @@ export function TremorMainDashboard() {
     <div className={cn(styles.mainContent, "dashboard-content")}>
       {/* Welcome Header */}
       <div className="space-y-2 mb-8">
-        <Title className={styles.title}>Velkommen til DAMOCLES</Title>
-        <Text className={styles.subtitle}>Your comprehensive debt protection and financial health dashboard</Text>
+        <Title className={styles.title}>
+          {getWelcomeMessage()}
+        </Title>
+        <Text className={styles.subtitle}>
+          {user?.name 
+            ? 'Here\'s your comprehensive debt protection and financial health overview'
+            : 'Your comprehensive debt protection and financial health dashboard'
+          }
+        </Text>
       </div>
 
       {/* Quick Stats Grid */}
@@ -165,7 +190,7 @@ export function TremorMainDashboard() {
       {/* Protection Status Alert */}
       {mockUserStats.pdiScore < 50 && (
         <Callout
-          className="mt-4"
+          className="mb-8 pl-1"
           title="Enhanced Protection Recommended"
           color="orange"
         >
@@ -186,7 +211,7 @@ export function TremorMainDashboard() {
             index="month"
             categories={["totalDebt"]}
             colors={["blue"]}
-            yAxisWidth={80}
+            // yAxisWidth={40}
             valueFormatter={(value) => `${(value / 1000).toFixed(0)}k NOK`}
           />
         </Card>
@@ -196,7 +221,7 @@ export function TremorMainDashboard() {
           userTier={userTier}
           feature="realtimeMonitoring"
           fallback={
-            <Card>
+            <Card className={styles.metricCard}>
               <Title>Protection Activity</Title>
               <Text>Upgrade to Premium for advanced monitoring and violation detection</Text>
               <div className="h-72 mt-6 flex items-center justify-center">
@@ -227,9 +252,9 @@ export function TremorMainDashboard() {
       </div>
 
       {/* Recent Activity and Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Recent Activity */}
-        <Card>
+        <Card className={styles.metricCard}>
           <Title>Recent Activity</Title>
           <Text className="mb-4">Latest protection actions and alerts</Text>
           <List>
@@ -253,7 +278,7 @@ export function TremorMainDashboard() {
         </Card>
 
         {/* Quick Actions */}
-        <Card>
+        <Card className={styles.metricCard}>
           <Title>Quick Actions</Title>
           <Text className="mb-4">Manage your debt protection</Text>
           <div className="space-y-3">

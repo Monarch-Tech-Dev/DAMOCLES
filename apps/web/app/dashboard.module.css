@@ -18,7 +18,7 @@
 }
 
 .mainContent {
-  margin-left: 256px;
+  margin: auto;
   flex: 1;
   padding: 2rem;
   max-width: 1400px;
@@ -70,8 +70,7 @@
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
-  height: 400px;
-  margin-bottom: 2rem;
+  /* min-height: 400px; */
 }
 
 /* Fix text visibility - enforce with !important */
@@ -195,7 +194,7 @@
   }
 
   .chartContainer {
-    height: 300px;
+    /* height: 300px; */
     padding: 1rem;
   }
 }
