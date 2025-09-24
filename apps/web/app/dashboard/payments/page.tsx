@@ -5,6 +5,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Receipt, AlertCircle, CheckCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import styles from '@/app/dashboard.module.css';
 
 interface Invoice {
   id: string;
@@ -175,7 +177,7 @@ export default function PaymentsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className={cn(styles.mainContent, "payments-content")}>
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded-md w-1/4 mb-6"></div>
           <div className="grid gap-4">
@@ -188,14 +190,14 @@ export default function PaymentsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className={cn(styles.mainContent, "payments-content")}>
       <div className="flex items-center gap-2">
         <CreditCard className="h-6 w-6" />
         <h1 className="text-2xl font-bold">Payment Management</h1>
       </div>
 
       {/* Pending Invoices */}
-      <div className="space-y-4">
+      <div className="space-y-4 mb-8">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Receipt className="h-5 w-5" />
           Pending Success Fees ({pendingInvoices.length})
@@ -290,7 +292,7 @@ export default function PaymentsPage() {
       </div>
 
       {/* Payment History */}
-      <div className="space-y-4">
+      <div className="space-y-4 mb-8">
         <h2 className="text-lg font-semibold">Payment History</h2>
 
         {paymentHistory.length === 0 ? (

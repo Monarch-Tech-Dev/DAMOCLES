@@ -19,6 +19,8 @@ import {
   ArrowUpCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils';
+import styles from '@/app/dashboard.module.css';
 
 interface SubscriptionTier {
   name: string
@@ -107,15 +109,15 @@ export default function SubscriptionPage() {
   const commissionEarned = totalRecovered * 0.25
 
   return (
-    <div className="p-6 space-y-6">
+    <div className={cn(styles.mainContent, "dashboard-content")}>
       {/* Header */}
-      <div className="space-y-2">
+      <div className="space-y-2 mb-8">
         <Title>Subscription Management</Title>
         <Text>Choose the right plan for your debt protection needs</Text>
       </div>
 
       {/* Current Status */}
-      <Card>
+      <Card className={styles.metricCard + " mb-8"}>
         <Flex alignItems="center" className="space-x-4">
           <div className="flex-1">
             <Text className="text-sm text-slate-600">Current Plan</Text>
@@ -142,13 +144,14 @@ export default function SubscriptionPage() {
         title="Recovery Commission Model"
         icon={ArrowUpCircle}
         color="green"
+        className="mb-8"
       >
         We earn 25% commission only when we successfully recover money for you.
         No recovery = no fees. Your success is our success.
       </Callout>
 
       {/* Subscription Tiers */}
-      <Grid numItems={1} numItemsLg={3} className="gap-6">
+      <Grid numItems={1} numItemsLg={3} className="gap-6 mb-8">
         {subscriptionTiers.map((tier) => {
           const IconComponent = tier.icon
           const isCurrent = tier.name === currentTier
@@ -156,7 +159,7 @@ export default function SubscriptionPage() {
           return (
             <Card
               key={tier.name}
-              className={`relative ${tier.popular ? 'ring-2 ring-blue-500' : ''} ${isCurrent ? 'bg-blue-50' : ''}`}
+              className={`relative ${tier.popular ? 'ring-2 ring-blue-500' : ''} ${isCurrent ? 'bg-blue-50' : ''} ${styles.metricCard}`}
             >
               {tier.popular && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -247,7 +250,7 @@ export default function SubscriptionPage() {
       </Grid>
 
       {/* Enterprise Option */}
-      <Card>
+      <Card className={styles.metricCard}>
         <div className="p-6 text-center space-y-4">
           <Title>Enterprise & Family Plans</Title>
           <Text>

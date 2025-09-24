@@ -1,7 +1,7 @@
 'use client'
 
 import { TremorMainDashboard } from '@/components/dashboard/tremor-main-dashboard';
-import styles from '../dashboard.module.css';
+import styles from '@/app/dashboard.module.css';
 
 export default function DashboardPage() {
   return (
