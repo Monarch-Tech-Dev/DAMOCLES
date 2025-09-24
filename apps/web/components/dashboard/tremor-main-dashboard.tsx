@@ -211,7 +211,7 @@ export function TremorMainDashboard() {
             index="month"
             categories={["totalDebt"]}
             colors={["blue"]}
-            yAxisWidth={80}
+            // yAxisWidth={40}
             valueFormatter={(value) => `${(value / 1000).toFixed(0)}k NOK`}
           />
         </Card>
