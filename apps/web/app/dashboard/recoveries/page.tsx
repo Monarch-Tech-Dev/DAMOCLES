@@ -34,6 +34,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/auth-context'
 import { PremiumGate, FeatureLocked } from '@/components/subscription/premium-gate'
+import { cn } from '@/lib/utils';
+import styles from '@/app/dashboard.module.css';
 
 // Mock recovery data
 const mockRecoveries = [
@@ -120,16 +122,16 @@ export default function RecoveriesPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className={cn(styles.mainContent, "recoveries-content")}>
       {/* Header */}
-      <div className="space-y-2">
+      <div className="space-y-2 mb-8">
         <Title>Recovery Dashboard</Title>
         <Text>Track your money recovery progress and commission earnings</Text>
       </div>
 
       {/* Key Metrics */}
-      <Grid numItems={1} numItemsSm={2} numItemsLg={4} className="gap-6">
-        <Card>
+      <Grid numItems={1} numItemsSm={2} numItemsLg={4} className="gap-6 mb-8">
+        <Card className={styles.metricCard}>
           <Flex alignItems="start">
             <div>
               <Text>Total Recovered</Text>
@@ -139,7 +141,7 @@ export default function RecoveriesPage() {
           </Flex>
         </Card>
 
-        <Card>
+        <Card className={styles.metricCard}>
           <Flex alignItems="start">
             <div>
               <Text>Commission Earned</Text>
@@ -150,7 +152,7 @@ export default function RecoveriesPage() {
           </Flex>
         </Card>
 
-        <Card>
+        <Card className={styles.metricCard}>
           <Flex alignItems="start">
             <div>
               <Text>Completed Cases</Text>
@@ -160,7 +162,7 @@ export default function RecoveriesPage() {
           </Flex>
         </Card>
 
-        <Card>
+        <Card className={styles.metricCard}>
           <Flex alignItems="start">
             <div>
               <Text>Active Cases</Text>
@@ -189,9 +191,9 @@ export default function RecoveriesPage() {
       </PremiumGate>
 
       {/* Charts */}
-      <Grid numItems={1} numItemsLg={2} className="gap-6">
+      <Grid numItems={1} numItemsLg={2} className="gap-6 mb-8 mt-8">
         {/* Recovery Trend */}
-        <Card>
+        <Card className={styles.metricCard}>
           <Title>Recovery Trend</Title>
           <Text>Monthly recovery amounts and commission earnings</Text>
           <AreaChart
@@ -206,7 +208,7 @@ export default function RecoveriesPage() {
         </Card>
 
         {/* Recovery Types */}
-        <Card>
+        <Card className={styles.metricCard}>
           <Title>Recovery Types</Title>
           <Text>Breakdown by violation category</Text>
           <DonutChart
@@ -222,7 +224,7 @@ export default function RecoveriesPage() {
       </Grid>
 
       {/* Recent Recoveries */}
-      <Card>
+      <Card className={styles.metricCard + " mb-8"}>
         <Title>Recent Recoveries</Title>
         <Table className="mt-6">
           <TableHead>
@@ -280,7 +282,7 @@ export default function RecoveriesPage() {
 
       {/* Monthly Summary */}
       <Grid numItems={1} numItemsLg={2} className="gap-6">
-        <Card>
+        <Card className={styles.metricCard}>
           <Title>This Month's Progress</Title>
           <div className="space-y-4 mt-4">
             <div>
@@ -314,7 +316,7 @@ export default function RecoveriesPage() {
           </div>
         </Card>
 
-        <Card>
+        <Card className={styles.metricCard}>
           <Title>Next Steps</Title>
           <div className="space-y-3 mt-4">
             <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
