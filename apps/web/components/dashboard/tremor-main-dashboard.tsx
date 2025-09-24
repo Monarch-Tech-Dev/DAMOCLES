@@ -190,7 +190,7 @@ export function TremorMainDashboard() {
       {/* Protection Status Alert */}
       {mockUserStats.pdiScore < 50 && (
         <Callout
-          className="mb-8"
+          className="mb-8 pl-1"
           title="Enhanced Protection Recommended"
           color="orange"
         >
@@ -221,7 +221,7 @@ export function TremorMainDashboard() {
           userTier={userTier}
           feature="realtimeMonitoring"
           fallback={
-            <Card>
+            <Card className={styles.metricCard}>
               <Title>Protection Activity</Title>
               <Text>Upgrade to Premium for advanced monitoring and violation detection</Text>
               <div className="h-72 mt-6 flex items-center justify-center">
