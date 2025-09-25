@@ -26,6 +26,7 @@ secrets/
 *password*
 *token*
 *apikey*
+!TOKENOMICS.md
 *.credentials
 *auth*
 config/production.js
