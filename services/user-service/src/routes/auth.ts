@@ -23,19 +23,19 @@ export async function authRoutes(fastify: FastifyInstance) {
   fastify.post('/register', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const body = RegisterSchema.parse(request.body);
-      
+
       // Verify BankID token (mock implementation)
       const bankIdVerification = await verifyBankID(body.bankIdToken);
       if (!bankIdVerification.valid) {
         return reply.status(401).send({ error: 'BankID verification failed' });
       }
-      
+
       // Hash personal number for privacy
       const personalNumberHash = await bcrypt.hash(body.personalNumber, 12);
-      
+
       // Calculate initial risk score (placeholder logic)
       const riskScore = await calculateRiskScore(body);
-      
+
       const user = await prisma.user.create({
         data: {
           email: body.email,
@@ -45,19 +45,24 @@ export async function authRoutes(fastify: FastifyInstance) {
           onboardingStatus: 'PENDING'
         }
       });
-      
-      const token = jwt.sign(
+
+      const accessSecret = process.env.JWT_ACCESS_SECRET || 'fallback-secret';
+      const accessExpiry = process.env.JWT_ACCESS_EXPIRES_IN || '15m';
+      const refreshSecret = process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret';
+      const refreshExpiry = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+
+      const token = (jwt.sign as any)(
         { userId: user.id, email: user.email },
-        process.env.JWT_ACCESS_SECRET!,
-        { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m' }
+        accessSecret,
+        { expiresIn: accessExpiry }
       );
-      
-      const refreshToken = jwt.sign(
+
+      const refreshToken = (jwt.sign as any)(
         { userId: user.id },
-        process.env.JWT_REFRESH_SECRET!,
-        { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+        refreshSecret,
+        { expiresIn: refreshExpiry }
       );
-      
+
       return reply.send({
         token,
         refreshToken,
@@ -68,7 +73,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           onboardingStatus: user.onboardingStatus
         }
       });
-      
+
     } catch (error) {
       if (error instanceof z.ZodError) {
         return reply.status(400).send({ error: 'Validation error', details: error.errors });
@@ -76,44 +81,49 @@ export async function authRoutes(fastify: FastifyInstance) {
       throw error;
     }
   });
-  
+
   // Login with BankID
   fastify.post('/login', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const body = LoginSchema.parse(request.body);
-      
+
       // Verify BankID token
       const bankIdVerification = await verifyBankID(body.bankIdToken);
       if (!bankIdVerification.valid) {
         return reply.status(401).send({ error: 'BankID verification failed' });
       }
-      
+
       const user = await prisma.user.findUnique({
         where: { email: body.email }
       });
-      
+
       if (!user || !user.isActive) {
         return reply.status(401).send({ error: 'Invalid credentials' });
       }
-      
+
       // Update last login
       await prisma.user.update({
         where: { id: user.id },
         data: { lastLoginAt: new Date() }
       });
-      
-      const token = jwt.sign(
+
+      const accessSecret = process.env.JWT_ACCESS_SECRET || 'fallback-secret';
+      const accessExpiry = process.env.JWT_ACCESS_EXPIRES_IN || '15m';
+      const refreshSecret = process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret';
+      const refreshExpiry = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+
+      const token = (jwt.sign as any)(
         { userId: user.id, email: user.email },
-        process.env.JWT_ACCESS_SECRET!,
-        { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m' }
+        accessSecret,
+        { expiresIn: accessExpiry }
       );
-      
-      const refreshToken = jwt.sign(
+
+      const refreshToken = (jwt.sign as any)(
         { userId: user.id },
-        process.env.JWT_REFRESH_SECRET!,
-        { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+        refreshSecret,
+        { expiresIn: refreshExpiry }
       );
-      
+
       return reply.send({
         token,
         refreshToken,
@@ -125,7 +135,7 @@ export async function authRoutes(fastify: FastifyInstance) {
           onboardingStatus: user.onboardingStatus
         }
       });
-      
+
     } catch (error) {
       if (error instanceof z.ZodError) {
         return reply.status(400).send({ error: 'Validation error', details: error.errors });
@@ -133,7 +143,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       throw error;
     }
   });
-  
+
   // Refresh token
   fastify.post('/refresh', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
@@ -141,30 +151,34 @@ export async function authRoutes(fastify: FastifyInstance) {
       if (!refreshToken) {
         return reply.status(401).send({ error: 'No refresh token' });
       }
-      
-      const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET!) as any;
-      
+
+      const refreshSecret = process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret';
+      const decoded = jwt.verify(refreshToken, refreshSecret) as any;
+
       const user = await prisma.user.findUnique({
         where: { id: decoded.userId }
       });
-      
+
       if (!user || !user.isActive) {
         return reply.status(401).send({ error: 'Invalid token' });
       }
-      
-      const token = jwt.sign(
+
+      const accessSecret = process.env.JWT_ACCESS_SECRET || 'fallback-secret';
+      const accessExpiry = process.env.JWT_ACCESS_EXPIRES_IN || '15m';
+
+      const token = (jwt.sign as any)(
         { userId: user.id, email: user.email },
-        process.env.JWT_ACCESS_SECRET!,
-        { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m' }
+        accessSecret,
+        { expiresIn: accessExpiry }
       );
-      
+
       return reply.send({ token });
-      
+
     } catch (error) {
       return reply.status(401).send({ error: 'Invalid refresh token' });
     }
   });
-  
+
   // Logout
   fastify.post('/logout', async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.send({ message: 'Logged out successfully' });
@@ -178,7 +192,7 @@ async function verifyBankID(token: string): Promise<{ valid: boolean; personalNu
   if (process.env.NODE_ENV === 'development') {
     return { valid: true, personalNumber: '12345678901' };
   }
-  
+
   // Production BankID verification would go here
   return { valid: false };
 }
@@ -188,12 +202,12 @@ async function calculateRiskScore(userData: any): Promise<number> {
   // Placeholder risk calculation logic
   // In production, this would use ML models and external data
   let score = 0.5; // Base score
-  
+
   // Factors that could influence risk score:
   // - Age derived from personal number
   // - Email domain
   // - Phone number patterns
   // - Historical data if user exists
-  
+
   return Math.min(Math.max(score, 0), 1);
 }
