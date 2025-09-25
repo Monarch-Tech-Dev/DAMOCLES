@@ -36,7 +36,11 @@ secrets/
 *apikey*
 !TOKENOMICS.md
 *.credentials
-*auth*
+*auth.key
+*auth.config
+*auth.json
+!apps/web/app/auth/
+!apps/web/app/api/auth/
 config/production.js
 config/staging.js
 
