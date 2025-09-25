@@ -1,0 +1,26 @@
+{
+  "type": "atLeast",
+  "required": 3,
+  "scripts": [
+    {
+      "type": "sig",
+      "keyHash": "FOUNDER_KEY_HASH_PLACEHOLDER"
+    },
+    {
+      "type": "sig",
+      "keyHash": "COMMUNITY_MEMBER_1_HASH_PLACEHOLDER"
+    },
+    {
+      "type": "sig",
+      "keyHash": "COMMUNITY_MEMBER_2_HASH_PLACEHOLDER"
+    },
+    {
+      "type": "sig",
+      "keyHash": "ADVISOR_KEY_HASH_PLACEHOLDER"
+    },
+    {
+      "type": "sig",
+      "keyHash": "BACKUP_KEY_HASH_PLACEHOLDER"
+    }
+  ]
+}
