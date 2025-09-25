@@ -87,7 +87,7 @@ process.on('SIGTERM', gracefulShutdown);
 const start = async () => {
   try {
     await fastify.listen({ 
-      port: parseInt(process.env.USER_SERVICE_PORT || '3000'), 
+      port: parseInt(process.env.PORT || '3001'), 
       host: '0.0.0.0' 
     });
     fastify.log.info('User service started successfully');
