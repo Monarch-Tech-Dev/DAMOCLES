@@ -48,14 +48,14 @@ export async function authRoutes(fastify: FastifyInstance) {
       
       const token = jwt.sign(
         { userId: user.id, email: user.email },
-        process.env.JWT_SECRET!,
-        { expiresIn: '15m' }
+        process.env.JWT_ACCESS_SECRET!,
+        { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m' }
       );
       
       const refreshToken = jwt.sign(
         { userId: user.id },
-        process.env.JWT_SECRET!,
-        { expiresIn: '7d' }
+        process.env.JWT_REFRESH_SECRET!,
+        { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
       );
       
       return reply.send({
@@ -104,14 +104,14 @@ export async function authRoutes(fastify: FastifyInstance) {
       
       const token = jwt.sign(
         { userId: user.id, email: user.email },
-        process.env.JWT_SECRET!,
-        { expiresIn: '15m' }
+        process.env.JWT_ACCESS_SECRET!,
+        { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m' }
       );
       
       const refreshToken = jwt.sign(
         { userId: user.id },
-        process.env.JWT_SECRET!,
-        { expiresIn: '7d' }
+        process.env.JWT_REFRESH_SECRET!,
+        { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
       );
       
       return reply.send({
@@ -154,8 +154,8 @@ export async function authRoutes(fastify: FastifyInstance) {
       
       const token = jwt.sign(
         { userId: user.id, email: user.email },
-        process.env.JWT_SECRET!,
-        { expiresIn: '15m' }
+        process.env.JWT_ACCESS_SECRET!,
+        { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m' }
       );
       
       return reply.send({ token });

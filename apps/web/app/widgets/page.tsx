@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Copy, ExternalLink, Code, Monitor, Smartphone, Globe } from 'lucide-react'
+import DOMPurify from 'isomorphic-dompurify'
 
 export default function WidgetsPage() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
@@ -189,7 +190,7 @@ export default function WidgetsPage() {
                   {/* Preview */}
                   <div className="bg-gray-900 p-4 rounded-lg mb-4">
                     <div className="text-xs text-gray-500 mb-2">Preview:</div>
-                    <div dangerouslySetInnerHTML={{ __html: widget.preview }} />
+                    <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(widget.preview) }} />
                   </div>
 
                   {/* Size Options */}

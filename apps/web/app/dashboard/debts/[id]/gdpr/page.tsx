@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import toast from 'react-hot-toast'
+import DOMPurify from 'isomorphic-dompurify'
 
 interface Debt {
   id: string
@@ -350,7 +351,7 @@ export default function GDPRRequestPage() {
                         Vis forespørsel innhold
                       </summary>
                       <div className="mt-2 p-3 bg-gray-50 rounded text-sm max-h-40 overflow-y-auto">
-                        <div dangerouslySetInnerHTML={{ __html: request.content.substring(0, 500) + '...' }} />
+                        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(request.content.substring(0, 500) + '...') }} />
                       </div>
                     </details>
                   )}
