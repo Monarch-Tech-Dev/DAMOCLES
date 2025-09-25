@@ -1,5 +1,13 @@
 # DAMOCLES Security-First .gitignore
 # NEVER commit sensitive data to public repositories
+#
+# SECURITY PRACTICES:
+# 1. ALWAYS ask for explicit permission before git commit/push
+# 2. NEVER auto-commit or auto-push to GitHub
+# 3. ALWAYS verify .gitignore is properly configured
+# 4. NEVER commit keys, secrets, tokens, or credentials
+# 5. ALWAYS check files for sensitive data before staging
+# 6. NEVER override .gitignore without explicit approval
 
 # Environment variables - CRITICAL SECURITY
 .env
@@ -278,6 +286,8 @@ docs/TOKEN_ACTIVATION_STRATEGY.md
 
 # Internal Business Documents (DO NOT COMMIT TO OPEN SOURCE)
 docs/TOKEN_ACTIVATION_STRATEGY.md
+docs/GDPR_ENGINE_CAPABILITIES.md
+docs/TRUST_ENGINE_CAPABILITIES.md
 **/INTERNAL_*.md
 **/STRATEGY_*.md
 **/CONFIDENTIAL_*.md
@@ -343,6 +353,18 @@ official-sword-minting.md
 **/COMPLETE_*.md
 **/FLOW_*.md
 **/ARCHITECTURE_*.md
+**/FINAL_STEPS_*.md
+**/TOKEN_ACTIVATION_STRATEGY_*md
+**/PLATFORM_MAP_*md
+**/CARDANO_SECURITY_STACK_*.md
+**/SECURITY_PRACTICES_*.md
+
+# Internal Development and Security Documentation (KEEP LOCAL)
+CARDANO_SECURITY_STACK.md
+SECURITY_PRACTICES.md
+ACCURATE_COMPLETION_STATUS.md
+IMPLEMENTATION_VERIFICATION.md
+CLAUDE_INTERNAL_DOCS.md
 
 # Deployment keys and sensitive configs
 **/*_DEPLOYMENT.md
