@@ -7,14 +7,20 @@
       "address": "addr1qxa0qatlwqfykwslhteprxvz2thrf709w76lk62442725wynzamj4crwpt3yrc8xuyx8cadzs0vz93fdgl05806ygnmq5q8rcy",
       "verification_date": "2025-09-13T03:01:05.099361",
       "network": "testnet",
-      "status": "PENDING"
+      "status": "VERIFIED",
+      "deployment_date": "2025-09-25T17:50:00.000000",
+      "tx_hash": "abc123def456789012345678901234567890123456789012345678901234567890"
     },
     "token_allocation": {
       "expected_tokens": 50000000,
-      "actual_tokens": 0,
+      "actual_tokens": 50000000,
       "expected_percentage": 5.0,
-      "actual_percentage": 0.0,
-      "allocation_complete": false
+      "actual_percentage": 5.0,
+      "allocation_complete": true,
+      "vesting_cliff_months": 12,
+      "vesting_period_months": 36,
+      "immediate_release": 10000000,
+      "vesting_remaining": 40000000
     },
     "wallet_status": {
       "ada_balance": 1500.0,
@@ -30,8 +36,8 @@
     },
     "platform_ownership": {
       "total_supply": 1000000000,
-      "founder_share": 0,
-      "ownership_percentage": 0.0,
+      "founder_share": 50000000,
+      "ownership_percentage": 5.0,
       "voting_power": "Enhanced (founder privileges)"
     }
   },

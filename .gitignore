@@ -377,3 +377,6 @@ CLAUDE_INTERNAL_DOCS.md
 create-testnet-wallet.js
 deploy-sword-now.js
 real-testnet-deployment.js
+apps/web/.env.local
+docs/PLATFORM_MAP.md
+FINAL_STEPS.md
