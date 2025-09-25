@@ -317,6 +317,32 @@ DEVELOPMENT_ROADMAP.md
 # Security notices (internal only)
 SECURITY-NOTICE.md
 
+# Internal Development Architecture and Flow Documentation
+DEVELOPMENT.md
+DEVELOPER_SETUP.md
+DEVELOPER_TASK_LIST.md
+DEVELOPER_TODO_PRODUCTION.md
+DEVELOPER-INCENTIVES.md
+DEPLOYMENT_GUIDE.md
+QUICK_START.md
+PRODUCTION_TASKS_MODULAR.md
+PROJECT_STATUS_REPORT.md
+PDI_COMPLETE_IMPLEMENTATION.md
+PDI_DEPLOYMENT.md
+
+# Founder and Business Strategy Documentation (INTERNAL)
+FOUNDER_DEPLOYMENT.md
+INTEGRATED-TOKENOMICS.md
+INTERNAL_PROJECT_MAP.md
+MAINNET_SWORD_DEPLOYMENT.md
+SWORD_TESTNET_COMPLETE.md
+official-sword-minting.md
+
+# Complete platform architecture and flows (INTERNAL)
+**/COMPLETE_*.md
+**/FLOW_*.md
+**/ARCHITECTURE_*.md
+
 # Deployment keys and sensitive configs
 **/*_DEPLOYMENT.md
 **/*testnet*.md
