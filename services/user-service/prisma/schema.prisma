@@ -14,6 +14,9 @@ model User {
   name                  String?
   passwordHash          String?  @map("password_hash")
   phoneNumber           String?  @map("phone_number")
+  vippsVerified         Boolean  @default(false) @map("vipps_verified")
+  vippsUserId           String?  @unique @map("vipps_user_id")
+  bankIdVerified        Boolean  @default(false) @map("bankid_verified")
   riskScore             Float?   @map("risk_score")
   shieldTier            String   @default("Bronze Shield") @map("shield_tier")
   tokenBalance          Float    @default(0) @map("token_balance")

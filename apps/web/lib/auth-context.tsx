@@ -1,6 +1,7 @@
 'use client'
 
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react'
+import { useSession, signIn, signOut } from 'next-auth/react'
 
 interface User {
   id: string
@@ -18,15 +19,35 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { data: session, status } = useSession()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(false)
+
+  // Sync NextAuth session with AuthContext
+  useEffect(() => {
+    if (session?.user) {
+      setUser({
+        id: session.user.email || '1',
+        email: session.user.email || '',
+        name: session.user.name || 'User'
+      })
+    } else {
+      setUser(null)
+    }
+  }, [session])
 
   const login = async (email: string, password: string) => {
     setLoading(true)
     try {
-      // TODO: Implement actual login logic
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setUser({ id: '1', email, name: 'Test User' })
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false
+      })
+
+      if (result?.error) {
+        throw new Error('Invalid credentials')
+      }
     } catch (error) {
       throw error
     } finally {
@@ -35,11 +56,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = () => {
-    setUser(null)
+    signOut({ callbackUrl: '/login' })
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading: loading || status === 'loading' }}>
       {children}
     </AuthContext.Provider>
   )
