@@ -1,0 +1,32 @@
+{
+  "hero": {
+    "title": "DAMOCLES",
+    "subtitle": "The Sword of Digital Justice",
+    "description": "Revolutionizing content moderation with blockchain-verified AI agents"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "features": "Features",
+    "contact": "Contact"
+  },
+  "features": {
+    "title": "Platform Features",
+    "ai": {
+      "title": "AI-Powered Moderation",
+      "description": "Advanced machine learning for content analysis"
+    },
+    "blockchain": {
+      "title": "Blockchain Verification",
+      "description": "Immutable audit trail on Cardano"
+    },
+    "privacy": {
+      "title": "Privacy First",
+      "description": "GDPR-compliant data protection"
+    }
+  },
+  "cta": {
+    "getStarted": "Get Started",
+    "learnMore": "Learn More"
+  }
+}
