@@ -380,3 +380,9 @@ real-testnet-deployment.js
 apps/web/.env.local
 docs/PLATFORM_MAP.md
 FINAL_STEPS.md
+
+# Launch day sensitive files
+LAUNCH_DAY_CHECKLIST.md
+deployment-status.json
+scripts/prepare-mainnet-wallet.sh
+apps/web/.env.production.local
