@@ -73,12 +73,24 @@ export default function RegisterForm() {
     }
   };
 
-  const handleBankIDRegister = async () => {
+  const handleVippsRegister = async () => {
     setLoading(true);
+    setError('');
+
     try {
-      await signIn('bankid', { callbackUrl: '/dashboard' });
+      const result = await signIn('vipps', {
+        redirect: false,
+        callbackUrl: '/dashboard',
+      });
+
+      if (result?.error) {
+        setError('Vipps registrering feilet. Prøv igjen.');
+      } else if (result?.url) {
+        window.location.href = result.url;
+      }
     } catch (err) {
-      setError('BankID registrering feilet');
+      setError('Noe gikk galt med Vipps registrering.');
+    } finally {
       setLoading(false);
     }
   };
@@ -201,12 +213,12 @@ export default function RegisterForm() {
           </div>
 
           <button
-            onClick={handleBankIDRegister}
+            onClick={handleVippsRegister}
             disabled={loading}
-            className="mt-4 w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center space-x-2"
+            className="mt-4 w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center space-x-2"
           >
             <CreditCard className="h-5 w-5" />
-            <span>Registrer med BankID</span>
+            <span>Registrer med Vipps</span>
           </button>
         </div>
 
