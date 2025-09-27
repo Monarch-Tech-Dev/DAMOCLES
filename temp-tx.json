@@ -1,0 +1,55 @@
+{
+  "inputs": [
+    {
+      "address": "addr1v9nq9a5s58kv079zxsp2ukv2qw0rx4j8lxjs0y2wjt46auc3zkmjq",
+      "amount": [
+        {
+          "unit": "lovelace",
+          "quantity": "2000000"
+        },
+        {
+          "unit": "0256b19ba92b4246be412b5075d5f64921da542229141ddca5dd8a9e53574f5244",
+          "quantity": "50000000"
+        }
+      ],
+      "tx_hash": "7571857abda2d3e3305aaaf9780e6d093213512960d9683b0b8b52ef93ef7a64",
+      "output_index": 0
+    },
+    {
+      "address": "addr1v9nq9a5s58kv079zxsp2ukv2qw0rx4j8lxjs0y2wjt46auc3zkmjq",
+      "amount": [
+        {
+          "unit": "lovelace",
+          "quantity": "59720659"
+        }
+      ],
+      "tx_hash": "7571857abda2d3e3305aaaf9780e6d093213512960d9683b0b8b52ef93ef7a64",
+      "output_index": 1
+    }
+  ],
+  "outputs": [
+    {
+      "address": "addr1q82l2xf222f965h247nqrd6luhplqw9770r6sed7thlc4srlv4gzct3njfv8z2lnh540s0vngk4gnquxghxp835nn74szyuu2a",
+      "amount": [
+        {
+          "unit": "lovelace",
+          "quantity": "2000000"
+        },
+        {
+          "unit": "0256b19ba92b4246be412b5075d5f64921da542229141ddca5dd8a9e53574f5244",
+          "quantity": "50000000"
+        }
+      ]
+    },
+    {
+      "address": "addr1v9nq9a5s58kv079zxsp2ukv2qw0rx4j8lxjs0y2wjt46auc3zkmjq",
+      "amount": [
+        {
+          "unit": "lovelace",
+          "quantity": "59520659"
+        }
+      ]
+    }
+  ],
+  "fee": "200000"
+}
