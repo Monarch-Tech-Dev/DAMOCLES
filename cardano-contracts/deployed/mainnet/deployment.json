@@ -1,0 +1,10 @@
+{
+  "network": "mainnet",
+  "deployment_date": "2025-09-27T11:54:11.6NZ",
+  "founder_address": "addr1v9nq9a5s58kv079zxsp2ukv2qw0rx4j8lxjs0y2wjt46auc3zkmjq",
+  "sword_policy_id": "0256b19ba92b4246be412b5075d5f64921da542229141ddca5dd8a9e",
+  "founder_tokens_minted": 50000000,
+  "transaction_hash": "",
+  "blockfrost_api_key": "mainnetLsZLdLUxJGdYdRaV7A8kZ8D5zFLYBXU6",
+  "deployment_method": "blockfrost_api"
+}

@@ -13,9 +13,20 @@ const RegisterSchema = z.object({
   bankIdToken: z.string() // BankID verification token
 });
 
+const EmailRegisterSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  password: z.string().min(8)
+});
+
 const LoginSchema = z.object({
   email: z.string().email(),
   bankIdToken: z.string()
+});
+
+const EmailLoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string()
 });
 
 export async function authRoutes(fastify: FastifyInstance) {
@@ -82,6 +93,72 @@ export async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // Register with email/password
+  fastify.post('/register-email', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const body = EmailRegisterSchema.parse(request.body);
+
+      // Check if user already exists
+      const existingUser = await prisma.user.findUnique({
+        where: { email: body.email }
+      });
+
+      if (existingUser) {
+        return reply.status(400).send({ error: 'User already exists' });
+      }
+
+      // Hash password
+      const passwordHash = await bcrypt.hash(body.password, 12);
+
+      const user = await prisma.user.create({
+        data: {
+          email: body.email,
+          name: body.name,
+          passwordHash,
+          riskScore: 0.5, // Default risk score
+          onboardingStatus: 'PENDING',
+          shieldTier: 'Bronze Shield'
+        }
+      });
+
+      const accessSecret = process.env.JWT_ACCESS_SECRET || 'fallback-secret';
+      const accessExpiry = process.env.JWT_ACCESS_EXPIRES_IN || '15m';
+      const refreshSecret = process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret';
+      const refreshExpiry = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+
+      const token = (jwt.sign as any)(
+        { userId: user.id, email: user.email },
+        accessSecret,
+        { expiresIn: accessExpiry }
+      );
+
+      const refreshToken = (jwt.sign as any)(
+        { userId: user.id },
+        refreshSecret,
+        { expiresIn: refreshExpiry }
+      );
+
+      return reply.send({
+        token,
+        refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          tier: user.shieldTier,
+          bankIdVerified: false,
+          onboardingStatus: user.onboardingStatus
+        }
+      });
+
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.status(400).send({ error: 'Validation error', details: error.errors });
+      }
+      throw error;
+    }
+  });
+
   // Login with BankID
   fastify.post('/login', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
@@ -131,6 +208,70 @@ export async function authRoutes(fastify: FastifyInstance) {
           id: user.id,
           email: user.email,
           shieldTier: user.shieldTier,
+          tokenBalance: user.tokenBalance,
+          onboardingStatus: user.onboardingStatus
+        }
+      });
+
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.status(400).send({ error: 'Validation error', details: error.errors });
+      }
+      throw error;
+    }
+  });
+
+  // Login with email/password
+  fastify.post('/login-email', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const body = EmailLoginSchema.parse(request.body);
+
+      const user = await prisma.user.findUnique({
+        where: { email: body.email }
+      });
+
+      if (!user || !user.isActive || !user.passwordHash) {
+        return reply.status(401).send({ error: 'Invalid credentials' });
+      }
+
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(body.password, user.passwordHash);
+      if (!isPasswordValid) {
+        return reply.status(401).send({ error: 'Invalid credentials' });
+      }
+
+      // Update last login
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() }
+      });
+
+      const accessSecret = process.env.JWT_ACCESS_SECRET || 'fallback-secret';
+      const accessExpiry = process.env.JWT_ACCESS_EXPIRES_IN || '15m';
+      const refreshSecret = process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret';
+      const refreshExpiry = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+
+      const token = (jwt.sign as any)(
+        { userId: user.id, email: user.email },
+        accessSecret,
+        { expiresIn: accessExpiry }
+      );
+
+      const refreshToken = (jwt.sign as any)(
+        { userId: user.id },
+        refreshSecret,
+        { expiresIn: refreshExpiry }
+      );
+
+      return reply.send({
+        token,
+        refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          tier: user.shieldTier,
+          bankIdVerified: !!user.personalNumberHash,
           tokenBalance: user.tokenBalance,
           onboardingStatus: user.onboardingStatus
         }

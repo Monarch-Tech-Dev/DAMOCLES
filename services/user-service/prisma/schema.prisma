@@ -9,11 +9,13 @@ datasource db {
 
 model User {
   id                    String   @id @default(cuid())
-  personalNumberHash    String   @unique @map("personal_number_hash")
+  personalNumberHash    String?  @unique @map("personal_number_hash")
   email                 String   @unique
+  name                  String?
+  passwordHash          String?  @map("password_hash")
   phoneNumber           String?  @map("phone_number")
   riskScore             Float?   @map("risk_score")
-  shieldTier            String   @default("bronze") @map("shield_tier")
+  shieldTier            String   @default("Bronze Shield") @map("shield_tier")
   tokenBalance          Float    @default(0) @map("token_balance")
   onboardingStatus      String   @default("PENDING") @map("onboarding_status")
   isActive              Boolean  @default(true) @map("is_active")
@@ -340,7 +342,7 @@ model UserAuthorization {
   id              String    @id @default(cuid())
   userId          String    @map("user_id")
   creditorId      String?   @map("creditor_id") // If null, applies to all creditors
-  scope           String[]  // ['send_gdpr', 'receive_responses', 'follow_up']
+  scope           String    // JSON: ['send_gdpr', 'receive_responses', 'follow_up']
   platformEmail   String    @map("platform_email") // user-12345@damocles.no
   replyToEmail    String    @map("reply_to_email") // responses@damocles.no
   ccUserEmail     Boolean   @map("cc_user_email") @default(true)
@@ -361,7 +363,7 @@ model PlatformEmail {
   direction       String    // 'outbound' | 'inbound'
   fromEmail       String    @map("from_email")
   toEmail         String    @map("to_email")
-  ccEmails        String[]  @map("cc_emails")
+  ccEmails        String    @map("cc_emails") // JSON array
   subject         String
   bodyHtml        String    @map("body_html")
   bodyText        String    @map("body_text")
@@ -389,12 +391,12 @@ model PlatformEmail {
 model EmailParsing {
   id                  String    @id @default(cuid())
   platformEmailId     String    @unique @map("platform_email_id")
-  admissions          String[]  // Detected admissions
-  violations          String[]  // Detected violations
-  refundOffers        String[]  @map("refund_offers")
-  newDocuments        String[]  @map("new_documents")
-  legalThreats        String[]  @map("legal_threats")
-  escalationTriggers  String[]  @map("escalation_triggers")
+  admissions          String    // JSON: Detected admissions
+  violations          String    // JSON: Detected violations
+  refundOffers        String    @map("refund_offers") // JSON
+  newDocuments        String    @map("new_documents") // JSON
+  legalThreats        String    @map("legal_threats") // JSON
+  escalationTriggers  String    @map("escalation_triggers") // JSON
   sentiment           String    // 'positive', 'neutral', 'negative', 'hostile'
   requiresHumanReview Boolean   @map("requires_human_review") @default(false)
   confidence          Float     @default(0.0)
