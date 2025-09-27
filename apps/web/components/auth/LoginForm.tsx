@@ -36,12 +36,24 @@ export default function LoginForm() {
     }
   };
 
-  const handleBankIDLogin = async () => {
+  const handleVippsLogin = async () => {
     setLoading(true);
+    setError('');
+
     try {
-      await signIn('bankid', { callbackUrl: '/dashboard' });
+      const result = await signIn('vipps', {
+        redirect: false,
+        callbackUrl: '/dashboard',
+      });
+
+      if (result?.error) {
+        setError('Vipps pålogging feilet. Prøv igjen.');
+      } else if (result?.url) {
+        window.location.href = result.url;
+      }
     } catch (err) {
-      setError('BankID pålogging feilet');
+      setError('Noe gikk galt med Vipps pålogging.');
+    } finally {
       setLoading(false);
     }
   };
@@ -125,12 +137,12 @@ export default function LoginForm() {
           </div>
 
           <button
-            onClick={handleBankIDLogin}
+            onClick={handleVippsLogin}
             disabled={loading}
-            className="mt-4 w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center space-x-2"
+            className="mt-4 w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 flex items-center justify-center space-x-2"
           >
             <CreditCard className="h-5 w-5" />
-            <span>Logg inn med BankID</span>
+            <span>Logg inn med Vipps</span>
           </button>
         </div>
 
