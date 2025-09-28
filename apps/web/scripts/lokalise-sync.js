@@ -4,9 +4,17 @@ const { LokaliseApi } = require('@lokalise/node-api');
 const fs = require('fs').promises;
 const path = require('path');
 
-// Lokalise configuration - provided by user
-const LOKALISE_API_TOKEN = process.env.LOKALISE_API_TOKEN || 'e7ef0f2f2c50bfbb2504450e0fb96cf1448f4859';
-const PROJECT_ID = '6660133068d80e8f372e83.69311825';
+// Lokalise configuration - MUST be set via environment variables
+const LOKALISE_API_TOKEN = process.env.LOKALISE_API_TOKEN;
+const PROJECT_ID = process.env.LOKALISE_PROJECT_ID;
+
+if (!LOKALISE_API_TOKEN || !PROJECT_ID) {
+  console.error('❌ Missing required environment variables:');
+  console.error('   LOKALISE_API_TOKEN - Your Lokalise API token');
+  console.error('   LOKALISE_PROJECT_ID - Your Lokalise project ID');
+  console.error('\nSet them in your .env file or environment.');
+  process.exit(1);
+}
 
 const lokaliseApi = new LokaliseApi({ apiToken: LOKALISE_API_TOKEN });
 
