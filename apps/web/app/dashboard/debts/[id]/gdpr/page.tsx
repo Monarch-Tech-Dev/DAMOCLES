@@ -9,9 +9,9 @@ import {
   DocumentTextIcon,
   ClockIcon,
   CheckCircleIcon,
-  ExclamationTriangleIcon,
   PaperAirplaneIcon
 } from '@heroicons/react/24/outline'
+import { ExclamationTriangleIcon } from '@heroicons/react/24/solid'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
