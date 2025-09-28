@@ -14,7 +14,7 @@ export function Stats() {
           <div className="group">
             <div className="p-8 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300">
               <div className="text-5xl lg:text-6xl font-black text-white mb-4 group-hover:scale-110 transition-transform duration-300">€2.4M</div>
-              <div className="text-white/80 font-medium uppercase tracking-wide">Money Recovered</div>
+              <div className="text-white/80 font-medium uppercase tracking-wide">Penger Gjenopprettet</div>
               <div className="mt-2 w-full h-1 bg-gradient-to-r from-purple-300 to-white/50 rounded-full"></div>
             </div>
           </div>
@@ -22,7 +22,7 @@ export function Stats() {
           <div className="group">
             <div className="p-8 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300">
               <div className="text-5xl lg:text-6xl font-black text-white mb-4 group-hover:scale-110 transition-transform duration-300">15,000+</div>
-              <div className="text-white/80 font-medium uppercase tracking-wide">Violations Detected</div>
+              <div className="text-white/80 font-medium uppercase tracking-wide">Brudd Oppdaget</div>
               <div className="mt-2 w-full h-1 bg-gradient-to-r from-pink-300 to-white/50 rounded-full"></div>
             </div>
           </div>
@@ -30,7 +30,7 @@ export function Stats() {
           <div className="group">
             <div className="p-8 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300">
               <div className="text-5xl lg:text-6xl font-black text-white mb-4 group-hover:scale-110 transition-transform duration-300">8,500</div>
-              <div className="text-white/80 font-medium uppercase tracking-wide">Protected Users</div>
+              <div className="text-white/80 font-medium uppercase tracking-wide">Beskyttede Brukere</div>
               <div className="mt-2 w-full h-1 bg-gradient-to-r from-cyan-300 to-white/50 rounded-full"></div>
             </div>
           </div>
@@ -38,7 +38,7 @@ export function Stats() {
           <div className="group">
             <div className="p-8 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300">
               <div className="text-5xl lg:text-6xl font-black text-white mb-4 group-hover:scale-110 transition-transform duration-300">95%</div>
-              <div className="text-white/80 font-medium uppercase tracking-wide">Success Rate</div>
+              <div className="text-white/80 font-medium uppercase tracking-wide">Suksessrate</div>
               <div className="mt-2 w-full h-1 bg-gradient-to-r from-emerald-300 to-white/50 rounded-full"></div>
             </div>
           </div>
