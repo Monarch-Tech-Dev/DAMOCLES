@@ -223,9 +223,7 @@ export default function AnalyticsPage() {
             categories={["revenue", "gdpr"]}
             colors={["green", "purple"]}
             yAxisWidth={70}
-            valueFormatter={(value, category) =>
-              category === 'revenue' ? `${(value / 1000).toFixed(0)}k NOK` : `${value}`
-            }
+            valueFormatter={(value) => `${value}`}
           />
         </Card>
       </div>
