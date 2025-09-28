@@ -1,1 +1,83 @@
-{}
+{
+  "nav": {
+    "home": "Hjem",
+    "how_it_works": "Slik fungerer det",
+    "pricing": "Priser",
+    "about": "Om oss",
+    "login": "Logg inn",
+    "register": "Registrer deg"
+  },
+  "hero": {
+    "title": "Beskytt deg mot ulovlig inkasso",
+    "subtitle": "Automatisk gjeldsforsvar med GDPR-rettigheter og bruddoppdagelse",
+    "description": "Ta kontroll over gjelden din med juridiske automatiseringsverktøy som oppdager ulovlige gebyrer, sender GDPR-forespørsler, og sporer din gjeldshelse gjennom vårt PDI-system.",
+    "check_debt": "Sjekk min gjeld",
+    "learn_more": "Les mer"
+  },
+  "stats": {
+    "recovered": "Penger Gjenopprettet",
+    "violations": "Brudd Oppdaget",
+    "users": "Beskyttede Brukere",
+    "success": "Suksessrate"
+  },
+  "features": {
+    "active_protection": "Aktiv beskyttelse",
+    "gdpr_ready": "GDPR Klar",
+    "automated_protection": "Automatisk Beskyttelse",
+    "stop_illegal": "Stopp ulovlig inkasso",
+    "detect_violations": "Oppdag brudd automatisk og ta juridiske skritt med GDPR-verktøy",
+    "debt_health": "Gjeldshelse-sjekk",
+    "calculate_pdi": "Beregn din personlige gjeldsindeks og identifiser potensielle brudd i gjeldsinnkrevingen din",
+    "legal_requests": "Juridiske dataforespørsler",
+    "auto_gdpr": "Generer og send GDPR-forespørsler automatisk til inkassoselskaper og kredittbyråer",
+    "collective_action": "Kollektiv handling",
+    "join_sword": "Bli med SWORD-tokenholdere i koordinert juridisk handling mot ulovlig gjeldspraksis"
+  },
+  "steps": {
+    "title": "Tre enkle trinn",
+    "subtitle": "Hvordan DAMOCLES beskytter dine rettigheter",
+    "description": "Få automatisk juridisk beskyttelse mot ulovlig inkassopraksis",
+    "step1": {
+      "title": "Registrer deg og verifiser",
+      "description": "Opprett kontoen din med sikker BankID-verifisering og aktiver automatisk gjeldsbeskyttelse"
+    },
+    "step2": {
+      "title": "Gjeldshelse-sjekk",
+      "description": "Beregn din personlige gjeldsindeks og skann automatisk for ulovlige gebyrer og inkassobrudd"
+    },
+    "step3": {
+      "title": "Ta juridiske skritt",
+      "description": "Generer GDPR-forespørsler automatisk, inngi klager og bli med i kollektiv handling gjennom SWORD-tokens"
+    }
+  },
+  "dashboard": {
+    "title": "Kontrollpanel",
+    "debts": "Gjeld",
+    "pdi": "PDI",
+    "gdpr": "GDPR",
+    "recoveries": "Gjenvinnelse",
+    "cardano": "Cardano"
+  },
+  "cta": {
+    "stop_illegal": "Stopp ulovlig inkasso",
+    "ready_fight": "Klar til å kjempe tilbake mot ulovlige gebyrer?",
+    "automated_protection": "Få automatisk juridisk beskyttelse som setter dine rettigheter først. Start med en gratis gjeldshelse-sjekk og GDPR-bruddskanning.",
+    "check_debt": "Sjekk min gjeld",
+    "sign_in": "Logg inn",
+    "gdpr_detection": "GDPR-bruddoppdagelse",
+    "automated_requests": "Automatiserte juridiske forespørsler",
+    "collective_ready": "Kollektiv handling klar"
+  },
+  "footer": {
+    "tagline": "Automatisk gjeldsbeskyttelsesplattform som bruker GDPR-rettigheter og bruddoppdagelse.",
+    "defending": "Forsvarer dine rettigheter mot ulovlig inkasso",
+    "platform": "Plattform",
+    "company": "Selskap",
+    "legal": "Juridisk",
+    "contact": "Kontakt",
+    "privacy": "Personvernerklæring",
+    "terms": "Vilkår for bruk",
+    "gdpr_compliance": "GDPR-samsvar",
+    "copyright": "© 2024 DAMOCLES Platform. Automatisk gjeldsbeskyttelse for alle."
+  }
+}
