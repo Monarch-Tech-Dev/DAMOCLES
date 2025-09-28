@@ -7,13 +7,13 @@ import { motion } from 'framer-motion'
 import {
   ArrowLeftIcon,
   PencilIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
+    CheckCircleIcon,
   ClockIcon,
   DocumentTextIcon,
   ChatBubbleLeftRightIcon,
   BanknotesIcon
 } from '@heroicons/react/24/outline'
+import { ExclamationTriangleIcon } from '@heroicons/react/24/solid'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
