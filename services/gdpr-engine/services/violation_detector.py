@@ -173,22 +173,88 @@ class ViolationDetector:
     def _analyze_gdpr_response(self, content: str) -> List[Dict[str, Any]]:
         """Specialized analysis for GDPR responses"""
         violations = []
-        
-        # Check for incomplete responses
-        if len(content) < 500:
+        content_lower = content.lower()
+
+        # Smart completeness assessment
+        completeness_score = self._assess_completeness(content_lower)
+
+        if completeness_score < 0.4:  # Below 40% completeness
             violations.append({
                 "id": str(uuid.uuid4()),
                 "type": "incomplete_response",
-                "severity": "medium",
-                "confidence": 0.6,
-                "evidence": f"Response too short: {len(content)} characters",
-                "legal_reference": "GDPR Article 12(3)",
-                "estimated_damage": 150.0,
-                "description": "GDPR response appears incomplete or insufficient",
+                "severity": "high" if completeness_score < 0.2 else "medium",
+                "confidence": min(0.9, 1.0 - completeness_score),
+                "evidence": f"Response completeness score: {completeness_score:.2f}",
+                "legal_reference": "GDPR Article 12(3) and Article 15",
+                "estimated_damage": 300.0 if completeness_score < 0.2 else 150.0,
+                "description": f"GDPR response appears incomplete (score: {completeness_score:.1%})",
                 "created_at": datetime.now().isoformat()
             })
-        
+
+        # Check for legitimate "no data" responses
+        no_data_patterns = [
+            "ingen personopplysninger",
+            "no personal data",
+            "ikke registrert",
+            "not registered",
+            "no data held"
+        ]
+
+        has_legitimate_no_data = any(pattern in content_lower for pattern in no_data_patterns)
+
+        # If very short but has legitimate no-data explanation, reduce severity
+        if len(content) < 300 and has_legitimate_no_data:
+            # Remove or downgrade incomplete response violation
+            violations = [v for v in violations if v["type"] != "incomplete_response" or v["confidence"] < 0.5]
+
         return violations
+
+    def _assess_completeness(self, content: str) -> float:
+        """Assess GDPR response completeness based on required elements"""
+        required_elements = {
+            'data_categories': [
+                'personopplysninger', 'personal data', 'personlige data',
+                'kundedata', 'customer data', 'kontaktinformasjon'
+            ],
+            'processing_purposes': [
+                'behandlingsformål', 'processing purpose', 'bruksformål',
+                'hvorfor', 'why', 'formål'
+            ],
+            'retention_period': [
+                'oppbevaringstid', 'retention period', 'sletting',
+                'oppbevaring', 'lagring', 'storage period'
+            ],
+            'third_party_sharing': [
+                'tredjeparter', 'third party', 'deling',
+                'utlevering', 'sharing', 'mottakere'
+            ],
+            'legal_basis': [
+                'behandlingsgrunnlag', 'legal basis', 'juridisk grunnlag',
+                'lovhjemmel', 'consent', 'samtykke'
+            ],
+            'rights_info': [
+                'rettigheter', 'rights', 'klagerett',
+                'datatilsynet', 'correction', 'deletion'
+            ]
+        }
+
+        score = 0.0
+        total_categories = len(required_elements)
+
+        for category, keywords in required_elements.items():
+            if any(keyword in content for keyword in keywords):
+                score += 1.0
+
+        # Bonus for specific data provision (not just acknowledgment)
+        if re.search(r'(tabell|table|liste|list|\d+.*kr|\d+.*data)', content):
+            score += 0.3
+
+        # Penalty for obvious template responses
+        template_indicators = ['standard svar', 'template', 'automatisk']
+        if any(indicator in content for indicator in template_indicators):
+            score -= 0.2
+
+        return min(1.0, max(0.0, score / total_categories))
     
     def _generate_mock_violations(self, document_type: str) -> List[Dict[str, Any]]:
         """Generate mock violations for demonstration"""
