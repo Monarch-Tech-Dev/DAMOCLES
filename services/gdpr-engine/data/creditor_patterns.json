@@ -1,0 +1,77 @@
+{
+  "lindorff": {
+    "typical_format": "pdf_attachment",
+    "common_violations": ["excessive_fees", "missing_legal_basis", "incomplete_response"],
+    "average_response_time": 28,
+    "response_quality": 0.3,
+    "patterns": {
+      "fee_structure": "Often includes unexplained 'behandlingsgebyr'",
+      "data_completeness": "Rarely provides full call logs",
+      "legal_compliance": "Inconsistent legal basis documentation"
+    },
+    "automation_hints": {
+      "look_for": ["behandlingsgebyr", "purregebyr", "inkassogebyr"],
+      "red_flags": ["standard svar", "ikke tilgjengelig", "av sikkerhetshensyn"]
+    }
+  },
+  "intrum": {
+    "typical_format": "email_with_pdf",
+    "common_violations": ["excessive_retention", "unauthorized_sharing"],
+    "average_response_time": 21,
+    "response_quality": 0.6,
+    "patterns": {
+      "fee_structure": "Generally compliant with Inkassoloven",
+      "data_completeness": "Good data provision",
+      "legal_compliance": "Usually provides legal basis"
+    },
+    "automation_hints": {
+      "look_for": ["kredittreferanse", "external_sharing"],
+      "red_flags": ["permanent_storage", "indefinite_retention"]
+    }
+  },
+  "dnb": {
+    "typical_format": "secure_portal_link",
+    "common_violations": ["delayed_response", "incomplete_data_categories"],
+    "average_response_time": 25,
+    "response_quality": 0.7,
+    "patterns": {
+      "fee_structure": "Transparent fee documentation",
+      "data_completeness": "Comprehensive but technical",
+      "legal_compliance": "Strong legal basis documentation"
+    },
+    "automation_hints": {
+      "look_for": ["kredittscoring", "automated_decisions"],
+      "red_flags": ["technical_limitations", "system_constraints"]
+    }
+  },
+  "nordea": {
+    "typical_format": "pdf_attachment",
+    "common_violations": ["missing_consent_details", "third_party_sharing"],
+    "average_response_time": 30,
+    "response_quality": 0.5,
+    "patterns": {
+      "fee_structure": "Complex fee structures, often unclear",
+      "data_completeness": "Variable quality",
+      "legal_compliance": "Adequate but not detailed"
+    },
+    "automation_hints": {
+      "look_for": ["group_companies", "data_sharing", "marketing"],
+      "red_flags": ["legitimate_interest", "group_processing"]
+    }
+  },
+  "default": {
+    "typical_format": "email_response",
+    "common_violations": ["incomplete_response", "delayed_response"],
+    "average_response_time": 27,
+    "response_quality": 0.4,
+    "patterns": {
+      "fee_structure": "Varies widely",
+      "data_completeness": "Often incomplete",
+      "legal_compliance": "Basic compliance"
+    },
+    "automation_hints": {
+      "look_for": ["standard_template", "generic_response"],
+      "red_flags": ["no_data_available", "system_limitation"]
+    }
+  }
+}
