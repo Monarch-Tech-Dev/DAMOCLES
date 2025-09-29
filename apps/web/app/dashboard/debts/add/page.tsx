@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
-  ArrowLeftIcon,
-  MagnifyingGlassIcon,
-  PlusIcon
-} from '@heroicons/react/24/outline'
-import { ExclamationTriangleIcon } from '@heroicons/react/24/solid'
+  ArrowLeft,
+  Search,
+  Plus,
+  AlertTriangle
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -248,7 +248,7 @@ export default function AddDebtPage() {
         <div className="flex items-center gap-4 mb-6">
           <Link href="/dashboard/debts">
             <Button variant="outline" size="sm">
-              <ArrowLeftIcon className="w-4 h-4 mr-2" />
+              <ArrowLeft className="w-4 h-4 mr-2" />
               Tilbake
             </Button>
           </Link>
@@ -287,7 +287,7 @@ export default function AddDebtPage() {
               
               {/* Search */}
               <div className="relative mb-6">
-                <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <Input
                   placeholder="Søk etter kreditor..."
                   value={creditorSearch}
@@ -303,7 +303,7 @@ export default function AddDebtPage() {
                   onClick={() => setShowNewCreditorForm(true)}
                   className="w-full"
                 >
-                  <PlusIcon className="w-4 h-4 mr-2" />
+                  <Plus className="w-4 h-4 mr-2" />
                   Opprett ny kreditor
                 </Button>
               </div>
@@ -473,7 +473,7 @@ export default function AddDebtPage() {
                 
                 <div className="mt-3 flex items-center gap-4 text-sm">
                   <span className="flex items-center gap-1">
-                    <ExclamationTriangleIcon className="w-4 h-4" />
+                    <AlertTriangle className="w-4 h-4" />
                     <span className={getRiskColor(selectedCreditor.violationScore)}>
                       Overtredelsescore: {selectedCreditor.violationScore}
                     </span>

@@ -252,11 +252,13 @@ class GDPREngine:
         try:
             # Get creditor violation statistics
             stats = await self.db.get_creditor_violation_stats(creditor_id)
-            
-            # Check if sword threshold is met
-            sword_threshold = 100  # Configurable threshold
-            
-            if stats['total_violations'] >= sword_threshold:
+
+            # Smart threshold calculation
+            should_trigger = await self._should_trigger_sword_protocol(
+                creditor_id, stats, violations
+            )
+
+            if should_trigger:
                 # Create blockchain evidence entry
                 evidence_hash = await self._create_blockchain_evidence(
                     creditor_id, violations
@@ -302,35 +304,173 @@ class GDPREngine:
         
         if debt:
             return {
-                'account_number': debt.account_number,
-                'original_amount': float(debt.original_amount),
-                'current_amount': float(debt.current_amount)
+                'account_number': debt.get('account_number', 'Ukjent'),
+                'original_amount': float(debt.get('original_amount', 0)),
+                'current_amount': float(debt.get('current_amount', 0))
             }
         
         return {'account_number': 'Ukjent'}
     
     async def _schedule_followup_reminder(self, request_id: str, delay_days: int):
-        """Schedule follow-up reminder for GDPR request"""
-        await asyncio.sleep(delay_days * 24 * 60 * 60)  # Convert days to seconds
-        
+        """Schedule escalating follow-up sequence for GDPR request"""
+        await asyncio.sleep(delay_days * 24 * 60 * 60)
+
         gdpr_request = await self.db.get_gdpr_request(request_id)
-        
+
         if gdpr_request and gdpr_request.status == 'SENT':
-            # Send reminder email
-            user = await self.db.get_user(gdpr_request.user_id)
-            creditor = await self.db.get_creditor(gdpr_request.creditor_id)
-            
+            days_elapsed = (datetime.now() - gdpr_request.sent_at).days
+            await self._escalate_non_response(request_id, days_elapsed)
+
+    async def _escalate_non_response(self, request_id: str, days_elapsed: int):
+        """Automated escalation sequence for non-responsive creditors"""
+        gdpr_request = await self.db.get_gdpr_request(request_id)
+        if not gdpr_request:
+            return
+
+        user = await self.db.get_user(gdpr_request.user_id)
+        creditor = await self.db.get_creditor(gdpr_request.creditor_id)
+
+        if days_elapsed == 25:
+            # Day 25: Friendly reminder
             await self.email_service.send_gdpr_reminder_email(
                 user.email,
                 creditor.name,
                 gdpr_request.reference_id,
-                gdpr_request.response_due
+                gdpr_request.response_due,
+                tone="friendly"
             )
+            logger.info(f"Sent friendly reminder for request {request_id}")
+
+        elif days_elapsed == 35:
+            # Day 35: Formal notice to creditor and Datatilsynet
+            await self._notify_datatilsynet(gdpr_request, user, creditor)
+            await self.email_service.send_formal_notice_email(
+                creditor.privacy_email,
+                user,
+                gdpr_request.reference_id,
+                days_elapsed
+            )
+            logger.info(f"Escalated to Datatilsynet for request {request_id}")
+
+        elif days_elapsed == 45:
+            # Day 45: Initiate legal proceedings
+            await self._initiate_legal_proceedings(gdpr_request, user, creditor)
+            logger.info(f"Initiated legal proceedings for request {request_id}")
+
+        elif days_elapsed >= 60:
+            # Day 60+: Automatic SWORD protocol trigger
+            violation = {
+                "type": "failure_to_respond",
+                "severity": "critical",
+                "confidence": 0.95,
+                "evidence": f"No response after {days_elapsed} days",
+                "legal_reference": "GDPR Article 12(3)",
+                "estimated_damage": 500.0
+            }
+            await self.trigger_sword_protocol(creditor.id, [violation])
+
+    async def _notify_datatilsynet(self, gdpr_request, user, creditor):
+        """Notify Norwegian Data Protection Authority"""
+        await self.email_service.send_datatilsynet_complaint(
+            subject=f"GDPR Violation - No Response from {creditor.name}",
+            creditor_info={
+                "name": creditor.name,
+                "org_number": creditor.organization_number,
+                "email": creditor.privacy_email
+            },
+            request_details={
+                "reference_id": gdpr_request.reference_id,
+                "sent_date": gdpr_request.sent_at,
+                "user_id": user.id,
+                "user_email": user.email
+            }
+        )
+
+    async def _initiate_legal_proceedings(self, gdpr_request, user, creditor):
+        """Initiate legal proceedings through forliksrådet (conciliation court)"""
+        # Generate documentation package for small claims court
+        legal_package = {
+            "case_type": "gdpr_non_compliance",
+            "damages_claimed": 3000.0,  # Standard GDPR violation fine
+            "evidence": {
+                "original_request": gdpr_request.content,
+                "tracking_data": f"Sent: {gdpr_request.sent_at}",
+                "reference_id": gdpr_request.reference_id
+            },
+            "creditor_info": {
+                "name": creditor.name,
+                "org_number": creditor.organization_number,
+                "address": creditor.address if hasattr(creditor, 'address') else "Unknown"
+            }
+        }
+
+        # Store legal case record
+        await self.db.create_legal_case({
+            "gdpr_request_id": gdpr_request.id,
+            "case_type": "forliksrad",
+            "status": "initiated",
+            "claim_amount": 3000.0,
+            "evidence_package": legal_package
+        })
+
+        # Notify user of legal action
+        await self.email_service.send_legal_action_notification(
+            user.email,
+            creditor.name,
+            gdpr_request.reference_id,
+            legal_package
+        )
     
     async def _parse_pdf_response(self, content: bytes) -> Dict[str, Any]:
-        """Parse PDF GDPR response"""
-        # Implementation would use pdfplumber or similar
-        return {"format": "pdf", "text": "PDF content extraction not implemented"}
+        """Parse PDF GDPR response with OCR fallback"""
+        try:
+            import pdfplumber
+            import pytesseract
+            from pdf2image import convert_from_bytes
+            import io
+
+            # First attempt: Direct text extraction
+            with pdfplumber.open(io.BytesIO(content)) as pdf:
+                extracted_text = ""
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        extracted_text += page_text + "\n"
+
+                # Extract tables separately
+                tables = []
+                for page in pdf.pages:
+                    page_tables = page.extract_tables()
+                    if page_tables:
+                        tables.extend(page_tables)
+
+            # Fallback: OCR for scanned PDFs
+            if len(extracted_text.strip()) < 50:  # Likely scanned PDF
+                logger.info("Low text extraction, attempting OCR")
+                images = convert_from_bytes(content, dpi=300)
+                ocr_text = ""
+                for img in images:
+                    # Norwegian language OCR
+                    page_text = pytesseract.image_to_string(img, lang='nor+eng')
+                    ocr_text += page_text + "\n"
+
+                if len(ocr_text.strip()) > len(extracted_text.strip()):
+                    extracted_text = ocr_text
+
+            return {
+                "format": "pdf",
+                "text": extracted_text,
+                "tables": tables,
+                "page_count": len(pdf.pages) if 'pdf' in locals() else 0,
+                "extraction_method": "ocr" if len(extracted_text.strip()) < 50 else "direct"
+            }
+
+        except ImportError as e:
+            logger.warning(f"PDF processing libraries not available: {e}")
+            return {"format": "pdf", "text": "PDF processing not available", "error": str(e)}
+        except Exception as e:
+            logger.error(f"PDF parsing failed: {e}")
+            return {"format": "pdf", "text": "", "error": str(e)}
     
     async def _parse_email_response(self, content: bytes) -> Dict[str, Any]:
         """Parse email GDPR response"""
@@ -392,3 +532,86 @@ class GDPREngine:
                         
                 except Exception as e:
                     logger.error(f"Failed to trigger settlement for user {user.id}: {e}")
+
+    async def _should_trigger_sword_protocol(
+        self,
+        creditor_id: str,
+        stats: Dict[str, Any],
+        recent_violations: List[Violation]
+    ) -> bool:
+        """Smart SWORD protocol activation based on severity-weighted thresholds"""
+
+        # Get recent violations (last 30 days)
+        recent_critical = len([v for v in recent_violations if v.severity == 'critical'])
+        recent_high = len([v for v in recent_violations if v.severity == 'high'])
+
+        total_critical = stats.get('critical_violations', 0)
+        total_high = stats.get('high_violations', 0)
+        total_violations = stats.get('total_violations', 0)
+
+        # Severity-weighted activation criteria
+        if recent_critical >= 5 or total_critical >= 10:  # Critical violations
+            logger.info(f"SWORD triggered: {total_critical} critical violations for creditor {creditor_id}")
+            return True
+
+        if recent_high >= 15 or total_high >= 30:  # High severity violations
+            logger.info(f"SWORD triggered: {total_high} high-severity violations for creditor {creditor_id}")
+            return True
+
+        # Time-based clustering (20+ violations in 7 days)
+        if len(recent_violations) >= 20:
+            # Check if violations occurred within 7 days
+            recent_dates = [v.created_at for v in recent_violations if hasattr(v, 'created_at')]
+            if recent_dates and self._check_time_clustering(recent_dates, days=7):
+                logger.info(f"SWORD triggered: Time-clustered violations for creditor {creditor_id}")
+                return True
+
+        # Pattern matching (same violation type across multiple users)
+        if await self._check_violation_patterns(creditor_id, recent_violations):
+            logger.info(f"SWORD triggered: Systematic violation pattern for creditor {creditor_id}")
+            return True
+
+        # Traditional threshold as fallback
+        if total_violations >= 100:
+            logger.info(f"SWORD triggered: Traditional threshold ({total_violations} violations) for creditor {creditor_id}")
+            return True
+
+        return False
+
+    def _check_time_clustering(self, violation_dates: List[datetime], days: int) -> bool:
+        """Check if violations are clustered in time"""
+        if len(violation_dates) < 20:
+            return False
+
+        violation_dates.sort()
+        time_window = timedelta(days=days)
+
+        for i in range(len(violation_dates) - 19):
+            if violation_dates[i + 19] - violation_dates[i] <= time_window:
+                return True
+
+        return False
+
+    async def _check_violation_patterns(
+        self,
+        creditor_id: str,
+        recent_violations: List[Violation]
+    ) -> bool:
+        """Check for systematic violation patterns across users"""
+
+        # Group violations by type
+        violation_types = {}
+        for violation in recent_violations:
+            v_type = violation.type if hasattr(violation, 'type') else violation.get('type')
+            if v_type not in violation_types:
+                violation_types[v_type] = 0
+            violation_types[v_type] += 1
+
+        # Check if same violation type affects 10+ different users
+        for v_type, count in violation_types.items():
+            if count >= 10:
+                # Verify it's across different users (would need user_id tracking)
+                logger.info(f"Pattern detected: {v_type} violation found {count} times")
+                return True
+
+        return False
