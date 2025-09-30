@@ -228,8 +228,8 @@ export default function PDIPage() {
 
   const isFormValid = Object.values(inputs).slice(0, 6).every(value => value >= 0) && inputs.monthlyIncome > 0
 
-  const suggestBankIDFill = () => {
-    // Demo values for BankID auto-fill
+  const suggestVippsFill = () => {
+    // Demo values for Vipps auto-fill
     setInputs({
       monthlyIncome: 45000,
       totalDebt: 850000,
@@ -271,10 +271,10 @@ export default function PDIPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={suggestBankIDFill}
+              onClick={suggestVippsFill}
               className="text-blue-600 border-blue-300 hover:bg-blue-50"
             >
-              🏦 Demo BankID Fill
+              📱 Demo Vipps Fill
             </Button>
           </div>
 

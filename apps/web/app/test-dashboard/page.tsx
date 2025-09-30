@@ -163,7 +163,7 @@ export default function TestDashboardPage() {
             <div className="space-y-2 text-blue-200">
               <p><strong>E-post:</strong> {user.email}</p>
               <p><strong>Shield Tier:</strong> {user.tier}</p>
-              <p><strong>BankID Verifisert:</strong> {user.bankIdVerified ? 'Ja' : 'Nei'}</p>
+              <p><strong>Vipps Verifisert:</strong> {user.vippsVerified ? 'Ja' : 'Nei'}</p>
               <p><strong>Token Balance:</strong> {user.tokenBalance}</p>
               <p><strong>Status:</strong> {user.onboardingStatus}</p>
             </div>
