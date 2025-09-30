@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .score-box { background: #f7f7f7; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center; }
+    .score { font-size: 48px; font-weight: bold; color: #667eea; }
+    .button { display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🧮 Trust Analysis Complete</h1>
+    </div>
+    <div class="content">
+      <h2>{{userName}}, your debt analysis is ready</h2>
+      
+      <div class="score-box">
+        <div class="score">{{trustScore}}%</div>
+        <p>Trust Score</p>
+      </div>
+      
+      <h3>Key Findings:</h3>
+      <ul>
+        {{#each findings}}
+        <li>{{this}}</li>
+        {{/each}}
+      </ul>
+      
+      <h3>Detected Violations:</h3>
+      <ul>
+        {{#each violations}}
+        <li>{{this.type}}: {{this.description}}</li>
+        {{/each}}
+      </ul>
+      
+      <a href="{{reportUrl}}" class="button">View Full Report</a>
+      
+      <p>{{empowermentMessage}}</p>
+    </div>
+  </div>
+</body>
+</html>
