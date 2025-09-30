@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(null);
       setToken(null);
-      router.push('/login');
+      router.push('/auth/login');
     } catch (error) {
       console.error('Logout error:', error);
     }
