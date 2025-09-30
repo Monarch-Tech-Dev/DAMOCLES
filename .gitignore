@@ -257,6 +257,7 @@ test-data/production/
 # Generated documentation with internal details
 docs/internal/
 docs/private/
+docs/USER_FLOW_AND_ARCHITECTURE.md
 
 # Personal Learning Documents (INTERNAL USE ONLY)
 docs/SYSTEMS_MASTERY_GUIDE.md
