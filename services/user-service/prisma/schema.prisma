@@ -55,7 +55,6 @@ model Creditor {
   debts                 Debt[]
   gdprRequests          GdprRequest[]
   violations            Violation[]
-  collectiveIntelligence CollectiveIntelligence?
   platformEmails        PlatformEmail[]
 
   @@map("creditors")
@@ -287,36 +286,6 @@ model LearningEvent {
   @@map("learning_events")
 }
 
-model ResponsePattern {
-  id                    String   @id @default(cuid())
-  creditorId            String   @map("creditor_id")
-  triggerPhrase         String   @map("trigger_phrase")
-  successRate           Float    @map("success_rate")
-  admissionType         String   @map("admission_type")
-  sampleCount           Int      @map("sample_count")
-  averageResponseTime   Float    @map("average_response_time")
-  lastUpdated           DateTime @updatedAt @map("last_updated")
-
-  @@unique([creditorId, triggerPhrase])
-  @@map("response_patterns")
-}
-
-model CollectiveIntelligence {
-  id                  String   @id @default(cuid())
-  creditorId          String   @unique @map("creditor_id")
-  violationPattern    String   @map("violation_pattern")
-  affectedUsers       Int      @map("affected_users")
-  totalHarm           Decimal  @map("total_harm")
-  evidenceStrength    String   @map("evidence_strength") // 'weak', 'moderate', 'strong', 'conclusive'
-  classActionEligible Boolean  @map("class_action_eligible")
-  winningStrategies   String   @map("winning_strategies") // JSON array
-  averagePdiImpact    Float    @map("average_pdi_impact")
-  lastUpdated         DateTime @updatedAt @map("last_updated")
-
-  creditor            Creditor @relation(fields: [creditorId], references: [id])
-
-  @@map("collective_intelligence")
-}
 
 model ClassAction {
   id                String    @id @default(cuid())
@@ -454,4 +423,112 @@ model Payment {
   user                User      @relation(fields: [userId], references: [id])
 
   @@map("payments")
+}
+
+// ==============================================================================
+// EVENT SOURCING & LEGAL COMPLIANCE MODELS
+// For immutable audit trail and legal proceedings evidence
+// ==============================================================================
+
+model PrivacyEvent {
+  id            String   @id @default(cuid())
+  aggregateId   String   @map("aggregate_id")     // case_id or collector_id
+  aggregateType String   @map("aggregate_type")   // 'case', 'collector', 'user'
+  eventType     String   @map("event_type")       // 'DSAR_SUBMITTED', 'VIOLATION_DETECTED', etc.
+  eventData     String   @map("event_data")       // JSON data
+  metadata      String?                           // Additional JSON metadata
+  createdAt     DateTime @default(now()) @map("created_at")
+  createdBy     String?  @map("created_by")       // User ID who triggered event
+
+  @@index([aggregateId, createdAt])
+  @@index([eventType])
+  @@index([aggregateType])
+  @@map("privacy_events")
+}
+
+model CollectorRiskScore {
+  id                    String   @id @default(cuid())
+  collectorId           String   @unique @map("collector_id")
+  riskScore             Float    @default(0.0) @map("risk_score")
+  totalViolations       Int      @default(0) @map("total_violations")
+  violationScore        Float    @default(0.0) @map("violation_score")
+  responseScore         Float    @default(0.0) @map("response_score")
+  severityScore         Float    @default(0.0) @map("severity_score")
+  enforcementScore      Float    @default(0.0) @map("enforcement_score")
+  confidenceLevel       Float    @default(0.0) @map("confidence_level")
+  affectedUsers         Int      @default(0) @map("affected_users")
+  lastCalculated        DateTime @updatedAt @map("last_calculated")
+
+  @@index([riskScore])
+  @@index([totalViolations])
+  @@map("collector_risk_scores")
+}
+
+model ViolationPattern {
+  id              String   @id @default(cuid())
+  collectorId     String   @map("collector_id")
+  article         String                        // 'GDPR_15', 'GDPR_22', etc.
+  violationType   String   @map("violation_type") // 'SETTLEMENT_LOGIC', 'DATA_CONTRADICTION', etc.
+  occurrenceCount Int      @default(1) @map("occurrence_count")
+  severity        String                        // 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'
+  firstDetected   DateTime @default(now()) @map("first_detected")
+  lastDetected    DateTime @updatedAt @map("last_detected")
+
+  @@unique([collectorId, article, violationType])
+  @@index([collectorId])
+  @@index([severity])
+  @@map("violation_patterns")
+}
+
+model ResponsePattern {
+  id                    String   @id @default(cuid())
+  creditorId            String   @map("creditor_id")
+  triggerPhrase         String   @map("trigger_phrase")
+  successRate           Float    @map("success_rate")
+  admissionType         String   @map("admission_type")
+  sampleCount           Int      @map("sample_count")
+  averageResponseTime   Float    @map("average_response_time")
+  lastUpdated           DateTime @updatedAt @map("last_updated")
+
+  @@unique([creditorId, triggerPhrase], name: "creditorId_triggerPhrase")
+  @@index([creditorId])
+  @@index([successRate])
+  @@map("response_patterns")
+}
+
+model CollectiveIntelligence {
+  id                    String   @id @default(cuid())
+  creditorId            String   @unique @map("creditor_id")
+  violationPattern      String   @map("violation_pattern")
+  affectedUsers         Int      @map("affected_users")
+  totalHarm             Float    @map("total_harm")
+  evidenceStrength      String   @map("evidence_strength") // 'weak', 'moderate', 'strong', 'conclusive'
+  classActionEligible   Boolean  @map("class_action_eligible")
+  winningStrategies     String   @map("winning_strategies") // JSON array
+  averagePdiImpact      Float    @map("average_pdi_impact")
+  lastUpdated           DateTime @updatedAt @map("last_updated")
+
+  @@index([classActionEligible])
+  @@index([evidenceStrength])
+  @@map("collective_intelligence")
+}
+
+// For blockchain evidence integration
+model BlockchainEvidence {
+  id                    String   @id @default(cuid())
+  caseId                String   @map("case_id")
+  documentType          String   @map("document_type")     // 'GDPR_REQUEST', 'GDPR_RESPONSE', etc.
+  contentHash           String   @map("content_hash")      // SHA-256 hash
+  blockchainTxId        String   @unique @map("blockchain_tx_id")
+  blockNumber           Int?     @map("block_number")
+  timestamp             DateTime
+  proofUrl              String   @map("proof_url")
+  ipfsHash              String?  @map("ipfs_hash")
+  verified              Boolean  @default(false)
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  @@index([caseId])
+  @@index([contentHash])
+  @@index([blockchainTxId])
+  @@map("blockchain_evidence")
 }

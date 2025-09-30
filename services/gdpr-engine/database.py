@@ -5,6 +5,12 @@ from models.user import User
 from models.creditor import Creditor
 from models.gdpr import GDPRRequest, GDPRResponse, Violation
 
+class DictObj:
+    """Simple object wrapper for dictionaries to allow attribute access"""
+    def __init__(self, data: dict):
+        for key, value in data.items():
+            setattr(self, key, value)
+
 class Database:
     def __init__(self):
         self.pool = None
@@ -104,3 +110,52 @@ class Database:
             "violation_score": 3.2,
             "average_response_time": 25.5
         }
+
+    async def get_user_debt_with_creditor(self, user_id: str, creditor_id: str) -> Optional[Dict[str, Any]]:
+        # Mock debt retrieval for GDPR request generation
+        from datetime import datetime
+        return {
+            "id": f"debt_{user_id}_{creditor_id}",
+            "user_id": user_id,
+            "creditor_id": creditor_id,
+            "original_amount": 15000.0,
+            "current_amount": 18500.0,
+            "status": "active",
+            "account_number": "AC12345678",
+            "description": "Unpaid invoice from 2023",
+            "created_at": datetime.now(),
+            "updated_at": datetime.now()
+        }
+
+    async def create_gdpr_request(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a new GDPR request record"""
+        from datetime import datetime
+        import uuid
+
+        # Mock GDPR request creation
+        gdpr_request = {
+            "id": request_data.get("id", str(uuid.uuid4())),
+            "user_id": request_data["user_id"],
+            "creditor_id": request_data["creditor_id"],
+            "reference_id": request_data["reference_id"],
+            "content": request_data.get("content", ""),
+            "status": request_data.get("status", "PENDING"),
+            "request_type": request_data.get("request_type", "DATA_ACCESS"),
+            "created_at": datetime.now(),
+            "updated_at": datetime.now(),
+            "sent_at": None,
+            "response_received_at": None,
+            "legal_deadline": request_data.get("legal_deadline"),
+            "followup_scheduled_at": request_data.get("followup_scheduled_at")
+        }
+
+        print(f"Mock: Created GDPR request {gdpr_request['id']} for user {gdpr_request['user_id']}")
+        return DictObj(gdpr_request)
+
+    async def update_gdpr_request(self, request_id: str, update_data: Dict[str, Any]) -> bool:
+        """Update a GDPR request record"""
+        from datetime import datetime
+
+        # Mock GDPR request update
+        print(f"Mock: Updated GDPR request {request_id} with {update_data}")
+        return True

@@ -23,7 +23,7 @@ import {
   DollarSign,
   AlertCircle,
 } from 'lucide-react'
-import { useAuth } from '@/lib/auth-context'
+import { useAuth } from '@/contexts/AuthContext'
 import { PremiumGate, FeatureLocked } from '@/components/subscription/premium-gate'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -364,7 +364,7 @@ export default function DocumentsPage() {
                 <Text className="font-medium">
                   {doc.price === 0 ? 'Free' : `€${doc.price}`}
                 </Text>
-                <Button size="sm" variant="outline" icon={Download}>
+                <Button size="sm" variant="outline" icon={<Download className="w-4 h-4" />}>
                   Download
                 </Button>
               </div>

@@ -25,7 +25,7 @@ export async function authenticateUser(
       return reply.status(401).send({ error: 'No token provided' });
     }
     
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as any;
     
     // Add user info to request
     (request as any).user = {

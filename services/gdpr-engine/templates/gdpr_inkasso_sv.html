@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDPR-begäran - Inkassoföretag</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #dc2626;">GDPR-begäran - Inkassoföretag</h2>
+
+        <p><strong>Datum:</strong> {{ date }}</p>
+        <p><strong>Referens:</strong> {{ reference_id }}</p>
+
+        <p><strong>Till: {{ creditor_name }}</strong><br>
+        {% if organization_number %}Org.nr: {{ organization_number }}<br>{% endif %}
+        E-post: {{ contact_email }}</p>
+
+        <p><strong>Från: {{ user_name }}</strong><br>
+        E-post: {{ user_email }}</p>
+
+        <hr style="margin: 30px 0;">
+
+        <h3>GDPR-begäran - Särskild fokus på inkassoverksamhet</h3>
+
+        <p><strong style="color: #dc2626;">VIKTIGT:</strong> Som inkassoföretag behandlar ni särskilt känsliga personuppgifter. Denna begäran kräver särskild uppmärksamhet enligt GDPR och svensk inkassolagstiftning.</p>
+
+        <h4>1. Fullständig information om skulden</h4>
+        <ul>
+            <li>Ursprunglig borgenär och skuldbelopp</li>
+            <li>Datum för när skulden överfördes till er</li>
+            <li>Komplett översikt över avgifter och räntor</li>
+            <li>Rättslig grund för varje kostnad</li>
+            <li>Beräkningsgrund för alla tillägg</li>
+        </ul>
+
+        <h4>2. Behandlingsaktiviteter</h4>
+        <ul>
+            <li>Alla kommunikationsloggar (brev, e-post, SMS, telefon)</li>
+            <li>Kreditbedömningar och poängdata</li>
+            <li>Delning av information med tredje parter</li>
+            <li>Registreringar i kreditreferensregister</li>
+            <li>Automatiserade beslutsprocesser</li>
+        </ul>
+
+        <h4>3. Efterlevnad av inkassolagstiftning</h4>
+        <p>Vänligen bekräfta att ni följer:</p>
+        <ul>
+            <li>Inkassolagen (1974:182) - Godtagbar inkassoverksamhet</li>
+            <li>Konsumentskyddslagen - Skydd mot otillbörliga inkassometoder</li>
+            <li>Skuldsaneringslagen - Respekt för skuldsanering</li>
+            <li>Rättegångsbalken - Korrekt rättslig process</li>
+        </ul>
+
+        <h4>4. Databehandlaravtal</h4>
+        <p>Ange vilka databehandlaravtal som gäller min information, inklusive:</p>
+        <ul>
+            <li>Kreditreferensföretag (UC, Creditsafe, etc.)</li>
+            <li>IT-leverantörer</li>
+            <li>Andra inkassoföretag</li>
+            <li>Advokater och rättsväsendet</li>
+        </ul>
+
+        <h4>5. Automatiserade beslut och GDPR Artikel 22 - Kritiskt viktigt</h4>
+        <p><strong style="color: #dc2626;">SCHUFA-DOMEN (EU-domstolen C-634/21):</strong> EU-domstolen har fastslagit att kreditbedömningar som påverkar mina rättigheter eller intressen betydligt omfattas av strikta GDPR-krav.</p>
+
+        <p><strong>Krav på information om automatiserade beslut:</strong></p>
+        <ul>
+            <li><strong>Logik och algoritmer:</strong> Detaljerad beskrivning av poänglogiken som används</li>
+            <li><strong>Betydelse och konsekvenser:</strong> Hur automatiserade beslut påverkar mitt krav</li>
+            <li><strong>Datakällor:</strong> Alla källor till data som används i automatiserade bedömningar</li>
+            <li><strong>Viktningsmodell:</strong> Hur olika faktorer viktas i poängalgoritmen</li>
+            <li><strong>Träffsäkerhet:</strong> Statistik om algoritmens noggrannhet</li>
+            <li><strong>Uppdateringsfrekvens:</strong> Hur ofta algoritmen och data uppdateras</li>
+        </ul>
+
+        <p><strong>Specifika krav efter Schufa-domen:</strong></p>
+        <ul>
+            <li><strong>Meningsfull information:</strong> Inte bara generiska beskrivningar, utan konkret information om hur algoritmen fungerar</li>
+            <li><strong>Begripligt format:</strong> Informationen måste vara tillgänglig för mig som konsument</li>
+            <li><strong>Rätt till mänsklig intervention:</strong> Möjlighet för manuell bedömning av mitt krav</li>
+            <li><strong>Rätt att uttrycka min ståndpunkt:</strong> Möjlighet att ge tilläggsinformation</li>
+            <li><strong>Rätt att bestrida beslutet:</strong> Tydliga rutiner för att utmana automatiserade beslut</li>
+        </ul>
+
+        <p><strong>Inkludera i svaret:</strong></p>
+        <ul>
+            <li>Automatisk behandling av mitt krav</li>
+            <li>Poängalgoritmer som används (detaljerad beskrivning)</li>
+            <li>Profilering för betalningsförmåga</li>
+            <li>Automatiserade uppföljningsprocesser</li>
+            <li><strong>NYTT:</strong> Referenser till använda kreditreferensregister (UC, Creditsafe, etc.)</li>
+            <li><strong>NYTT:</strong> Bedömning av betalningshistorik från offentliga register</li>
+            <li><strong>NYTT:</strong> Machine learning-modeller för riskpoäng</li>
+        </ul>
+
+        {% if account_number and account_number != 'Ukjent' %}
+        <h4>6. Kontoinformation</h4>
+        <p>Skuld registrerad på konto/referens: {{ account_number }}</p>
+        {% endif %}
+
+        <h4>7. Radering och förvaring</h4>
+        <p>Ange:</p>
+        <ul>
+            <li>Förvaringstid för mina personuppgifter</li>
+            <li>Kriterier för automatisk radering</li>
+            <li>Rutiner för manuell radering på begäran</li>
+        </ul>
+
+        <h4>8. Juridiska rättigheter</h4>
+        <p>Bekräfta att jag har informerats om:</p>
+        <ul>
+            <li>Rätt att bestrida skulden</li>
+            <li>Rätt att kräva dokumentation</li>
+            <li>Rätt till betalningsavtal</li>
+            <li>Rätt att klaga till Konsumentverket och Dataskyddsmyndigheten</li>
+        </ul>
+
+        <p><strong style="color: #dc2626;">TIDSFRIST:</strong> Enligt GDPR förväntar jag mig svar inom {{ legal_deadline }} dagar. Försening kan leda till klagomål till Dataskyddsmyndigheten och Konsumentverket.</p>
+
+        <p>Med vänlig hälsning,<br>
+        {{ user_name }}</p>
+
+        <hr style="margin: 30px 0;">
+
+        <p style="font-size: 12px; color: #666;">
+            <strong>Juridisk grund:</strong><br>
+            - GDPR Artikel 15 - Rätten till information<br>
+            - <strong>GDPR Artikel 22 - Automatiserade beslut och profilering</strong><br>
+            - <strong>EU-domstolens dom C-634/21 (Schufa-fallet) - Krav på meningsfull information</strong><br>
+            - Inkassolagen (1974:182)<br>
+            - Dataskyddsförordningen (GDPR:s implementering i Sverige)<br>
+            - Konsumentskyddslagen<br>
+            - Skuldsaneringslagen
+        </p>
+
+        <p style="font-size: 10px; color: #666;">
+            Genererad av DAMOCLES konsumentskyddsplattform
+        </p>
+    </div>
+</body>
+</html>

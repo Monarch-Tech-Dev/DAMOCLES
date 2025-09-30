@@ -13,6 +13,9 @@ from models.user import User
 from models.creditor import Creditor
 from services.email_service import EmailService
 from services.violation_detector import ViolationDetector
+from services.blockchain_client import BlockchainClient
+from services.event_client import EventClient
+from services.template_selector import TemplateSelector
 from database import Database
 
 logger = logging.getLogger(__name__)
@@ -22,15 +25,18 @@ class GDPREngine:
         self.db = database
         self.email_service = EmailService()
         self.violation_detector = ViolationDetector()
-        
+        self.blockchain_client = BlockchainClient()
+        self.event_client = EventClient()
+        self.template_selector = TemplateSelector()
+
         # Initialize Jinja2 environment
         self.template_env = Environment(
             loader=FileSystemLoader('templates'),
             autoescape=True
         )
-        
-        # GDPR request templates by creditor type
-        self.templates = {
+
+        # Legacy GDPR request templates (for fallback)
+        self.legacy_templates = {
             'inkasso': 'gdpr_inkasso.html',
             'bnpl': 'gdpr_bnpl.html',
             'bank': 'gdpr_bank.html',
@@ -38,23 +44,50 @@ class GDPREngine:
         }
 
     async def generate_gdpr_request(
-        self, 
-        user: User, 
-        creditor: Creditor
+        self,
+        user: User,
+        creditor: Creditor,
+        user_preferences: Optional[Dict[str, Any]] = None
     ) -> GDPRRequest:
-        """Generate personalized GDPR request"""
-        
-        # Select template based on creditor type
-        template_name = self.templates.get(
-            creditor.type.lower(), 
-            self.templates['default']
-        )
-        
+        """Generate personalized GDPR request with intelligent template selection"""
+
+        # Prepare user data for template selector
+        user_data = {
+            'user_email': user.email,
+            'creditor_name': creditor.name,
+            'creditor_type': creditor.type.lower() if creditor.type else 'default',
+            'organization_number': creditor.organization_number
+        }
+
+        # Add user preferences if provided
+        if user_preferences:
+            user_data.update(user_preferences)
+
+        # Use intelligent template selection
         try:
+            template_name, template_metadata = self.template_selector.select_template(user_data)
+            logger.info(f"Selected template: {template_name} with confidence: {template_metadata['confidence_score']:.2f}")
+
+            # Log template selection details for debugging
+            logger.info(f"Template selection metadata: {template_metadata}")
+
             template = self.template_env.get_template(template_name)
-        except Exception:
-            # Fallback to default template
-            template = self.template_env.get_template(self.templates['default'])
+        except Exception as e:
+            logger.warning(f"Template selection failed: {e}, falling back to legacy logic")
+
+            # Legacy fallback logic
+            template_name = self.legacy_templates.get(
+                creditor.type.lower() if creditor.type else 'default',
+                self.legacy_templates['default']
+            )
+
+            try:
+                template = self.template_env.get_template(template_name)
+                template_metadata = {'fallback': True, 'confidence_score': 0.5}
+            except Exception:
+                # Final fallback to default template
+                template = self.template_env.get_template(self.legacy_templates['default'])
+                template_metadata = {'fallback': True, 'confidence_score': 0.3}
         
         # Generate unique reference ID
         reference_id = self._generate_reference_id(user, creditor)
@@ -93,7 +126,86 @@ class GDPREngine:
         })
         
         logger.info(f"Generated GDPR request {reference_id} for user {user.id} to creditor {creditor.name}")
-        
+
+        # Record template generation event
+        try:
+            await self.event_client.record_template_generated(
+                case_id=gdpr_request.id,
+                user_id=user.id,
+                template_type=template_name,
+                jurisdiction="NO",
+                articles=["Article 15"]
+            )
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to record template generation event: {str(e)}")
+
+        # Create blockchain evidence for legal compliance
+        try:
+            case_id = gdpr_request.id
+            blockchain_evidence = await self.blockchain_client.create_evidence(
+                case_id=case_id,
+                document_content=content,
+                evidence_type="GDPR_REQUEST",
+                metadata={
+                    "user_id": user.id,
+                    "creditor_id": creditor.id,
+                    "reference_id": reference_id,
+                    "creditor_name": creditor.name,
+                    "created_at": datetime.now().isoformat(),
+                    "legal_basis": "GDPR Article 15 - Right of Access"
+                }
+            )
+
+            if blockchain_evidence:
+                # Store blockchain reference in GDPR request
+                await self.db.update_gdpr_request(gdpr_request.id, {
+                    'blockchain_tx_id': blockchain_evidence.get('txId'),
+                    'blockchain_content_hash': blockchain_evidence.get('contentHash')
+                })
+                logger.info(f"🔗 Blockchain evidence created for GDPR request {reference_id}: {blockchain_evidence.get('txId')}")
+
+                # Record DSAR submission event with blockchain reference
+                try:
+                    await self.event_client.record_dsar_submitted(
+                        case_id=gdpr_request.id,
+                        user_id=user.id,
+                        creditor_id=creditor.id,
+                        creditor_name=creditor.name,
+                        reference_id=reference_id,
+                        blockchain_tx_id=blockchain_evidence.get('txId')
+                    )
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to record DSAR submission event: {str(e)}")
+            else:
+                logger.warning(f"⚠️ Failed to create blockchain evidence for GDPR request {reference_id}")
+
+                # Record DSAR submission event without blockchain reference
+                try:
+                    await self.event_client.record_dsar_submitted(
+                        case_id=gdpr_request.id,
+                        user_id=user.id,
+                        creditor_id=creditor.id,
+                        creditor_name=creditor.name,
+                        reference_id=reference_id
+                    )
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to record DSAR submission event: {str(e)}")
+
+        except Exception as e:
+            logger.error(f"❌ Error creating blockchain evidence for GDPR request {reference_id}: {str(e)}")
+
+            # Still record DSAR submission event even if blockchain fails
+            try:
+                await self.event_client.record_dsar_submitted(
+                    case_id=gdpr_request.id,
+                    user_id=user.id,
+                    creditor_id=creditor.id,
+                    creditor_name=creditor.name,
+                    reference_id=reference_id
+                )
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to record DSAR submission event: {str(e)}")
+
         return gdpr_request
     
     async def send_gdpr_request(
@@ -146,7 +258,23 @@ class GDPREngine:
                 'status': 'SENT',
                 'sent_at': datetime.now()
             })
-            
+
+            # Record request sent event
+            try:
+                await self.event_client.record_request_sent(
+                    case_id=gdpr_request.id,
+                    user_id=user.id,
+                    creditor_id=creditor.id,
+                    delivery_method="email",
+                    tracking_info={
+                        "recipient_email": creditor.privacy_email or f"post@{creditor.name.lower().replace(' ', '')}.no",
+                        "cc_emails": ['post@datatilsynet.no'],
+                        "tracking_pixel_url": tracking_pixel_url
+                    }
+                )
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to record request sent event: {str(e)}")
+
             # Schedule follow-up reminder
             if background_tasks:
                 background_tasks.add_task(
@@ -154,7 +282,7 @@ class GDPREngine:
                     gdpr_request.id,
                     delay_days=25  # 5 days before deadline
                 )
-            
+
             logger.info(f"Sent GDPR request {gdpr_request.reference_id}")
             
         except Exception as e:
@@ -199,11 +327,27 @@ class GDPREngine:
                 'format': response_format,
                 'received_at': datetime.now()
             })
-            
+
+            # Record response received event
+            try:
+                await self.event_client.record_response_received(
+                    case_id=request_id,
+                    user_id=gdpr_request.user_id,
+                    creditor_id=gdpr_request.creditor_id,
+                    response_type=response_format,
+                    response_data={
+                        "format": response_format,
+                        "size_bytes": len(response_content),
+                        "received_at": datetime.now().isoformat()
+                    }
+                )
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to record response received event: {str(e)}")
+
             # Detect violations using AI
             violations = await self.violation_detector.analyze(extracted_data)
             
-            # Store violations
+            # Store violations and record events
             for violation_data in violations:
                 violation_id = str(uuid.uuid4())
                 await self.db.create_violation({
@@ -219,6 +363,25 @@ class GDPREngine:
                     'status': 'PENDING',
                     'created_at': datetime.now()
                 })
+
+                # Record compliance violation event
+                try:
+                    await self.event_client.record_compliance_violation(
+                        case_id=request_id,
+                        user_id=gdpr_request.user_id,
+                        creditor_id=gdpr_request.creditor_id,
+                        violation_type=violation_data.type,
+                        violation_details={
+                            "severity": violation_data.severity,
+                            "confidence": violation_data.confidence,
+                            "evidence": violation_data.evidence,
+                            "legal_reference": violation_data.legal_reference,
+                            "estimated_damage": violation_data.estimated_damage,
+                            "violation_id": violation_id
+                        }
+                    )
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to record compliance violation event: {str(e)}")
             
             # Update request status
             await self.db.update_gdpr_request(request_id, {
