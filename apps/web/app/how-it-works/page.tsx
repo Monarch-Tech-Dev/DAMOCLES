@@ -38,10 +38,10 @@ export default function HowItWorksPage() {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">Register & Verify</h3>
                 <p className="text-gray-600 leading-relaxed mb-6">
-                  Create your account with secure BankID verification and activate automated debt protection
+                  Create your account with secure Vipps verification and activate automated debt protection
                 </p>
                 <ul className="text-left text-gray-600 space-y-2">
-                  <li>✓ Secure BankID verification</li>
+                  <li>✓ Secure Vipps verification</li>
                   <li>✓ GDPR-compliant data handling</li>
                   <li>✓ Instant activation</li>
                 </ul>

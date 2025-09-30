@@ -35,7 +35,7 @@ export function HowItWorks() {
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-4">Register & Verify</h3>
             <p className="text-gray-600 leading-relaxed">
-              Create your account with secure BankID verification and activate automated debt protection
+              Create your account with secure Vipps verification and activate automated debt protection
             </p>
           </div>
 
