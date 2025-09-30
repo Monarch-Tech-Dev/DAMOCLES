@@ -551,19 +551,39 @@ server.get('/risk/responses/:collectorId', async (request, reply) => {
 server.post('/risk/summary', async (request, reply) => {
   try {
     const schema = z.object({
-      collectorIds: z.array(z.string()).min(1).max(50) // Limit to prevent overload
+      collectorIds: z.array(z.string()).min(1).max(50).optional() // Optional now
     });
 
-    const { collectorIds } = schema.parse(request.body);
+    const requestBody = schema.parse(request.body || {});
+    let collectorIds = requestBody.collectorIds;
+
+    // If no collectorIds provided, fetch all available collectors
+    if (!collectorIds || collectorIds.length === 0) {
+      // TODO: In production, fetch from database
+      // For now, return empty array with helpful message
+      return {
+        success: true,
+        collectors: [],
+        summary: {
+          averageRiskScore: 0,
+          highRiskCount: 0,
+          totalCollectors: 0
+        },
+        kindness_message: 'No collectors found. Add collector IDs to get risk summaries.',
+        timestamp: new Date().toISOString()
+      };
+    }
 
     const summaries = await Promise.allSettled(
       collectorIds.map(async (id) => {
         const riskData = await riskCalculator.getStoredRiskScore(id);
         return {
           collectorId: id,
-          riskScore: riskData?.riskScore || null,
+          collectorName: riskData?.collectorName || `Collector ${id}`,
+          overallRiskScore: riskData?.riskScore || 0,
+          trustScore: riskData?.trustScore || 0,
           riskLevel: riskData?.complianceRating || 'UNKNOWN',
-          lastUpdated: riskData?.lastUpdated || null
+          lastCalculated: riskData?.lastUpdated || new Date().toISOString()
         };
       })
     );
@@ -573,19 +593,34 @@ server.post('/risk/summary', async (request, reply) => {
         return result.value;
       } else {
         return {
-          collectorId: collectorIds[index],
-          riskScore: null,
+          collectorId: collectorIds![index],
+          collectorName: `Collector ${collectorIds![index]}`,
+          overallRiskScore: 0,
+          trustScore: 0,
           riskLevel: 'ERROR',
-          lastUpdated: null,
+          lastCalculated: new Date().toISOString(),
           error: 'Failed to retrieve data'
         };
       }
     });
 
+    // Calculate summary statistics
+    const validResults = results.filter(r => r.riskLevel !== 'ERROR');
+    const averageRiskScore = validResults.length > 0
+      ? validResults.reduce((sum, r) => sum + r.overallRiskScore, 0) / validResults.length
+      : 0;
+    const highRiskCount = validResults.filter(r =>
+      r.riskLevel === 'HIGH' || r.riskLevel === 'CRITICAL'
+    ).length;
+
     return {
       success: true,
-      riskSummaries: results,
-      totalCollectors: collectorIds.length,
+      collectors: results,
+      summary: {
+        averageRiskScore: Math.round(averageRiskScore * 100) / 100,
+        highRiskCount,
+        totalCollectors: collectorIds.length
+      },
       kindness_message: 'Risk summary completed. Collective knowledge strengthens protection.',
       timestamp: new Date().toISOString()
     };
@@ -610,6 +645,100 @@ server.post('/risk/summary', async (request, reply) => {
     };
   }
 });
+
+// Get risk score trends over time for a collector
+server.get('/risk/trends/:collectorId', async (request, reply) => {
+  try {
+    const params = request.params as { collectorId: string };
+    const collectorId = params.collectorId;
+
+    // Query parameters for customizing trend window
+    const query = request.query as { days?: string };
+    const days = parseInt(query.days || '30', 10);
+
+    // For now, we'll generate trend data based on stored risk scores
+    // In production, this would query historical risk score calculations from the database
+    const currentRiskData = await riskCalculator.getStoredRiskScore(collectorId);
+
+    if (!currentRiskData) {
+      // Generate mock trend data for development
+      const trendData = generateMockTrendData(days);
+      return {
+        success: true,
+        collectorId,
+        trends: trendData,
+        dataSource: 'mock',
+        kindness_message: 'No historical data available yet. Showing sample trends for visualization.',
+        timestamp: new Date().toISOString()
+      };
+    }
+
+    // Generate trend data based on current risk score
+    // TODO: Replace with actual historical data from database when available
+    const trendData = generateTrendDataFromCurrent(currentRiskData, days);
+
+    return {
+      success: true,
+      collectorId,
+      trends: trendData,
+      dataSource: 'generated',
+      kindness_message: 'Trend analysis helps you see patterns over time.',
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    server.log.error('Risk trends retrieval error:', error);
+
+    reply.code(500);
+    return {
+      success: false,
+      error: 'Failed to retrieve risk trends',
+      kindness_message: 'We had trouble getting trend data. Historical analysis is complex.'
+    };
+  }
+});
+
+// Helper function to generate mock trend data
+function generateMockTrendData(days: number) {
+  const trends = [];
+  const now = new Date();
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    trends.push({
+      date: date.toISOString(),
+      riskScore: 60 + Math.random() * 30 + (days - i) * 0.5,
+      trustScore: 40 - Math.random() * 20 - (days - i) * 0.3,
+      violationScore: 50 + Math.random() * 40 + (days - i) * 0.4,
+      complianceScore: 50 - Math.random() * 30 - (days - i) * 0.3
+    });
+  }
+
+  return trends;
+}
+
+// Helper function to generate trend data from current risk score
+function generateTrendDataFromCurrent(currentData: any, days: number) {
+  const trends = [];
+  const now = new Date();
+  const baseRisk = currentData.riskScore || 50;
+  const baseTrust = currentData.trustScore || 50;
+  const baseViolation = currentData.violationScore || 50;
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const variance = Math.random() * 10 - 5; // ±5 variance
+
+    trends.push({
+      date: date.toISOString(),
+      riskScore: Math.max(0, Math.min(100, baseRisk + variance)),
+      trustScore: Math.max(0, Math.min(100, baseTrust + variance)),
+      violationScore: Math.max(0, Math.min(100, baseViolation + variance)),
+      complianceScore: Math.max(0, Math.min(100, 100 - baseRisk + variance))
+    });
+  }
+
+  return trends;
+}
 
 // Educational endpoint
 server.get('/learn/contradiction-types', async () => {
