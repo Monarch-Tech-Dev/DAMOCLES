@@ -27,7 +27,7 @@ import {
   EyeIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/contexts/AuthContext';
 import { FeatureLocked } from '@/components/subscription/premium-gate';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';

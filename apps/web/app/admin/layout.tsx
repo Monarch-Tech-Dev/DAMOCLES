@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/lib/auth-context'
+import { useAuth } from '@/contexts/AuthContext'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,7 +17,8 @@ import {
   FileText,
   DollarSign,
   Database,
-  Brain
+  Brain,
+  Activity
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -30,6 +31,7 @@ const adminNavigation = [
   { name: 'Harm Tracking', href: '/admin/harm', icon: AlertTriangle },
   { name: 'Learning Evolution', href: '/admin/learning', icon: Brain },
   { name: 'Platform Analytics', href: '/admin/analytics', icon: BarChart3 },
+  { name: 'Technical Analytics', href: '/admin/technical', icon: Activity },
   { name: 'Document Processing', href: '/admin/documents', icon: FileText },
   { name: 'Revenue Management', href: '/admin/revenue', icon: DollarSign },
   { name: 'System Status', href: '/admin/system', icon: Database },

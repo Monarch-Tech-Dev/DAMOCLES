@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env.local') });
+
 const { LokaliseApi } = require('@lokalise/node-api');
 const fs = require('fs').promises;
-const path = require('path');
 
 // Lokalise configuration - MUST be set via environment variables
 const LOKALISE_API_TOKEN = process.env.LOKALISE_API_TOKEN;

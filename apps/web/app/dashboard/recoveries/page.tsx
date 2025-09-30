@@ -32,7 +32,7 @@ import {
   Eye,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/lib/auth-context'
+import { useAuth } from '@/contexts/AuthContext'
 import { PremiumGate, FeatureLocked } from '@/components/subscription/premium-gate'
 import { cn } from '@/lib/utils';
 import styles from '@/app/dashboard.module.css';
@@ -266,10 +266,10 @@ export default function RecoveriesPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
-                    <Button size="xs" variant="outline" icon={Eye}>
+                    <Button size="xs" variant="outline" icon={<Eye className="w-3 h-3" />}>
                       View
                     </Button>
-                    <Button size="xs" variant="outline" icon={Download}>
+                    <Button size="xs" variant="outline" icon={<Download className="w-3 h-3" />}>
                       Download
                     </Button>
                   </div>

@@ -8,7 +8,8 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import { z } from 'zod';
 import { TrustAnalyzer } from './core/TrustAnalyzer';
-import { 
+import { CollectorRiskCalculator } from './services/CollectorRiskCalculator';
+import {
   ContradictionType,
   AuthorityCategory
 } from './types/index';
@@ -27,6 +28,9 @@ const server = Fastify({
 
 // Trust analyzer instance
 const trustAnalyzer = new TrustAnalyzer();
+
+// Risk calculator instance
+const riskCalculator = new CollectorRiskCalculator();
 
 // Register plugins
 server.register(cors, {
@@ -342,6 +346,271 @@ server.get('/authorities/category/:category', async (request, reply) => {
   }
 });
 
+// Risk scoring endpoints
+
+// Calculate risk score for a collector
+server.post('/risk/calculate', async (request, reply) => {
+  try {
+    const schema = z.object({
+      collectorId: z.string().min(1),
+      violationPatterns: z.array(z.object({
+        id: z.string(),
+        collectorId: z.string(),
+        article: z.string(),
+        violationType: z.string(),
+        occurrenceCount: z.number().min(0),
+        severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+        confidence: z.number().min(0).max(1),
+        lastOccurrence: z.string().transform(str => new Date(str))
+      })).optional(),
+      responsePatterns: z.array(z.object({
+        id: z.string(),
+        creditorId: z.string(),
+        triggerPhrase: z.string(),
+        successRate: z.number().min(0).max(1),
+        admissionType: z.string(),
+        complianceIndicators: z.array(z.string()),
+        lastUpdated: z.string().transform(str => new Date(str))
+      })).optional(),
+      settlementPatterns: z.object({
+        deniesLiabilityButOffersSettlement: z.boolean().optional(),
+        inconsistentSettlementOffers: z.boolean().optional(),
+        contradictoryStatements: z.boolean().optional(),
+        hasPattern: z.boolean().optional(),
+        consistencyScore: z.number().min(0).max(100).optional()
+      }).optional(),
+      authorityWeights: z.record(z.number().min(0).max(1)).optional()
+    });
+
+    const validatedRequest = schema.parse(request.body);
+    const result = await riskCalculator.calculateRiskScore(validatedRequest);
+
+    return {
+      success: true,
+      riskAssessment: result,
+      kindness_message: 'Risk assessment completed with care for your protection.',
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    server.log.error('Risk calculation error:', error);
+
+    if (error instanceof z.ZodError) {
+      reply.code(400);
+      return {
+        success: false,
+        error: 'Validation error',
+        details: error.errors,
+        kindness_message: 'We had trouble understanding your risk calculation request. Could you check the format?'
+      };
+    }
+
+    reply.code(500);
+    return {
+      success: false,
+      error: 'Risk calculation failed',
+      kindness_message: 'We encountered an issue calculating the risk score. Our team has been notified.'
+    };
+  }
+});
+
+// Assess collector risk with automatic data fetching
+server.post('/risk/assess/:collectorId', async (request, reply) => {
+  try {
+    const params = request.params as { collectorId: string };
+    const collectorId = params.collectorId;
+
+    const schema = z.object({
+      additionalData: z.object({
+        settlementPatterns: z.object({
+          deniesLiabilityButOffersSettlement: z.boolean().optional(),
+          inconsistentSettlementOffers: z.boolean().optional(),
+          contradictoryStatements: z.boolean().optional(),
+          hasPattern: z.boolean().optional(),
+          consistencyScore: z.number().min(0).max(100).optional()
+        }).optional(),
+        authorityWeights: z.record(z.number().min(0).max(1)).optional()
+      }).optional()
+    });
+
+    const { additionalData } = schema.parse(request.body || {});
+    const result = await riskCalculator.assessCollectorRisk(collectorId, additionalData);
+
+    return {
+      success: true,
+      collectorId,
+      riskAssessment: result,
+      kindness_message: 'Complete risk assessment finished. Your safety is our priority.',
+      timestamp: new Date().toISOString(),
+      protection_note: result.riskLevel === 'CRITICAL' ? 'High risk detected. Consider immediate protective measures.' : 'Risk level manageable with standard precautions.'
+    };
+  } catch (error) {
+    server.log.error('Risk assessment error:', error);
+
+    reply.code(500);
+    return {
+      success: false,
+      error: 'Risk assessment failed',
+      kindness_message: 'We had trouble assessing this collector\'s risk. Consumer protection is complex.'
+    };
+  }
+});
+
+// Get stored risk score for a collector
+server.get('/risk/score/:collectorId', async (request, reply) => {
+  try {
+    const params = request.params as { collectorId: string };
+    const collectorId = params.collectorId;
+
+    const storedRisk = await riskCalculator.getStoredRiskScore(collectorId);
+
+    if (!storedRisk) {
+      reply.code(404);
+      return {
+        success: false,
+        error: 'Risk score not found',
+        kindness_message: 'We don\'t have risk data for this collector yet. Would you like us to calculate it?'
+      };
+    }
+
+    return {
+      success: true,
+      collectorId,
+      riskData: storedRisk,
+      kindness_message: 'Risk data retrieved successfully.',
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    server.log.error('Risk score retrieval error:', error);
+
+    reply.code(500);
+    return {
+      success: false,
+      error: 'Failed to retrieve risk score',
+      kindness_message: 'We had trouble getting the risk data. Database connections can be tricky.'
+    };
+  }
+});
+
+// Get violation patterns for a collector
+server.get('/risk/violations/:collectorId', async (request, reply) => {
+  try {
+    const params = request.params as { collectorId: string };
+    const collectorId = params.collectorId;
+
+    const violations = await riskCalculator.getViolationPatterns(collectorId);
+
+    return {
+      success: true,
+      collectorId,
+      violationPatterns: violations,
+      totalViolations: violations.length,
+      kindness_message: violations.length > 0 ? 'Violation patterns found. Knowledge is power for protection.' : 'No violations found. This is good news!',
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    server.log.error('Violation patterns retrieval error:', error);
+
+    reply.code(500);
+    return {
+      success: false,
+      error: 'Failed to retrieve violation patterns',
+      kindness_message: 'We had trouble getting violation data. Legal pattern analysis is complex.'
+    };
+  }
+});
+
+// Get response patterns for a collector
+server.get('/risk/responses/:collectorId', async (request, reply) => {
+  try {
+    const params = request.params as { collectorId: string };
+    const collectorId = params.collectorId;
+
+    const responses = await riskCalculator.getResponsePatterns(collectorId);
+
+    return {
+      success: true,
+      collectorId,
+      responsePatterns: responses,
+      totalPatterns: responses.length,
+      kindness_message: responses.length > 0 ? 'Response patterns analyzed. Understanding behavior protects you.' : 'No response patterns found yet.',
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    server.log.error('Response patterns retrieval error:', error);
+
+    reply.code(500);
+    return {
+      success: false,
+      error: 'Failed to retrieve response patterns',
+      kindness_message: 'We had trouble getting response pattern data. Behavioral analysis takes time.'
+    };
+  }
+});
+
+// Get risk level summary for multiple collectors
+server.post('/risk/summary', async (request, reply) => {
+  try {
+    const schema = z.object({
+      collectorIds: z.array(z.string()).min(1).max(50) // Limit to prevent overload
+    });
+
+    const { collectorIds } = schema.parse(request.body);
+
+    const summaries = await Promise.allSettled(
+      collectorIds.map(async (id) => {
+        const riskData = await riskCalculator.getStoredRiskScore(id);
+        return {
+          collectorId: id,
+          riskScore: riskData?.riskScore || null,
+          riskLevel: riskData?.complianceRating || 'UNKNOWN',
+          lastUpdated: riskData?.lastUpdated || null
+        };
+      })
+    );
+
+    const results = summaries.map((result, index) => {
+      if (result.status === 'fulfilled') {
+        return result.value;
+      } else {
+        return {
+          collectorId: collectorIds[index],
+          riskScore: null,
+          riskLevel: 'ERROR',
+          lastUpdated: null,
+          error: 'Failed to retrieve data'
+        };
+      }
+    });
+
+    return {
+      success: true,
+      riskSummaries: results,
+      totalCollectors: collectorIds.length,
+      kindness_message: 'Risk summary completed. Collective knowledge strengthens protection.',
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    server.log.error('Risk summary error:', error);
+
+    if (error instanceof z.ZodError) {
+      reply.code(400);
+      return {
+        success: false,
+        error: 'Validation error',
+        details: error.errors,
+        kindness_message: 'Please check your collector ID list format.'
+      };
+    }
+
+    reply.code(500);
+    return {
+      success: false,
+      error: 'Summary generation failed',
+      kindness_message: 'We had trouble generating the risk summary. Bulk analysis is complex.'
+    };
+  }
+});
+
 // Educational endpoint
 server.get('/learn/contradiction-types', async () => {
   return {
@@ -463,6 +732,8 @@ Built with love for truth and justice ❤️⚔️
 🔍 Health check: http://${host}:${port}/health
 📖 Trust analysis: http://${host}:${port}/analyze
 ⚔️ DAMOCLES ready: http://${host}:${port}/analyze/debt-collection
+🎯 Risk scoring: http://${host}:${port}/risk/assess/{collectorId}
+📊 Risk summary: http://${host}:${port}/risk/summary
 
 Sacred Architecture principles active:
 ✅ Service over extraction

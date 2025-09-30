@@ -240,3 +240,23 @@ export interface UserOption {
   recommended: boolean;
   difficulty: 'easy' | 'medium' | 'advanced';
 }
+
+// Additional types needed for risk scoring
+export interface ViolationAnalysis {
+  violationId?: string;
+  severityScore: number;
+  urgencyLevel: 'low' | 'medium' | 'high' | 'critical';
+  violationType: string;
+  confidence: number;
+  riskFactors: string[];
+  recommendations: string[];
+  recommendedActions?: string[];
+  metadata?: Record<string, any>;
+}
+
+export interface TrustScoreInput {
+  claims: Claim[];
+  violations?: ViolationAnalysis[];
+  historicalData?: any;
+  context?: AnalysisContext;
+}

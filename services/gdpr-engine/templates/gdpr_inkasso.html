@@ -61,13 +61,37 @@
             <li>Advokater og rettsapparatet</li>
         </ul>
         
-        <h4>5. Automatiserte beslutninger</h4>
-        <p>Gi detaljert informasjon om:</p>
+        <h4>5. Automatiserte beslutninger og GDPR Artikkel 22 - Kritisk Viktig</h4>
+        <p><strong style="color: #dc2626;">SCHUFA-KJENNELSEN (EU-domstolen C-634/21):</strong> EU-domstolen har slått fast at kredittvurderinger som påvirker mine rettigheter eller interesser betydelig er underlagt strenge GDPR-krav.</p>
+
+        <p><strong>Krav til informasjon om automatiserte beslutninger:</strong></p>
+        <ul>
+            <li><strong>Logikk og algoritmer:</strong> Detaljert beskrivelse av scoringslogikken som er brukt</li>
+            <li><strong>Betydning og konsekvenser:</strong> Hvordan automatiserte beslutninger påvirker mitt krav</li>
+            <li><strong>Datakilder:</strong> Alle kilder til data brukt i automatiserte vurderinger</li>
+            <li><strong>Vektingsmodell:</strong> Hvordan ulike faktorer vektes i scoringsalgoritmen</li>
+            <li><strong>Treffsikkerhet:</strong> Statistikk om algoritmens nøyaktighet</li>
+            <li><strong>Oppdateringsfrekvens:</strong> Hvor ofte algoritmen og data oppdateres</li>
+        </ul>
+
+        <p><strong>Spesifikke krav etter Schufa-kjennelsen:</strong></p>
+        <ul>
+            <li><strong>Meningsfull informasjon:</strong> Ikke bare generiske beskrivelser, men konkret informasjon om hvordan algoritmen fungerer</li>
+            <li><strong>Forståelig format:</strong> Informasjonen må være tilgjengelig for meg som forbruker</li>
+            <li><strong>Rett til menneskelig intervensjon:</strong> Mulighet for manuell vurdering av mitt krav</li>
+            <li><strong>Rett til å uttrykke mitt standpunkt:</strong> Mulighet for å gi tilleggsinformasjon</li>
+            <li><strong>Rett til å bestride beslutningen:</strong> Klare rutiner for å utfordre automatiserte beslutninger</li>
+        </ul>
+
+        <p><strong>Inkludér i svaret:</strong></p>
         <ul>
             <li>Automatisk behandling av mitt krav</li>
-            <li>Scoringsalgoritmer som er brukt</li>
+            <li>Scoringsalgoritmer som er brukt (detaljert beskrivelse)</li>
             <li>Profilering for betalingsevne</li>
             <li>Automatiserte oppfølgingsprosesser</li>
+            <li><strong>NEY:</strong> Referanser til brukte kredittreferanseregistre (Experian, Bisnode, etc.)</li>
+            <li><strong>NEY:</strong> Vurdering av betalingshistorikk fra offentlige registre</li>
+            <li><strong>NEY:</strong> Machine learning-modeller for risikoscoring</li>
         </ul>
         
         {% if account_number and account_number != 'Ukjent' %}
@@ -102,7 +126,10 @@
         <p style="font-size: 12px; color: #666;">
             <strong>Juridisk grunnlag:</strong><br>
             - GDPR Artikkel 15 - Retten til informasjon<br>
+            - <strong>GDPR Artikkel 22 - Automatiserte beslutninger og profilering</strong><br>
+            - <strong>EU-domstolens kjennelse C-634/21 (Schufa-saken) - Krav til meningsfull informasjon</strong><br>
             - Inkassoloven § 15 - Dokumentasjonsplikt<br>
+            - Personvernloven (implementering av GDPR i Norge)<br>
             - Forbrukerkjøpsloven<br>
             - Finansavtaleloven
         </p>
