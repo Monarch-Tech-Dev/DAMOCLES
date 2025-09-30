@@ -47,7 +47,7 @@ DAMOCLES is the world's first automated blockchain-backed legal evidence platfor
 - Load testing implementation
 
 ### **Production Setup (3-4 weeks)**
-- BankID production integration
+- Vipps production integration (Norwegian authentication)
 - Security audit coordination
 - Beta user recruitment (100 Norwegian consumers)
 - Legal final approval
@@ -103,7 +103,7 @@ A comprehensive code review verified that several advanced features previously m
 **Database:** PostgreSQL with Prisma ORM
 **Blockchain:** Cardano for legal evidence
 **Cache:** Redis for performance
-**Authentication:** JWT with BankID integration
+**Authentication:** JWT with Vipps OAuth2 integration (90%+ Norwegian adoption)
 
 ---
 
