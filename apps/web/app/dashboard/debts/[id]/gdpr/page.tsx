@@ -12,9 +12,9 @@ import {
   PaperAirplaneIcon
 } from '@heroicons/react/24/outline'
 import { ExclamationTriangleIcon } from '@heroicons/react/24/solid'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Card } from '@/components/ui/card'
 import toast from 'react-hot-toast'
 import DOMPurify from 'isomorphic-dompurify'
 

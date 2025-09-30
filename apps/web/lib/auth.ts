@@ -76,7 +76,7 @@ export const authOptions: NextAuthOptions = {
 
         try {
           // Call your user service API
-          const response = await fetch(`${process.env.USER_SERVICE_URL || 'http://localhost:3002'}/auth/login-email`, {
+          const response = await fetch(`${process.env.USER_SERVICE_URL || 'http://localhost:3001'}/api/auth/login-email`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -91,14 +91,15 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
-          const user = await response.json();
+          const result = await response.json();
 
           return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            tier: user.tier || 'Bronze Shield',
-            bankIdVerified: user.bankIdVerified || false,
+            id: result.user.id,
+            email: result.user.email,
+            name: result.user.name,
+            tier: result.user.tier || 'Bronze Shield',
+            bankIdVerified: result.user.bankIdVerified || false,
+            accessToken: result.token,
           };
         } catch (error) {
           console.error('Auth error:', error);
@@ -121,6 +122,7 @@ export const authOptions: NextAuthOptions = {
         token.vippsVerified = user.vippsVerified;
         token.personalNumber = user.personalNumber;
         token.phoneNumber = user.phoneNumber;
+        token.accessToken = user.accessToken;
       }
 
       if (account?.provider === 'bankid') {
@@ -139,6 +141,7 @@ export const authOptions: NextAuthOptions = {
       session.user.vippsVerified = token.vippsVerified;
       session.user.personalNumber = token.personalNumber;
       session.user.phoneNumber = token.phoneNumber;
+      session.accessToken = token.accessToken;
       return session;
     },
   },

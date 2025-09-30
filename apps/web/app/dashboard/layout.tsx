@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/lib/auth-context'
+import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -119,6 +119,7 @@ export default function DashboardLayout({
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = pathname === item.href
+              const IconComponent = item.icon
               return (
                 <button
                   key={item.name}
@@ -130,7 +131,7 @@ export default function DashboardLayout({
                       : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
+                  <IconComponent className="h-5 w-5" />
                   <span>{item.name}</span>
                 </button>
               )

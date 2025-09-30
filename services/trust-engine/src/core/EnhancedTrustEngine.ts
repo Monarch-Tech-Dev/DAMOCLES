@@ -276,7 +276,7 @@ export class EnhancedTrustEngine extends TrustScoreEngine {
    */
   generateEnhancedTrustReport(
     claims: Claim[],
-    pdiData?: { score: number; category: string }
+    pdiData?: { score: number; category: 'healthy' | 'caution' | 'risky' | 'critical' }
   ): any {
     const enhancedResult = this.calculateEnhancedTrustScore(claims, pdiData);
 

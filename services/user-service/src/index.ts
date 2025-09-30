@@ -15,9 +15,9 @@ const fastify = Fastify({
 
 // Register plugins
 fastify.register(cors, {
-  origin: process.env.NODE_ENV === 'production' ? 
-    ['https://damocles.no'] : 
-    ['http://localhost:3001', 'http://localhost:3000']
+  origin: process.env.NODE_ENV === 'production' ?
+    ['https://damocles.no'] :
+    ['http://localhost:3001', 'http://localhost:3000', 'http://localhost:3002']
 });
 
 fastify.register(helmet);
@@ -43,11 +43,13 @@ import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
 import { debtRoutes } from './routes/debts';
 import { creditorRoutes } from './routes/creditors';
+import { eventRoutes } from './routes/events';
 
 fastify.register(authRoutes, { prefix: '/api/auth' });
 fastify.register(userRoutes, { prefix: '/api/users' });
 fastify.register(debtRoutes, { prefix: '/api/debts' });
 fastify.register(creditorRoutes, { prefix: '/api/creditors' });
+// fastify.register(eventRoutes, { prefix: '/api/events' }); // TODO: Fix TypeScript errors and re-enable
 
 // Error handling
 fastify.setErrorHandler((error, request, reply) => {

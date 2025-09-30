@@ -258,6 +258,14 @@ test-data/production/
 docs/internal/
 docs/private/
 
+# Personal Learning Documents (INTERNAL USE ONLY)
+docs/SYSTEMS_MASTERY_GUIDE.md
+docs/LINUX_MASTERY_GUIDE.md
+docs/LEARNING_COMPASS.md
+**/*_LEARNING_*.md
+**/*_MASTERY_*.md
+**/*_COMPASS_*.md
+
 # Custom application secrets
 config/secrets.yml
 config/credentials.yml
@@ -386,3 +394,4 @@ LAUNCH_DAY_CHECKLIST.md
 deployment-status.json
 scripts/prepare-mainnet-wallet.sh
 apps/web/.env.production.local
+deploy.sh

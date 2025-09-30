@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { useAuth } from '@/lib/auth-context'
+import { useAuth } from '@/contexts/AuthContext'
 import TreasuryStatus from '@/components/cardano/TreasuryStatus'
 import SwordBalance from '@/components/cardano/SwordBalance'
 import EmergencyStatus from '@/components/cardano/EmergencyStatus'
