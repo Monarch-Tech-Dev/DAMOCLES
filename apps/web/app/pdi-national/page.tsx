@@ -31,8 +31,11 @@ export default function NationalPDIPage() {
     // Fetch initial data
     fetchNationalData()
 
-    // Set up real-time WebSocket connection
-    const ws = new WebSocket('ws://localhost:8011')
+    // Set up real-time WebSocket connection (works in both dev and production)
+    const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const host = typeof window !== 'undefined' ? window.location.host : 'localhost:8011'
+    const wsUrl = `${protocol}//${host}/pdi`
+    const ws = new WebSocket(wsUrl)
 
     ws.onmessage = (event) => {
       const update = JSON.parse(event.data)
@@ -64,7 +67,7 @@ export default function NationalPDIPage() {
   const fetchNationalData = async () => {
     try {
       console.log('Fetching national PDI data...')
-      const response = await fetch('http://localhost:8011/api/public/pdi/national')
+      const response = await fetch('/pdi/api/public/pdi/national')
       console.log('Response status:', response.status)
 
       if (response.ok) {
