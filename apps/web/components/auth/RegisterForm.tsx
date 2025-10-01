@@ -35,7 +35,7 @@ export default function RegisterForm() {
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_USER_SERVICE_URL || 'http://localhost:3002'}/auth/register-email`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/register-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
