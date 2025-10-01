@@ -1,0 +1,80 @@
+# Dependencies
+node_modules/
+*/node_modules/
+**/__pycache__/
+*.pyc
+target/
+Cargo.lock
+
+# Environment variables - SECURITY
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*secret*
+*password*
+*token*
+!TOKENOMICS.md
+
+# Build artifacts
+dist/
+build/
+.next/
+out/
+coverage/
+*.map
+.cache/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# Documentation (internal)
+docs/internal/
+docs/private/
+**/*_INTERNAL*.md
+**/*_STRATEGY*.md
+**/*_CONFIDENTIAL*.md
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Blockchain data
+cardano-data/
+wallets/
+*.vkey
+*.skey
+*.addr
+deployment-results.json
