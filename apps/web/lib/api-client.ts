@@ -439,7 +439,7 @@ class ApiClient {
     getDashboard: async (): Promise<ApiResponse<{
       pdiTrend: Array<{ date: string; score: number }>
       debtReduction: number
-      documentsS sent: number
+      documentsSent: number
       successRate: number
     }>> => {
       return this.request('GET', '/analytics/dashboard')
