@@ -1,64 +1,53 @@
-
 services:
   # Database Services
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
+    container_name: damocles-postgres
     environment:
-      POSTGRES_DB: damocles_db
+      POSTGRES_DB: damocles
       POSTGRES_USER: damocles_user
-      POSTGRES_PASSWORD: damocles_password
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-damocles_dev_password}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./services/user-service/migrations:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U damocles_user"]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 5
+    networks:
+      - damocles-network
 
   redis:
     image: redis:7-alpine
+    container_name: damocles-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 3s
       retries: 5
-
-  # Blockchain Services
-  cardano-node:
-    image: ghcr.io/intersectmbo/cardano-node:latest
-    environment:
-      NETWORK: testnet
-    ports:
-      - "3001:3001"
-    volumes:
-      - cardano_data:/opt/cardano/data
-    command: ["run"]
-
-  ipfs:
-    image: ipfs/go-ipfs:latest
-    ports:
-      - "4001:4001"  # P2P
-      - "5001:5001"  # API
-      - "8080:8080"  # Gateway
-    volumes:
-      - ipfs_data:/data/ipfs
+    networks:
+      - damocles-network
 
   # Application Services
   user-service:
-    build: ./services/user-service
-    ports:
-      - "3000:3000"
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: damocles-user-service
     environment:
-      - DATABASE_URL=postgresql://damocles_user:damocles_password@postgres:5432/damocles_db
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=dev-secret-key
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://damocles_user:${DB_PASSWORD:-damocles_dev_password}@postgres:5432/damocles
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3001:3001"
     depends_on:
       postgres:
         condition: service_healthy
@@ -67,109 +56,176 @@ services:
     volumes:
       - ./services/user-service:/app
       - /app/node_modules
+    networks:
+      - damocles-network
+    restart: unless-stopped
 
   gdpr-engine:
-    build: ./services/gdpr-engine
+    build:
+      context: ./services/gdpr-engine
+      dockerfile: Dockerfile
+    container_name: damocles-gdpr-engine
+    environment:
+      ENVIRONMENT: development
+      PORT: 8001
+      USER_SERVICE_URL: http://user-service:3001
+      TRUST_ENGINE_URL: http://trust-engine:3003
+      BLOCKCHAIN_SERVICE_URL: http://blockchain-service:8021
+      SMTP_SERVER: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
     ports:
       - "8001:8001"
-    environment:
-      - DATABASE_URL=postgresql://damocles_user:damocles_password@postgres:5432/damocles_db
-      - REDIS_URL=redis://redis:6379
     depends_on:
-      postgres:
-        condition: service_healthy
+      - user-service
     volumes:
       - ./services/gdpr-engine:/app
+      - gdpr_templates:/app/templates
+    networks:
+      - damocles-network
+    restart: unless-stopped
 
   trust-engine:
-    build: ./services/trust-engine
-    ports:
-      - "8002:8002"
+    build:
+      context: ./services/trust-engine
+      dockerfile: Dockerfile
+    container_name: damocles-trust-engine
     environment:
-      - NODE_ENV=development
-      - API_VERSION=1.0.0
-      - SACRED_ARCHITECTURE=true
-    volumes:
-      - ./services/trust-engine:/app
-      - /app/node_modules
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  pdi-engine:
-    build: ./services/pdi-engine
+      NODE_ENV: development
+      PORT: 3003
+      DATABASE_URL: postgresql://damocles_user:${DB_PASSWORD:-damocles_dev_password}@postgres:5432/damocles
+      REDIS_URL: redis://redis:6379
     ports:
-      - "8004:8004"
-    environment:
-      - DATABASE_URL=postgresql://damocles_user:damocles_password@postgres:5432/damocles_db
-      - REDIS_URL=redis://redis:6379
-      - NODE_ENV=development
+      - "3003:3003"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     volumes:
-      - ./services/pdi-engine:/app
+      - ./services/trust-engine:/app
       - /app/node_modules
+    networks:
+      - damocles-network
+    restart: unless-stopped
 
-  settlement-service:
-    build: ./services/settlement-service
-    ports:
-      - "8003:8003"
+  blockchain-service:
+    build:
+      context: ./services/blockchain-service
+      dockerfile: Dockerfile
+    container_name: damocles-blockchain-service
     environment:
-      - DATABASE_URL=postgresql://damocles_user:damocles_password@postgres:5432/damocles_db
-      - CARDANO_NODE_URL=http://cardano-node:3001
+      NODE_ENV: development
+      PORT: 8021
+      CARDANO_NETWORK: ${CARDANO_NETWORK:-testnet}
+      BLOCKFROST_API_KEY: ${NEXT_PUBLIC_BLOCKFROST_API_KEY:-testnetXXXXXXXXXXXXXXXXXX}
+      TREASURY_ADDRESS: ${NEXT_PUBLIC_TREASURY_ADDRESS_TESTNET:-}
+      SWORD_POLICY: ${NEXT_PUBLIC_SWORD_POLICY_TESTNET:-}
+    ports:
+      - "8021:8021"
+    volumes:
+      - ./services/blockchain-service:/app
+      - /app/node_modules
+    networks:
+      - damocles-network
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: damocles-payment-service
+    environment:
+      NODE_ENV: development
+      PORT: 3006
+      DATABASE_URL: postgresql://damocles_user:${DB_PASSWORD:-damocles_dev_password}@postgres:5432/damocles
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_...}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_...}
+      USER_SERVICE_URL: http://user-service:3001
+    ports:
+      - "3006:3006"
     depends_on:
       postgres:
         condition: service_healthy
-      cardano-node:
+      user-service:
         condition: service_started
     volumes:
-      - ./services/settlement-service:/app
+      - ./services/payment-service:/app
+      - /app/node_modules
+    networks:
+      - damocles-network
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: damocles-notification-service
+    environment:
+      NODE_ENV: development
+      PORT: 3005
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3005:3005"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/notification-service:/app
+      - /app/node_modules
+    networks:
+      - damocles-network
+    restart: unless-stopped
 
   # Frontend
   web:
-    build: ./apps/web
-    ports:
-      - "3001:3000"
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      target: development
+    container_name: damocles-frontend
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:3000
-      - NEXT_PUBLIC_CARDANO_NETWORK=testnet
+      NODE_ENV: development
+      PORT: 3002
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXTAUTH_URL: http://localhost:3002
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev-secret-key-123-change-in-production}
+      JWT_SECRET: ${JWT_SECRET:-another-secret-key-for-jwt-tokens}
+      VIPPS_CLIENT_ID: ${VIPPS_CLIENT_ID:-}
+      VIPPS_CLIENT_SECRET: ${VIPPS_CLIENT_SECRET:-}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-pk_test_...}
+      NEXT_PUBLIC_CARDANO_NETWORK: ${CARDANO_NETWORK:-testnet}
+      NEXT_PUBLIC_BLOCKFROST_API_KEY: ${NEXT_PUBLIC_BLOCKFROST_API_KEY:-testnetXXXXXXXXXXXXXXXXXX}
+    ports:
+      - "3002:3002"
     depends_on:
       - user-service
+      - gdpr-engine
+      - trust-engine
+      - blockchain-service
+      - payment-service
+      - notification-service
     volumes:
       - ./apps/web:/app
       - /app/node_modules
-
-  # Monitoring
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3002:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./infrastructure/monitoring/grafana:/etc/grafana/provisioning
+      - /app/.next
+    networks:
+      - damocles-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+    driver: local
   redis_data:
-  cardano_data:
-  ipfs_data:
-  grafana_data:
+    driver: local
+  gdpr_templates:
+    driver: local
+
+networks:
+  damocles-network:
+    driver: bridge
