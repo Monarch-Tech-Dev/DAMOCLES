@@ -8,9 +8,16 @@ interface User {
   email: string;
   name: string;
   tier: string;
+  shieldTier?: string;
   bankIdVerified: boolean;
+  vippsVerified?: boolean;
   tokenBalance: number;
   onboardingStatus: string;
+  phoneNumber?: string;
+  subscriptionTier?: string;
+  createdAt?: string;
+  lastLoginAt?: string;
+  updatedAt?: string;
 }
 
 interface AuthContextType {
