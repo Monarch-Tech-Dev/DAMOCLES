@@ -2,6 +2,8 @@
 
 Run the entire DAMOCLES platform with a single command using Docker Compose.
 
+> **⚠️ RECOMMENDED:** Use Docker for development to avoid TypeScript version conflicts and build issues. Docker provides isolated environments for each service with correct dependencies.
+
 ## Quick Start
 
 ```bash
