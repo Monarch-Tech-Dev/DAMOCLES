@@ -396,3 +396,4 @@ deployment-status.json
 scripts/prepare-mainnet-wallet.sh
 apps/web/.env.production.local
 deploy.sh
+*.tsbuildinfo

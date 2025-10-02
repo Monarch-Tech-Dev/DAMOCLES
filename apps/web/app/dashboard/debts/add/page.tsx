@@ -61,60 +61,26 @@ export default function AddDebtPage() {
   const searchCreditors = async (searchTerm: string = '') => {
     setSearchingCreditors(true)
     try {
-      // Mock creditor data for demonstration
-      const mockCreditors: Creditor[] = [
-        {
-          id: '1',
-          name: 'DNB Bank',
-          organizationNumber: '984851006',
-          type: 'bank',
-          violationScore: 15,
-          averageSettlementRate: 0.85,
-          _count: { debts: 234 }
-        },
-        {
-          id: '2',
-          name: 'Nordea',
-          organizationNumber: '920058817',
-          type: 'bank',
-          violationScore: 22,
-          averageSettlementRate: 0.78,
-          _count: { debts: 189 }
-        },
-        {
-          id: '3',
-          name: 'Inkasso AS',
-          organizationNumber: '912345678',
-          type: 'debt_collector',
-          violationScore: 45,
-          averageSettlementRate: 0.62,
-          _count: { debts: 456 }
-        },
-        {
-          id: '4',
-          name: 'Credit Corp Norge',
-          organizationNumber: '987654321',
-          type: 'credit_company',
-          violationScore: 38,
-          averageSettlementRate: 0.71,
-          _count: { debts: 123 }
-        }
-      ]
+      const token = localStorage.getItem('token')
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
-      // Filter based on search term
-      let filteredCreditors = mockCreditors
-      if (searchTerm) {
-        filteredCreditors = mockCreditors.filter(creditor =>
-          creditor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          creditor.organizationNumber?.includes(searchTerm)
-        )
+      const params = new URLSearchParams()
+      if (searchTerm) params.append('search', searchTerm)
+
+      const response = await fetch(`${apiUrl}/api/creditors?${params}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setCreditors(data.creditors || [])
+      } else {
+        console.error('Failed to fetch creditors:', response.statusText)
+        toast.error('Kunne ikke laste kreditorer')
       }
-
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 300))
-      setCreditors(filteredCreditors)
     } catch (error) {
       console.error('Error searching creditors:', error)
+      toast.error('Nettverksfeil ved lasting av kreditorer')
     } finally {
       setSearchingCreditors(false)
     }
@@ -122,46 +88,15 @@ export default function AddDebtPage() {
 
   const fetchCreditorTypes = async () => {
     try {
-      // Mock creditor types for demonstration
-      const mockTypes: CreditorType[] = [
-        {
-          value: 'bank',
-          label: 'Bank',
-          description: 'Traditional banking institution'
-        },
-        {
-          value: 'credit_company',
-          label: 'Kredittselskap',
-          description: 'Credit and financing company'
-        },
-        {
-          value: 'debt_collector',
-          label: 'Inkassoselskap',
-          description: 'Debt collection agency'
-        },
-        {
-          value: 'insurance',
-          label: 'Forsikring',
-          description: 'Insurance company'
-        },
-        {
-          value: 'telecom',
-          label: 'Telekom',
-          description: 'Telecommunications provider'
-        },
-        {
-          value: 'utility',
-          label: 'Forsyning',
-          description: 'Utility company (power, water, etc.)'
-        },
-        {
-          value: 'other',
-          label: 'Annet',
-          description: 'Other type of creditor'
-        }
-      ]
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/creditors/types`)
 
-      setCreditorTypes(mockTypes)
+      if (response.ok) {
+        const data = await response.json()
+        setCreditorTypes(data.types || [])
+      } else {
+        console.error('Failed to fetch creditor types')
+      }
     } catch (error) {
       console.error('Error fetching creditor types:', error)
     }
@@ -191,25 +126,65 @@ export default function AddDebtPage() {
 
     setLoading(true)
     try {
-      // Mock creditor creation - simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      const newCreditor: Creditor = {
-        id: Date.now().toString(),
-        name: newCreditorName,
-        organizationNumber: newCreditorOrgNumber || undefined,
-        type: newCreditorType,
-        violationScore: 0,
-        averageSettlementRate: 0,
-        _count: { debts: 0 }
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('Du må være logget inn')
+        return
       }
 
-      setSelectedCreditor(newCreditor)
-      setShowNewCreditorForm(false)
-      setStep(2)
-      toast.success('Ny kreditor opprettet')
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+
+      const response = await fetch(`${apiUrl}/api/creditors`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: newCreditorName,
+          organizationNumber: newCreditorOrgNumber || undefined,
+          type: newCreditorType,
+          privacyEmail: newCreditorEmail || undefined
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const newCreditor: Creditor = {
+          ...data.creditor,
+          averageSettlementRate: data.creditor.averageSettlementRate || 0,
+          _count: { debts: 0 }
+        }
+
+        setSelectedCreditor(newCreditor)
+        setShowNewCreditorForm(false)
+        setStep(2)
+        toast.success('Ny kreditor opprettet')
+
+        // Refresh creditor list
+        await searchCreditors(creditorSearch)
+      } else if (response.status === 409) {
+        const data = await response.json()
+        toast.error('Kreditor finnes allerede')
+
+        // If creditor exists, use it
+        if (data.creditor) {
+          const existingCreditor: Creditor = {
+            ...data.creditor,
+            averageSettlementRate: 0,
+            _count: { debts: 0 }
+          }
+          setSelectedCreditor(existingCreditor)
+          setShowNewCreditorForm(false)
+          setStep(2)
+        }
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Feil ved opprettelse av kreditor')
+      }
     } catch (error) {
-      toast.error('Feil ved opprettelse av kreditor')
+      console.error('Error creating creditor:', error)
+      toast.error('Nettverksfeil ved opprettelse av kreditor')
     } finally {
       setLoading(false)
     }
@@ -223,13 +198,39 @@ export default function AddDebtPage() {
 
     setLoading(true)
     try {
-      // Mock debt submission - simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const token = localStorage.getItem('token')
+      if (!token) {
+        toast.error('Du må være logget inn')
+        return
+      }
 
-      toast.success('Gjeld lagt til')
-      router.push('/dashboard/debts')
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+
+      const response = await fetch(`${apiUrl}/api/debts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          creditorId: selectedCreditor.id,
+          originalAmount: parseFloat(originalAmount),
+          currentAmount: parseFloat(currentAmount),
+          accountNumber: accountNumber || undefined
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast.success('Gjeld lagt til')
+        router.push('/dashboard/debts')
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Feil ved opprettelse av gjeld')
+      }
     } catch (error) {
-      toast.error('Feil ved opprettelse av gjeld')
+      console.error('Error submitting debt:', error)
+      toast.error('Nettverksfeil ved opprettelse av gjeld')
     } finally {
       setLoading(false)
     }
