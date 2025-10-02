@@ -430,6 +430,7 @@ export default function AddDebtPage() {
                   </div>
                   
                   <Button
+                    type="button"
                     onClick={createNewCreditor}
                     disabled={loading}
                     className="w-full"
