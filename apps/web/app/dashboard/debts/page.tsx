@@ -14,36 +14,64 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import toast from 'react-hot-toast'
 
-// Mock debt data for demonstration
-const mockDebts = [
-  {
-    id: 1,
-    creditor: 'Bank ABC',
-    amount: 250000,
-    status: 'active',
-    type: 'Boliglån',
-    lastPayment: '2024-01-15'
-  },
-  {
-    id: 2,
-    creditor: 'Credit Company XYZ',
-    amount: 45000,
-    status: 'negotiating',
-    type: 'Kredittkort',
-    lastPayment: '2024-01-10'
+interface Debt {
+  id: string
+  creditor: {
+    id: string
+    name: string
+    type: string
   }
-]
+  originalAmount: number
+  currentAmount: number
+  status: string
+  createdAt: string
+}
 
 export default function DebtsPage() {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [debts, setDebts] = useState(mockDebts)
+  const [debts, setDebts] = useState<Debt[]>([])
+
+  useEffect(() => {
+    fetchDebts()
+  }, [])
+
+  const fetchDebts = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setLoading(false)
+        return
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiUrl}/api/debts`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setDebts(data.debts || [])
+      } else {
+        console.error('Failed to fetch debts')
+        toast.error('Kunne ikke laste gjeld')
+      }
+    } catch (error) {
+      console.error('Error fetching debts:', error)
+      toast.error('Nettverksfeil ved lasting av gjeld')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Filter debts based on search term
   const filteredDebts = debts.filter(debt =>
-    debt.creditor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    debt.type.toLowerCase().includes(searchTerm.toLowerCase())
+    debt.creditor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    debt.creditor.type.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   if (loading) {
@@ -107,7 +135,7 @@ export default function DebtsPage() {
                 <div>
                   <p className="text-sm font-medium text-slate-600">Totalt Gjeld</p>
                   <p className="text-2xl font-bold text-slate-900">
-                    {debts.reduce((sum, debt) => sum + debt.amount, 0).toLocaleString()} NOK
+                    {debts.reduce((sum, debt) => sum + debt.currentAmount, 0).toLocaleString()} NOK
                   </p>
                 </div>
                 <AlertTriangle className="w-8 h-8 text-red-500" />
@@ -167,17 +195,17 @@ export default function DebtsPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-semibold text-slate-900">{debt.creditor}</h3>
+                        <h3 className="text-lg font-semibold text-slate-900">{debt.creditor.name}</h3>
                         <Badge variant={debt.status === 'active' ? 'destructive' : debt.status === 'negotiating' ? 'default' : 'secondary'}>
                           {debt.status === 'active' ? 'Aktiv' : debt.status === 'negotiating' ? 'Forhandling' : 'Løst'}
                         </Badge>
                       </div>
-                      <p className="text-slate-600 text-sm">{debt.type}</p>
-                      <p className="text-xs text-slate-500 mt-1">Siste betaling: {debt.lastPayment}</p>
+                      <p className="text-slate-600 text-sm">{debt.creditor.type}</p>
+                      <p className="text-xs text-slate-500 mt-1">Opprettet: {new Date(debt.createdAt).toLocaleDateString('no-NO')}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold text-slate-900">
-                        {debt.amount.toLocaleString()} NOK
+                        {debt.currentAmount.toLocaleString()} NOK
                       </p>
                       <div className="flex space-x-2 mt-2">
                         <Link href={`/dashboard/debts/${debt.id}`}>
