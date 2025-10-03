@@ -35,7 +35,13 @@ export default function RegisterForm() {
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/register-email`, {
+      // Use environment variable or fallback to relative URL in production
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
+        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+          ? window.location.origin
+          : 'http://localhost:3001');
+
+      const response = await fetch(`${apiUrl}/api/auth/register-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,8 +54,8 @@ export default function RegisterForm() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        setError(errorData.message || 'Registrering feilet');
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.message || errorData.error || 'Registrering feilet');
         setLoading(false);
         return;
       }
@@ -67,7 +73,8 @@ export default function RegisterForm() {
         router.push('/dashboard');
       }
     } catch (err) {
-      setError('Noe gikk galt. Prøv igjen.');
+      console.error('Registration error:', err);
+      setError(`Noe gikk galt. Prøv igjen. ${err instanceof Error ? err.message : ''}`);
     } finally {
       setLoading(false);
     }
