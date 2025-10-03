@@ -12,7 +12,12 @@ export interface User {
 
 export async function loginUser(email: string, password: string): Promise<{ token: string; user: User } | null> {
   try {
-    const response = await fetch('http://localhost:3001/api/auth/login-email', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
+      (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+        ? window.location.origin
+        : 'http://localhost:3001');
+
+    const response = await fetch(`${apiUrl}/api/auth/login-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -52,7 +57,12 @@ export function clearTokenCookie() {
 
 export async function getCurrentUser(token: string): Promise<User | null> {
   try {
-    const response = await fetch('http://localhost:3001/api/users/me', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
+      (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+        ? window.location.origin
+        : 'http://localhost:3001');
+
+    const response = await fetch(`${apiUrl}/api/users/me`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },

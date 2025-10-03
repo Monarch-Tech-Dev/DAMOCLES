@@ -12,11 +12,26 @@ export interface APIError {
 }
 
 export class DamoclesAPIClient {
+  private getBaseUrl(localPort: number): string {
+    // Use environment variable if available
+    if (process.env.NEXT_PUBLIC_API_URL) {
+      return process.env.NEXT_PUBLIC_API_URL.replace(':3001', `:${localPort}`);
+    }
+
+    // In production (non-localhost), assume services are proxied through main domain
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+      return window.location.origin;
+    }
+
+    // Development fallback
+    return `http://localhost:${localPort}`;
+  }
+
   private baseUrls = {
-    userService: 'http://localhost:3001',
-    trustEngine: 'http://localhost:3003',
-    gdprEngine: 'http://localhost:8001',
-    blockchainService: 'http://localhost:8020',
+    userService: this.getBaseUrl(3001),
+    trustEngine: this.getBaseUrl(3003),
+    gdprEngine: this.getBaseUrl(8001),
+    blockchainService: this.getBaseUrl(8020),
   };
 
   private async request<T>(
