@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import { Shield, User, Lock, CreditCard } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -11,6 +11,7 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,16 +19,12 @@ export default function LoginForm() {
     setError('');
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      });
+      const success = await login(email, password);
 
-      if (result?.error) {
-        setError('Ugyldig påloggingsinformasjon');
-      } else {
+      if (success) {
         router.push('/dashboard');
+      } else {
+        setError('Ugyldig påloggingsinformasjon');
       }
     } catch (err) {
       setError('Noe gikk galt. Prøv igjen.');
@@ -37,25 +34,7 @@ export default function LoginForm() {
   };
 
   const handleVippsLogin = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const result = await signIn('vipps', {
-        redirect: false,
-        callbackUrl: '/dashboard',
-      });
-
-      if (result?.error) {
-        setError('Vipps pålogging feilet. Prøv igjen.');
-      } else if (result?.url) {
-        window.location.href = result.url;
-      }
-    } catch (err) {
-      setError('Noe gikk galt med Vipps pålogging.');
-    } finally {
-      setLoading(false);
-    }
+    setError('Vipps-pålogging kommer snart. Bruk e-post og passord for nå.');
   };
 
   return (

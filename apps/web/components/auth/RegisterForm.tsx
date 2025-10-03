@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import { Shield, User, Lock, Mail, CreditCard } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function RegisterForm() {
   const [formData, setFormData] = useState({
@@ -15,6 +15,7 @@ export default function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -61,16 +62,12 @@ export default function RegisterForm() {
       }
 
       // Auto-login after successful registration
-      const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      });
+      const loginSuccess = await login(formData.email, formData.password);
 
-      if (result?.error) {
-        setError('Registrering vellykket, men pålogging feilet. Prøv å logge inn manuelt.');
-      } else {
+      if (loginSuccess) {
         router.push('/dashboard');
+      } else {
+        setError('Registrering vellykket, men pålogging feilet. Prøv å logge inn manuelt.');
       }
     } catch (err) {
       console.error('Registration error:', err);
@@ -81,25 +78,7 @@ export default function RegisterForm() {
   };
 
   const handleVippsRegister = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const result = await signIn('vipps', {
-        redirect: false,
-        callbackUrl: '/dashboard',
-      });
-
-      if (result?.error) {
-        setError('Vipps registrering feilet. Prøv igjen.');
-      } else if (result?.url) {
-        window.location.href = result.url;
-      }
-    } catch (err) {
-      setError('Noe gikk galt med Vipps registrering.');
-    } finally {
-      setLoading(false);
-    }
+    setError('Vipps-registrering kommer snart. Bruk e-post og passord for nå.');
   };
 
   return (
