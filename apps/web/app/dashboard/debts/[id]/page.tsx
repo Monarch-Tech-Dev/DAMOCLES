@@ -65,7 +65,12 @@ export default function DebtDetailPage() {
   const fetchDebt = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:3000/api/debts/${params.id}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
+        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+          ? window.location.origin
+          : 'http://localhost:3001');
+
+      const response = await fetch(`${apiUrl}/api/debts/${params.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -115,7 +120,12 @@ export default function DebtDetailPage() {
         return
       }
       
-      const response = await fetch(`http://localhost:3000/api/debts/${debt.id}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
+        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+          ? window.location.origin
+          : 'http://localhost:3001');
+
+      const response = await fetch(`${apiUrl}/api/debts/${debt.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

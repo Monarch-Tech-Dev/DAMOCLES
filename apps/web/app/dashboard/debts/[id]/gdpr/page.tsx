@@ -52,7 +52,12 @@ export default function GDPRRequestPage() {
       const token = localStorage.getItem('token')
       
       // Get debt details
-      const debtResponse = await fetch(`http://localhost:3000/api/debts/${params.id}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
+        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+          ? window.location.origin
+          : 'http://localhost:3001');
+
+      const debtResponse = await fetch(`${apiUrl}/api/debts/${params.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       
