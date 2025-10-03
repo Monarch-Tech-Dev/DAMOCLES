@@ -57,7 +57,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (storedToken && storedUser) {
         // Verify token is still valid
-        const response = await fetch('http://localhost:3001/api/users/me', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
+          (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+            ? window.location.origin
+            : 'http://localhost:3001');
+
+        const response = await fetch(`${apiUrl}/api/users/me`, {
           headers: {
             'Authorization': `Bearer ${storedToken}`,
           },
@@ -83,7 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setError(null);
-      const response = await fetch('http://localhost:3001/api/auth/login-email', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
+        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+          ? window.location.origin
+          : 'http://localhost:3001');
+
+      const response = await fetch(`${apiUrl}/api/auth/login-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

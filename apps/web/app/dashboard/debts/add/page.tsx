@@ -62,7 +62,10 @@ export default function AddDebtPage() {
     setSearchingCreditors(true)
     try {
       const token = localStorage.getItem('token')
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
+        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+          ? window.location.origin
+          : 'http://localhost:3001');
 
       const params = new URLSearchParams()
       if (searchTerm) params.append('search', searchTerm)
@@ -88,7 +91,11 @@ export default function AddDebtPage() {
 
   const fetchCreditorTypes = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
+        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+          ? window.location.origin
+          : 'http://localhost:3001');
+
       const response = await fetch(`${apiUrl}/api/creditors/types`)
 
       if (response.ok) {
@@ -132,7 +139,10 @@ export default function AddDebtPage() {
         return
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
+        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+          ? window.location.origin
+          : 'http://localhost:3001');
 
       const response = await fetch(`${apiUrl}/api/creditors`, {
         method: 'POST',
@@ -204,7 +214,10 @@ export default function AddDebtPage() {
         return
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
+        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+          ? window.location.origin
+          : 'http://localhost:3001');
 
       const response = await fetch(`${apiUrl}/api/debts`, {
         method: 'POST',
