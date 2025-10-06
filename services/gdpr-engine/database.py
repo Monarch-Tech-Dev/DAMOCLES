@@ -15,6 +15,9 @@ class Database:
     def __init__(self):
         self.pool = None
         self.database_url = os.getenv("DATABASE_URL", "sqlite:///./damocles.db")
+        # In-memory storage for development (until real DB is connected)
+        self._gdpr_requests = {}  # key: request_id, value: request_data
+        self._gdpr_by_user = {}    # key: user_id, value: list of request_ids
         
     async def connect(self):
         # Mock database connection for development
@@ -78,14 +81,25 @@ class Database:
         )
         
     async def get_user_gdpr_requests(
-        self, 
-        user_id: str, 
+        self,
+        user_id: str,
         status: Optional[str] = None,
         limit: int = 20,
         offset: int = 0
     ) -> List[GDPRRequest]:
-        # Mock user GDPR requests retrieval
-        return []
+        # Get from in-memory storage
+        request_ids = self._gdpr_by_user.get(user_id, [])
+        requests = []
+
+        for req_id in request_ids:
+            if req_id in self._gdpr_requests:
+                req = self._gdpr_requests[req_id]
+                # Filter by status if specified
+                if status is None or req.get("status") == status:
+                    requests.append(DictObj(req))
+
+        # Apply pagination
+        return requests[offset:offset + limit]
         
     async def get_user_violations(
         self,
@@ -132,30 +146,58 @@ class Database:
         from datetime import datetime
         import uuid
 
-        # Mock GDPR request creation
+        # Create GDPR request with in-memory storage
         gdpr_request = {
             "id": request_data.get("id", str(uuid.uuid4())),
             "user_id": request_data["user_id"],
             "creditor_id": request_data["creditor_id"],
             "reference_id": request_data["reference_id"],
             "content": request_data.get("content", ""),
-            "status": request_data.get("status", "PENDING"),
+            "status": request_data.get("status", "pending"),
             "request_type": request_data.get("request_type", "DATA_ACCESS"),
-            "created_at": datetime.now(),
-            "updated_at": datetime.now(),
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat(),
             "sent_at": None,
             "response_received_at": None,
-            "legal_deadline": request_data.get("legal_deadline"),
-            "followup_scheduled_at": request_data.get("followup_scheduled_at")
+            "response_due": request_data.get("response_due").isoformat() if request_data.get("response_due") else None,
+            "legal_deadline": request_data.get("legal_deadline").isoformat() if request_data.get("legal_deadline") else None,
+            "followup_scheduled_at": request_data.get("followup_scheduled_at").isoformat() if request_data.get("followup_scheduled_at") else None
         }
 
-        print(f"Mock: Created GDPR request {gdpr_request['id']} for user {gdpr_request['user_id']}")
+        # Store in memory
+        request_id = gdpr_request["id"]
+        user_id = gdpr_request["user_id"]
+
+        self._gdpr_requests[request_id] = gdpr_request
+
+        # Index by user_id
+        if user_id not in self._gdpr_by_user:
+            self._gdpr_by_user[user_id] = []
+        self._gdpr_by_user[user_id].append(request_id)
+
+        print(f"Stored GDPR request {request_id} for user {user_id} in memory")
         return DictObj(gdpr_request)
 
     async def update_gdpr_request(self, request_id: str, update_data: Dict[str, Any]) -> bool:
         """Update a GDPR request record"""
         from datetime import datetime
 
-        # Mock GDPR request update
-        print(f"Mock: Updated GDPR request {request_id} with {update_data}")
-        return True
+        # Update in memory storage
+        if request_id in self._gdpr_requests:
+            request = self._gdpr_requests[request_id]
+
+            # Update fields
+            for key, value in update_data.items():
+                # Convert datetime objects to ISO format strings
+                if hasattr(value, 'isoformat'):
+                    request[key] = value.isoformat()
+                else:
+                    request[key] = value
+
+            request["updated_at"] = datetime.now().isoformat()
+
+            print(f"Updated GDPR request {request_id} in memory with {update_data}")
+            return True
+
+        print(f"Warning: GDPR request {request_id} not found in memory")
+        return False

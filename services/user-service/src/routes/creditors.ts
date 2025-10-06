@@ -13,6 +13,18 @@ const CreateCreditorSchema = z.object({
 });
 
 export async function creditorRoutes(fastify: FastifyInstance) {
+  // Get creditor types - MUST be before /:creditorId route
+  fastify.get('/types', async (request: FastifyRequest, reply: FastifyReply) => {
+    const types = [
+      { value: 'bank', label: 'Bank', description: 'Commercial banks and financial institutions' },
+      { value: 'inkasso', label: 'Inkasso', description: 'Debt collection companies' },
+      { value: 'bnpl', label: 'Buy Now Pay Later', description: 'BNPL service providers' },
+      { value: 'other', label: 'Other', description: 'Other creditor types' }
+    ];
+
+    return reply.send({ types });
+  });
+
   // Get all creditors (public - no auth required)
   fastify.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
     const search = (request.query as any).search || '';
@@ -143,17 +155,5 @@ export async function creditorRoutes(fastify: FastifyInstance) {
       }
       throw error;
     }
-  });
-  
-  // Get creditor types
-  fastify.get('/types', async (request: FastifyRequest, reply: FastifyReply) => {
-    const types = [
-      { value: 'bank', label: 'Bank', description: 'Commercial banks and financial institutions' },
-      { value: 'inkasso', label: 'Inkasso', description: 'Debt collection companies' },
-      { value: 'bnpl', label: 'Buy Now Pay Later', description: 'BNPL service providers' },
-      { value: 'other', label: 'Other', description: 'Other creditor types' }
-    ];
-    
-    return reply.send({ types });
   });
 }
