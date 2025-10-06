@@ -18,6 +18,30 @@ import { Card } from '@/components/ui/card'
 import toast from 'react-hot-toast'
 import DOMPurify from 'isomorphic-dompurify'
 
+// Helper function to safely sanitize HTML content
+const sanitizeContent = (html: string, maxLength?: number): string => {
+  if (typeof window === 'undefined') return ''; // Skip SSR to prevent hydration mismatch
+
+  try {
+    const sanitized = DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+      ALLOWED_ATTR: []
+    });
+
+    if (maxLength) {
+      const div = document.createElement('div');
+      div.innerHTML = sanitized;
+      const text = div.textContent || div.innerText || '';
+      return text.substring(0, maxLength) + (text.length > maxLength ? '...' : '');
+    }
+
+    return sanitized;
+  } catch (error) {
+    console.error('Sanitization error:', error);
+    return '';
+  }
+};
+
 interface Debt {
   id: string
   creditor: {
@@ -38,6 +62,20 @@ interface GDPRRequest {
   created_at: string
 }
 
+// Helper function to safely parse JWT token
+const getUserIdFromToken = (token: string | null): string | null => {
+  try {
+    if (!token) return null;
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1]));
+    return payload.userId || payload.sub || null;
+  } catch (error) {
+    console.error('Token parsing error:', error);
+    return null;
+  }
+};
+
 export default function GDPRRequestPage() {
   const params = useParams()
   const router = useRouter()
@@ -50,30 +88,40 @@ export default function GDPRRequestPage() {
   const fetchData = async () => {
     try {
       const token = localStorage.getItem('token')
-      
+
       // Get debt details
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
         (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
           ? window.location.origin
           : 'http://localhost:3001');
 
+      // GDPR Engine URL
+      const gdprApiUrl = process.env.NEXT_PUBLIC_GDPR_ENGINE_URL ||
+        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+          ? `${window.location.origin}/gdpr-api`
+          : 'http://localhost:8001');
+
       const debtResponse = await fetch(`${apiUrl}/api/debts/${params.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
-      
+
       if (debtResponse.ok) {
         const debtData = await debtResponse.json()
         setDebt(debtData.debt)
-        
-        // Get user ID from token (simplified for demo)
-        const userPayload = JSON.parse(atob(token!.split('.')[1]))
-        const userId = userPayload.userId
-        
+
+        // Get user ID from token safely
+        const userId = getUserIdFromToken(token)
+        if (!userId) {
+          toast.error('Ugyldig autentisering')
+          router.push('/login')
+          return
+        }
+
         // Get GDPR requests for this user
-        const gdprResponse = await fetch(`http://localhost:8001/gdpr/requests/${userId}`, {
+        const gdprResponse = await fetch(`${gdprApiUrl}/gdpr/requests/${userId}`, {
           headers: { 'Content-Type': 'application/json' }
         })
-        
+
         if (gdprResponse.ok) {
           const gdprData = await gdprResponse.json()
           setGdprRequests(gdprData.requests || [])
@@ -95,19 +143,31 @@ export default function GDPRRequestPage() {
 
   const generateGDPRRequest = async () => {
     if (!debt) return
-    
+
     setGenerating(true)
     try {
       const token = localStorage.getItem('token')
-      const userPayload = JSON.parse(atob(token!.split('.')[1]))
-      
-      const response = await fetch('http://localhost:8001/gdpr/generate', {
+      const userId = getUserIdFromToken(token)
+
+      if (!userId) {
+        toast.error('Ugyldig autentisering')
+        router.push('/login')
+        setGenerating(false)
+        return
+      }
+
+      const gdprApiUrl = process.env.NEXT_PUBLIC_GDPR_ENGINE_URL ||
+        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+          ? `${window.location.origin}/gdpr-api`
+          : 'http://localhost:8001');
+
+      const response = await fetch(`${gdprApiUrl}/gdpr/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          user_id: userPayload.userId,
+          user_id: userId,
           creditor_id: debt.creditor.id,
           request_type: 'article_15'
         })
@@ -131,7 +191,12 @@ export default function GDPRRequestPage() {
   const sendGDPRRequest = async (requestId: string) => {
     setSending(requestId)
     try {
-      const response = await fetch(`http://localhost:8001/gdpr/send/${requestId}`, {
+      const gdprApiUrl = process.env.NEXT_PUBLIC_GDPR_ENGINE_URL ||
+        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+          ? `${window.location.origin}/gdpr-api`
+          : 'http://localhost:8001');
+
+      const response = await fetch(`${gdprApiUrl}/gdpr/send/${requestId}`, {
         method: 'POST'
       })
 
@@ -356,7 +421,7 @@ export default function GDPRRequestPage() {
                         Vis forespørsel innhold
                       </summary>
                       <div className="mt-2 p-3 bg-gray-50 rounded text-sm max-h-40 overflow-y-auto">
-                        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(request.content.substring(0, 500) + '...') }} />
+                        <div dangerouslySetInnerHTML={{ __html: sanitizeContent(request.content, 500) }} />
                       </div>
                     </details>
                   )}
