@@ -16,12 +16,10 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import toast from 'react-hot-toast'
-import DOMPurify from 'isomorphic-dompurify'
+import DOMPurify from 'dompurify'
 
 // Helper function to safely sanitize HTML content
 const sanitizeContent = (html: string, maxLength?: number): string => {
-  if (typeof window === 'undefined') return ''; // Skip SSR to prevent hydration mismatch
-
   try {
     const sanitized = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
@@ -84,6 +82,7 @@ export default function GDPRRequestPage() {
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [sending, setSending] = useState('')
+  const [mounted, setMounted] = useState(false)
 
   const fetchData = async () => {
     try {
@@ -140,6 +139,10 @@ export default function GDPRRequestPage() {
       fetchData()
     }
   }, [params.id])
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const generateGDPRRequest = async () => {
     if (!debt) return
@@ -415,7 +418,7 @@ export default function GDPRRequestPage() {
                     </div>
                   )}
 
-                  {request.content && (
+                  {request.content && mounted && (
                     <details className="mt-4">
                       <summary className="cursor-pointer text-sm text-damocles-accent font-medium">
                         Vis forespørsel innhold
