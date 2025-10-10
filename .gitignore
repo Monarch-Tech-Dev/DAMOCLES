@@ -46,6 +46,9 @@ config/staging.js
 
 # Database files - Contains PII
 *.db
+*.db-journal
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 *.dump
