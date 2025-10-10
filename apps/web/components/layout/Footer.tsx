@@ -39,8 +39,8 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Juridisk</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="/contact" className="text-gray-300 hover:text-white">Personvern</a></li>
-              <li><a href="/contact" className="text-gray-300 hover:text-white">Vilkår for bruk</a></li>
+              <li><a href="/personvern" className="text-gray-300 hover:text-white">Personvern</a></li>
+              <li><a href="/vilkar" className="text-gray-300 hover:text-white">Vilkår for bruk</a></li>
               <li><a href="/about" className="text-gray-300 hover:text-white">GDPR-samsvar</a></li>
               <li><a href="/contact" className="text-gray-300 hover:text-white">Kontakt</a></li>
             </ul>
