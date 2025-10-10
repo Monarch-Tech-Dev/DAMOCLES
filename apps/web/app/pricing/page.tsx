@@ -11,19 +11,19 @@ export default function PricingPage() {
         {/* Hero Section */}
         <section className="relative py-24 bg-gradient-to-br from-slate-50 via-white to-gray-50 overflow-hidden">
           <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl"></div>
+            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-100/50 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-100/50 rounded-full blur-3xl"></div>
           </div>
 
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-4xl sm:text-6xl font-black text-gray-900 mb-6 leading-tight">
-              Simple
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600">
-                Fair Pricing
+              Enkel og
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-slate-700">
+                transparent prising
               </span>
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed mb-12">
-              No hidden fees. No upfront costs. We only succeed when you do.
+              Ingen abonnement. Ingen skjulte kostnader. Du bestemmer selv når og hva du betaler for.
             </p>
           </div>
         </section>
@@ -33,169 +33,155 @@ export default function PricingPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-3 gap-8">
 
-              {/* Free Plan */}
-              <div className="bg-white border-2 border-gray-200 rounded-3xl p-8 relative">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Debt Health Check</h3>
-                <div className="mb-6">
-                  <span className="text-4xl font-black text-gray-900">Free</span>
-                  <span className="text-gray-600 ml-2">Forever</span>
+              {/* Free Tier */}
+              <div className="bg-white border-2 border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all duration-200">
+                <div className="text-center mb-8">
+                  <h3 className="text-2xl font-bold text-slate-900 mb-2">Gratis</h3>
+                  <div className="text-4xl font-black text-slate-900 mb-4">0 kr</div>
+                  <p className="text-slate-600">Kom i gang uten kostnad</p>
                 </div>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-center">
-                    <span className="text-emerald-500 mr-3">✓</span>
-                    Personal Debt Index (PDI) calculation
+
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-600 flex-shrink-0 mt-0.5">✓</span>
+                    <span className="text-slate-700">Grunnleggende GDPR-forespørsel</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-emerald-500 mr-3">✓</span>
-                    Basic violation detection
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-600 flex-shrink-0 mt-0.5">✓</span>
+                    <span className="text-slate-700">PDI-beregning (gjeldshelse)</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-emerald-500 mr-3">✓</span>
-                    Educational resources
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-600 flex-shrink-0 mt-0.5">✓</span>
+                    <span className="text-slate-700">Manuell dokumentopplasting</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-emerald-500 mr-3">✓</span>
-                    Debt health monitoring
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-600 flex-shrink-0 mt-0.5">✓</span>
+                    <span className="text-slate-700">Tilgang til fellesskapsressurser</span>
                   </li>
                 </ul>
+
                 <Link
                   href="/auth/register"
-                  className="block w-full text-center bg-gray-100 text-gray-900 py-3 rounded-2xl font-semibold hover:bg-gray-200 transition-colors"
+                  className="block w-full px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold text-center hover:bg-slate-200 transition-colors duration-200"
                 >
-                  Get Started Free
+                  Start gratis
                 </Link>
               </div>
 
-              {/* Pro Plan */}
-              <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-8 relative text-white transform scale-105">
-                <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold">
-                  Most Popular
+              {/* Standard Tier - Most Popular */}
+              <div className="bg-blue-600 border-2 border-blue-600 rounded-2xl p-8 relative transform hover:scale-105 transition-all duration-200 shadow-lg">
+                <div className="absolute top-0 right-0 bg-green-500 text-white px-4 py-1 rounded-bl-2xl rounded-tr-2xl text-sm font-semibold">
+                  Mest populær
                 </div>
-                <h3 className="text-2xl font-bold mb-4">Legal Protection</h3>
-                <div className="mb-6">
-                  <span className="text-4xl font-black">25%</span>
-                  <span className="ml-2">of money recovered</span>
+
+                <div className="text-center mb-8">
+                  <h3 className="text-2xl font-bold text-white mb-2">Standard</h3>
+                  <div className="flex items-baseline justify-center gap-2 mb-4">
+                    <span className="text-lg text-white/80">Fra</span>
+                    <div className="text-4xl font-black text-white">299 kr</div>
+                  </div>
+                  <p className="text-white/90">Per GDPR-sak med AI-analyse</p>
                 </div>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-center">
-                    <span className="text-purple-200 mr-3">✓</span>
-                    Everything in Free plan
+
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-start gap-3">
+                    <span className="text-white flex-shrink-0 mt-0.5">✓</span>
+                    <span className="text-white">Alt i Gratis</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-purple-200 mr-3">✓</span>
-                    Automated GDPR requests
+                  <li className="flex items-start gap-3">
+                    <span className="text-white flex-shrink-0 mt-0.5">✓</span>
+                    <span className="text-white">Matematisk brudddeteksjon</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-purple-200 mr-3">✓</span>
-                    Legal complaint filing
+                  <li className="flex items-start gap-3">
+                    <span className="text-white flex-shrink-0 mt-0.5">✓</span>
+                    <span className="text-white">Automatisk dokumentanalyse</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-purple-200 mr-3">✓</span>
-                    Priority support
+                  <li className="flex items-start gap-3">
+                    <span className="text-white flex-shrink-0 mt-0.5">✓</span>
+                    <span className="text-white">Motstridighetsdeteksjon</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-purple-200 mr-3">✓</span>
-                    SWORD token participation
+                  <li className="flex items-start gap-3">
+                    <span className="text-white flex-shrink-0 mt-0.5">✓</span>
+                    <span className="text-white">Oppfølgingspåminnelser</span>
                   </li>
                 </ul>
+
                 <Link
                   href="/auth/register"
-                  className="block w-full text-center bg-white text-purple-600 py-3 rounded-2xl font-semibold hover:bg-gray-100 transition-colors"
+                  className="block w-full px-6 py-3 bg-white text-blue-600 rounded-xl font-semibold text-center hover:bg-blue-50 transition-colors duration-200"
                 >
-                  Start Legal Protection
+                  Kom i gang
                 </Link>
-                <p className="text-purple-200 text-sm mt-4 text-center">
-                  Only pay when we recover money for you
-                </p>
               </div>
 
-              {/* Enterprise Plan */}
-              <div className="bg-white border-2 border-gray-200 rounded-3xl p-8 relative">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Enterprise</h3>
-                <div className="mb-6">
-                  <span className="text-4xl font-black text-gray-900">Custom</span>
-                  <span className="text-gray-600 ml-2">Pricing</span>
+              {/* Pro Tier */}
+              <div className="bg-white border-2 border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-lg transition-all duration-200">
+                <div className="text-center mb-8">
+                  <h3 className="text-2xl font-bold text-slate-900 mb-2">Pro</h3>
+                  <div className="flex items-baseline justify-center gap-2 mb-4">
+                    <span className="text-lg text-slate-600">Fra</span>
+                    <div className="text-4xl font-black text-slate-900">999 kr</div>
+                  </div>
+                  <p className="text-slate-600">For komplekse saker</p>
                 </div>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-center">
-                    <span className="text-emerald-500 mr-3">✓</span>
-                    Everything in Legal Protection
+
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-600 flex-shrink-0 mt-0.5">✓</span>
+                    <span className="text-slate-700">Alt i Standard</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-emerald-500 mr-3">✓</span>
-                    Bulk GDPR request management
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-600 flex-shrink-0 mt-0.5">✓</span>
+                    <span className="text-slate-700">Komplett bevispakke</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-emerald-500 mr-3">✓</span>
-                    Legal team consultation
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-600 flex-shrink-0 mt-0.5">✓</span>
+                    <span className="text-slate-700">Blockchain-bevissikring</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-emerald-500 mr-3">✓</span>
-                    Custom integration
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-600 flex-shrink-0 mt-0.5">✓</span>
+                    <span className="text-slate-700">Automatisk eskalering</span>
                   </li>
-                  <li className="flex items-center">
-                    <span className="text-emerald-500 mr-3">✓</span>
-                    White-label options
+                  <li className="flex items-start gap-3">
+                    <span className="text-green-600 flex-shrink-0 mt-0.5">✓</span>
+                    <span className="text-slate-700">SWORD token-tilgang</span>
                   </li>
                 </ul>
+
                 <Link
-                  href="/contact"
-                  className="block w-full text-center bg-gray-900 text-white py-3 rounded-2xl font-semibold hover:bg-gray-800 transition-colors"
+                  href="/auth/register"
+                  className="block w-full px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold text-center hover:bg-slate-200 transition-colors duration-200"
                 >
-                  Contact Sales
+                  Kom i gang
                 </Link>
               </div>
             </div>
           </div>
         </section>
 
-        {/* How Success Fee Works */}
+        {/* Pricing Disclaimer */}
         <section className="py-20 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">How Our Success Fee Works</h2>
-              <p className="text-xl text-gray-600 mb-12">
-                We only get paid when we successfully recover money for you. This aligns our interests with yours.
-              </p>
-
-              <div className="grid md:grid-cols-3 gap-8">
-                <div className="bg-white p-6 rounded-2xl shadow-lg">
-                  <div className="text-3xl mb-4">🔍</div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">We Find Violations</h3>
-                  <p className="text-gray-600">
-                    Our AI scans your debt for illegal fees, GDPR violations, and improper collection practices.
-                  </p>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-lg">
-                  <div className="text-3xl mb-4">⚖️</div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">We Take Action</h3>
-                  <p className="text-gray-600">
-                    Automated legal requests, complaints, and negotiations with debt collectors on your behalf.
-                  </p>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-lg">
-                  <div className="text-3xl mb-4">💰</div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">You Keep 75%</h3>
-                  <p className="text-gray-600">
-                    When we successfully recover money, you keep 75% and we take 25% as our success fee.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-12 bg-gradient-to-r from-purple-600 to-pink-600 p-8 rounded-2xl text-white">
-                <h3 className="text-2xl font-bold mb-4">Example Recovery</h3>
-                <div className="text-left max-w-2xl mx-auto">
-                  <div className="mb-2">Illegal collection fees found: €1,200</div>
-                  <div className="mb-2">GDPR violation penalty: €800</div>
-                  <div className="border-t border-purple-300 pt-2 mb-2 font-bold">
-                    Total recovered: €2,000
-                  </div>
-                  <div className="text-purple-200">You receive: €1,500 (75%)</div>
-                  <div className="text-purple-200">Our fee: €500 (25%)</div>
-                </div>
-              </div>
+            <div className="max-w-3xl mx-auto bg-blue-50 border border-blue-200 rounded-2xl p-8">
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Om prising:</h3>
+              <ul className="space-y-2 text-slate-700">
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span><strong>Start alltid gratis</strong> - Test systemet før du betaler noe</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span><strong>Betal kun for tjenester du faktisk trenger</strong> - Ingen tvungne pakker</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span><strong>Ingen abonnement eller skjulte kostnader</strong> - Transparent prising</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 font-bold">•</span>
+                  <span><strong>Resultater varierer</strong> - Vi garanterer ikke økonomiske resultater</span>
+                </li>
+              </ul>
             </div>
           </div>
         </section>
@@ -203,24 +189,26 @@ export default function PricingPage() {
         {/* FAQ */}
         <section className="py-20 bg-white">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Frequently Asked Questions</h2>
+            <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Ofte stilte spørsmål</h2>
             <div className="space-y-8">
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">What if you don't recover any money?</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Hva skjer hvis jeg ikke finner noen feil?</h3>
                 <p className="text-gray-600">
-                  You pay nothing. Our Legal Protection plan only charges a success fee when we actually recover money for you.
+                  Gratis-versjonen koster ingenting. Betalte tjenester betales kun når du velger å bruke dem.
+                  Vi garanterer ikke resultater - verktøyet gir deg informasjon, du bestemmer hva du gjør med den.
                 </p>
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">How long does the process take?</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Hvor lang tid tar prosessen?</h3>
                 <p className="text-gray-600">
-                  GDPR requests typically get responses within 30 days. Violation claims can take 2-6 months depending on complexity.
+                  GDPR-forespørsler har 30 dagers svarfrist ifølge loven. Kompleksiteten varierer avhengig av saken.
+                  Du beveger deg i ditt eget tempo.
                 </p>
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Can I cancel anytime?</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Kan jeg avslutte når som helst?</h3>
                 <p className="text-gray-600">
-                  Yes, you can cancel your Legal Protection plan anytime. We'll complete any active cases at no additional charge.
+                  Ja, det er ingen binding. Gratis-tjenestene er alltid tilgjengelige. Betalte tjenester betales per bruk.
                 </p>
               </div>
             </div>
@@ -228,17 +216,17 @@ export default function PricingPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-20 bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+        <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
           <div className="max-w-4xl mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-4">Start Your Free Debt Health Check</h2>
-            <p className="text-xl mb-8 text-purple-100">
-              See what violations we can find in your debt collection. No cost, no commitment.
+            <h2 className="text-3xl font-bold mb-4">Start gratis gjeldshelse-sjekk</h2>
+            <p className="text-xl mb-8 text-blue-100">
+              Se hvilke potensielle feil som finnes i inkassokravet ditt. Ingen kostnad, ingen forpliktelse.
             </p>
             <Link
               href="/auth/register"
-              className="inline-block bg-white text-purple-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-gray-100 transition-colors"
+              className="inline-block bg-white text-blue-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-gray-100 transition-colors"
             >
-              Check My Debt
+              Kom i gang gratis
             </Link>
           </div>
         </section>
