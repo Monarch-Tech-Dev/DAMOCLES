@@ -112,7 +112,7 @@ export default function FoundingMembersPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       {/* Floating Notification Bar */}
-      <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-red-600 to-orange-600 text-white py-2 px-4 text-center text-sm font-semibold z-50 animate-pulse">
+      <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-red-600 to-orange-600 text-white py-2 px-4 text-center text-sm font-semibold z-50 animate-pulse" suppressHydrationWarning>
         ⚡ URGENT: Only {stats.spotsRemaining} Founding Member spots left!
         <span className="ml-2 text-yellow-200">
           {stats.recentJoiners[0]} just joined
@@ -153,7 +153,7 @@ export default function FoundingMembersPage() {
                 <h3 className="text-2xl font-bold">Live Member Count</h3>
               </div>
 
-              <div className="text-6xl font-bold text-blue-400 mb-2">
+              <div className="text-6xl font-bold text-blue-400 mb-2" suppressHydrationWarning>
                 {stats.totalMembers.toLocaleString()}
               </div>
               <div className="text-gray-400 mb-4">/ 1000 Founding Members</div>
@@ -166,14 +166,14 @@ export default function FoundingMembersPage() {
                 ></div>
               </div>
 
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-gray-400" suppressHydrationWarning>
                 {stats.percentFilled.toFixed(1)}% filled
               </div>
 
               {/* Recent Joiners */}
               <div className="mt-4 p-3 bg-gray-900 rounded-lg">
                 <div className="text-xs text-gray-500 mb-2">Recent joiners:</div>
-                <div className="flex justify-center space-x-2">
+                <div className="flex justify-center space-x-2" suppressHydrationWarning>
                   {stats.recentJoiners.map((name, index) => (
                     <span key={index} className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
                       {name}
@@ -192,7 +192,7 @@ export default function FoundingMembersPage() {
                 <h3 className="text-2xl font-bold">Campaign Ends In</h3>
               </div>
 
-              <div className="grid grid-cols-4 gap-2 mb-4">
+              <div className="grid grid-cols-4 gap-2 mb-4" suppressHydrationWarning>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-red-400">{timeLeft.days}</div>
                   <div className="text-xs text-gray-400">DAYS</div>
