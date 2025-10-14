@@ -86,27 +86,8 @@ export async function sendGDPREmail(params: SendGDPREmailParams): Promise<{ succ
     const [response] = await sgMail.send(msg);
     const messageId = response.headers['x-message-id'] as string;
 
-    // Store email in database
-    await prisma.platformEmail.create({
-      data: {
-        userId: '', // Will need to get from GDPR request
-        creditorId: '', // Will need to get from GDPR request
-        subject,
-        bodyHtml: htmlContent,
-        bodyText: textContent,
-        userApproved: true,
-        status: 'sent',
-        sentAt: new Date(),
-        trackingId,
-        messageId,
-        metadata: JSON.stringify({
-          sendgrid_message_id: messageId,
-          to_email: toEmail,
-          to_name: toName,
-          reply_to: replyToEmail
-        })
-      }
-    });
+    // Note: PlatformEmail will be created by email routes with full context
+    // This is just for SendGrid tracking
 
     console.log(`GDPR email sent successfully: ${messageId}`);
 
@@ -195,6 +176,10 @@ export async function processInboundEmail(email: InboundEmail): Promise<void> {
       data: {
         userId: gdprRequest.userId,
         creditorId: gdprRequest.creditorId,
+        direction: 'inbound',
+        fromEmail: email.from,
+        toEmail: email.to,
+        ccEmails: '[]',
         subject: email.subject,
         bodyHtml: email.html || '',
         bodyText: email.text || '',
