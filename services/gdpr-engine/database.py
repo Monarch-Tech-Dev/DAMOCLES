@@ -33,37 +33,106 @@ class Database:
         return True
         
     async def get_user(self, user_id: str) -> Optional[User]:
-        # Mock user retrieval
+        """Fetch user from user-service database"""
+        import os
         from datetime import datetime
-        return User(
-            id=user_id,
-            email="user@example.com",
-            phone_number="+4712345678",
-            risk_score=0.5,
-            shield_tier="bronze",
-            token_balance=100.0,
-            onboarding_status="COMPLETED",
-            is_active=True,
-            created_at=datetime.now(),
-            updated_at=datetime.now()
-        )
+
+        try:
+            # Query user-service database directly
+            query = """
+                SELECT
+                    id, email, name, phone_number, street_address,
+                    postal_code, city, country, date_of_birth,
+                    risk_score, shield_tier, token_balance,
+                    onboarding_status, gdpr_profile_complete,
+                    vipps_verified, vipps_sub, is_active,
+                    created_at, updated_at
+                FROM users
+                WHERE id = $1
+            """
+
+            # Use connection to user-service database
+            user_db_url = os.getenv('USER_DB_URL', os.getenv('DATABASE_URL'))
+
+            import asyncpg
+            conn = await asyncpg.connect(user_db_url)
+            try:
+                row = await conn.fetchrow(query, user_id)
+                if not row:
+                    return None
+
+                return User(
+                    id=row['id'],
+                    email=row['email'],
+                    name=row.get('name'),
+                    phone_number=row.get('phone_number'),
+                    street_address=row.get('street_address'),
+                    postal_code=row.get('postal_code'),
+                    city=row.get('city'),
+                    country=row.get('country'),
+                    date_of_birth=row.get('date_of_birth'),
+                    risk_score=float(row.get('risk_score', 0.5)),
+                    shield_tier=row.get('shield_tier', 'bronze'),
+                    token_balance=float(row.get('token_balance', 0.0)),
+                    onboarding_status=row.get('onboarding_status', 'PENDING'),
+                    is_active=row.get('is_active', True),
+                    created_at=row['created_at'],
+                    updated_at=row['updated_at']
+                )
+            finally:
+                await conn.close()
+
+        except Exception as e:
+            import logging
+            logging.error(f"Error fetching user {user_id}: {e}")
+            return None
         
     async def get_creditor(self, creditor_id: str) -> Optional[Creditor]:
-        # Mock creditor retrieval
+        """Fetch creditor from user-service database"""
+        import os
         from datetime import datetime
-        return Creditor(
-            id=creditor_id,
-            name="Example Creditor AS",
-            organization_number="123456789",
-            type="inkasso",
-            privacy_email="privacy@example-creditor.no",
-            violation_score=2.5,
-            total_violations=15,
-            average_settlement_rate=0.65,
-            is_active=True,
-            created_at=datetime.now(),
-            updated_at=datetime.now()
-        )
+
+        try:
+            # Query user-service database directly
+            query = """
+                SELECT
+                    id, name, organization_number, type, privacy_email,
+                    violation_score, total_violations, average_settlement_rate,
+                    is_active, created_at, updated_at
+                FROM creditors
+                WHERE id = $1
+            """
+
+            # Use connection to user-service database
+            user_db_url = os.getenv('USER_DB_URL', os.getenv('DATABASE_URL'))
+
+            import asyncpg
+            conn = await asyncpg.connect(user_db_url)
+            try:
+                row = await conn.fetchrow(query, creditor_id)
+                if not row:
+                    return None
+
+                return Creditor(
+                    id=row['id'],
+                    name=row['name'],
+                    organization_number=row.get('organization_number'),
+                    type=row.get('type', 'default'),
+                    privacy_email=row.get('privacy_email'),
+                    violation_score=float(row.get('violation_score', 0.0)),
+                    total_violations=int(row.get('total_violations', 0)),
+                    average_settlement_rate=float(row.get('average_settlement_rate', 0.0)),
+                    is_active=row.get('is_active', True),
+                    created_at=row['created_at'],
+                    updated_at=row['updated_at']
+                )
+            finally:
+                await conn.close()
+
+        except Exception as e:
+            import logging
+            logging.error(f"Error fetching creditor {creditor_id}: {e}")
+            return None
         
     async def get_gdpr_request(self, request_id: str) -> Optional[GDPRRequest]:
         # Mock GDPR request retrieval
