@@ -33,10 +33,22 @@ export default function DebtsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [debts, setDebts] = useState<Debt[]>([])
+  const [apiUrl, setApiUrl] = useState('')
 
   useEffect(() => {
-    fetchDebts()
+    // Set API URL on client side to avoid hydration mismatch
+    const url = process.env.NEXT_PUBLIC_API_URL ||
+      (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+        ? window.location.origin
+        : 'http://localhost:3001');
+    setApiUrl(url)
   }, [])
+
+  useEffect(() => {
+    if (apiUrl) {
+      fetchDebts()
+    }
+  }, [apiUrl])
 
   const fetchDebts = async () => {
     try {
@@ -45,11 +57,6 @@ export default function DebtsPage() {
         setLoading(false)
         return
       }
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? window.location.origin
-          : 'http://localhost:3001');
 
       const response = await fetch(`${apiUrl}/api/debts`, {
         headers: {
@@ -205,7 +212,7 @@ export default function DebtsPage() {
                         </Badge>
                       </div>
                       <p className="text-slate-600 text-sm">{debt.creditor.type}</p>
-                      <p className="text-xs text-slate-500 mt-1">Opprettet: {new Date(debt.createdAt).toLocaleDateString('no-NO')}</p>
+                      <p className="text-xs text-slate-500 mt-1" suppressHydrationWarning>Opprettet: {new Date(debt.createdAt).toLocaleDateString('no-NO')}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold text-slate-900">
