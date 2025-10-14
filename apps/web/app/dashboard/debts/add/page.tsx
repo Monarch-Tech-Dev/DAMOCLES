@@ -113,11 +113,15 @@ export default function AddDebtPage() {
   }
 
   useEffect(() => {
-    searchCreditors()
-    fetchCreditorTypes()
-  }, [])
+    if (apiUrl) {
+      searchCreditors()
+      fetchCreditorTypes()
+    }
+  }, [apiUrl])
 
   useEffect(() => {
+    if (!apiUrl) return;
+
     if (creditorSearch) {
       const debounce = setTimeout(() => {
         searchCreditors(creditorSearch)
@@ -126,7 +130,7 @@ export default function AddDebtPage() {
     } else {
       searchCreditors()
     }
-  }, [creditorSearch])
+  }, [creditorSearch, apiUrl])
 
   const createNewCreditor = async () => {
     if (!newCreditorName || !newCreditorType) {
