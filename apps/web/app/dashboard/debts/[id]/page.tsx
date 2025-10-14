@@ -12,7 +12,8 @@ import {
   DocumentTextIcon,
   ChatBubbleLeftRightIcon,
   BanknotesIcon,
-  XCircleIcon
+  XCircleIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -58,6 +59,7 @@ export default function DebtDetailPage() {
   const [debt, setDebt] = useState<Debt | null>(null)
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [editAmount, setEditAmount] = useState('')
   const [editStatus, setEditStatus] = useState('')
@@ -148,6 +150,42 @@ export default function DebtDetailPage() {
       toast.error('Feil ved oppdatering av gjeld')
     } finally {
       setUpdating(false)
+    }
+  }
+
+  const deleteDebt = async () => {
+    if (!debt || !apiUrl) return
+
+    // Confirm deletion
+    if (!window.confirm(
+      `Er du sikker på at du vil slette gjelden til ${debt.creditor.name}?\n\n` +
+      `Dette vil permanent fjerne gjelden og alle tilknyttede data. Denne handlingen kan ikke angres.`
+    )) {
+      return
+    }
+
+    setDeleting(true)
+    try {
+      const token = localStorage.getItem('token')
+
+      const response = await fetch(`${apiUrl}/api/debts/${debt.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok || response.status === 204) {
+        toast.success('Gjeld slettet')
+        router.push('/dashboard/debts')
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Feil ved sletting av gjeld')
+      }
+    } catch (error) {
+      toast.error('Feil ved sletting av gjeld')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -471,6 +509,24 @@ export default function DebtDetailPage() {
                     {(debt.creditor.averageSettlementRate * 100).toFixed(0)}%
                   </p>
                 </div>
+              </div>
+
+              {/* Delete Debt Button */}
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <Button
+                  onClick={deleteDebt}
+                  disabled={deleting || debt.status === 'settled'}
+                  variant="outline"
+                  className="w-full text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                >
+                  <TrashIcon className="w-4 h-4 mr-2" />
+                  {deleting ? 'Sletter...' : 'Slett gjeld'}
+                </Button>
+                {debt.status === 'settled' && (
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Avsluttede gjeld kan ikke slettes
+                  </p>
+                )}
               </div>
             </Card>
 
