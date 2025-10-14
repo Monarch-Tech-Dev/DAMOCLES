@@ -20,12 +20,13 @@ export async function authenticateUser(
     }
     
     const token = authorization.replace('Bearer ', '');
-    
+
     if (!token) {
       return reply.status(401).send({ error: 'No token provided' });
     }
-    
-    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET!) as any;
+
+    const jwtSecret = process.env.JWT_ACCESS_SECRET || 'fallback-secret';
+    const decoded = jwt.verify(token, jwtSecret) as any;
     
     // Add user info to request
     (request as any).user = {

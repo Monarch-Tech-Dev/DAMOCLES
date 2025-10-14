@@ -133,20 +133,32 @@ export default function AddDebtPage() {
   }, [creditorSearch, apiUrl])
 
   const createNewCreditor = async () => {
+    console.log('Creating creditor...', {
+      name: newCreditorName,
+      type: newCreditorType,
+      apiUrl
+    })
+
     if (!newCreditorName || !newCreditorType) {
       toast.error('Navn og type er påkrevd')
       return
     }
 
-    if (!apiUrl) return;
+    if (!apiUrl) {
+      toast.error('Vennligst vent, laster...')
+      return
+    }
+
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
       if (!token) {
         toast.error('Du må være logget inn')
+        setLoading(false)
         return
       }
 
+      console.log('Sending request to:', `${apiUrl}/api/creditors`)
       const response = await fetch(`${apiUrl}/api/creditors`, {
         method: 'POST',
         headers: {
@@ -161,8 +173,11 @@ export default function AddDebtPage() {
         })
       })
 
+      console.log('Response status:', response.status)
+
       if (response.ok) {
         const data = await response.json()
+        console.log('Creditor created:', data)
         const newCreditor: Creditor = {
           ...data.creditor,
           averageSettlementRate: data.creditor.averageSettlementRate || 0,
@@ -178,6 +193,7 @@ export default function AddDebtPage() {
         await searchCreditors(creditorSearch)
       } else if (response.status === 409) {
         const data = await response.json()
+        console.log('Creditor already exists:', data)
         toast.error('Kreditor finnes allerede')
 
         // If creditor exists, use it
@@ -193,6 +209,7 @@ export default function AddDebtPage() {
         }
       } else {
         const data = await response.json()
+        console.error('Error creating creditor:', data)
         toast.error(data.error || 'Feil ved opprettelse av kreditor')
       }
     } catch (error) {
