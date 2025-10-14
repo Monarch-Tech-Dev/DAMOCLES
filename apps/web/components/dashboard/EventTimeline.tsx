@@ -260,7 +260,7 @@ export function EventTimeline({
                             <div className="flex items-center justify-between sm:justify-start">
                               {renderStatusBadge(event.status)}
                               <div className="sm:hidden text-xs text-gray-500">
-                                <time dateTime={event.timestamp}>
+                                <time dateTime={event.timestamp} suppressHydrationWarning>
                                   {formatTimestamp(event.timestamp)}
                                 </time>
                               </div>
@@ -272,7 +272,7 @@ export function EventTimeline({
                           {renderMetadata(event.metadata)}
                         </div>
                         <div className="hidden sm:block whitespace-nowrap text-right text-sm text-gray-500">
-                          <time dateTime={event.timestamp}>
+                          <time dateTime={event.timestamp} suppressHydrationWarning>
                             {formatTimestamp(event.timestamp)}
                           </time>
                         </div>

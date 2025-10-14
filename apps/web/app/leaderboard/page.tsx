@@ -372,7 +372,7 @@ export default function LeaderboardPage() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Ends:</span>
-                    <span>{new Date(competition.endDate).toLocaleDateString('no-NO')}</span>
+                    <span suppressHydrationWarning>{new Date(competition.endDate).toLocaleDateString('no-NO')}</span>
                   </div>
                 </div>
 
