@@ -61,14 +61,21 @@ export default function DebtDetailPage() {
   const [editMode, setEditMode] = useState(false)
   const [editAmount, setEditAmount] = useState('')
   const [editStatus, setEditStatus] = useState('')
+  const [apiUrl, setApiUrl] = useState('')
+
+  // Set API URL on client side to avoid hydration mismatch
+  useEffect(() => {
+    const url = process.env.NEXT_PUBLIC_API_URL ||
+      (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+        ? window.location.origin
+        : 'http://localhost:3001');
+    setApiUrl(url);
+  }, []);
 
   const fetchDebt = async () => {
+    if (!apiUrl) return;
     try {
       const token = localStorage.getItem('token')
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? window.location.origin
-          : 'http://localhost:3001');
 
       const response = await fetch(`${apiUrl}/api/debts/${params.id}`, {
         headers: {
@@ -94,36 +101,31 @@ export default function DebtDetailPage() {
   }
 
   useEffect(() => {
-    if (params.id) {
+    if (params.id && apiUrl) {
       fetchDebt()
     }
-  }, [params.id])
+  }, [params.id, apiUrl])
 
   const updateDebt = async () => {
-    if (!debt) return
-    
+    if (!debt || !apiUrl) return
+
     setUpdating(true)
     try {
       const token = localStorage.getItem('token')
       const updates: any = {}
-      
+
       if (editAmount !== debt.currentAmount.toString()) {
         updates.currentAmount = parseFloat(editAmount)
       }
-      
+
       if (editStatus !== debt.status) {
         updates.status = editStatus
       }
-      
+
       if (Object.keys(updates).length === 0) {
         setEditMode(false)
         return
       }
-      
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? window.location.origin
-          : 'http://localhost:3001');
 
       const response = await fetch(`${apiUrl}/api/debts/${debt.id}`, {
         method: 'PATCH',
@@ -276,7 +278,7 @@ export default function DebtDetailPage() {
                       className="text-2xl font-bold text-damocles-primary bg-transparent border-b border-gray-300 focus:border-damocles-accent outline-none w-full"
                     />
                   ) : (
-                    <p className="text-2xl font-bold text-damocles-primary">
+                    <p className="text-2xl font-bold text-damocles-primary" suppressHydrationWarning>
                       {formatCurrency(debt.currentAmount)}
                     </p>
                   )}
@@ -284,7 +286,7 @@ export default function DebtDetailPage() {
                 
                 <div>
                   <p className="text-sm text-gray-500">Opprinnelig beløp</p>
-                  <p className="text-2xl font-bold text-gray-600">
+                  <p className="text-2xl font-bold text-gray-600" suppressHydrationWarning>
                     {formatCurrency(debt.originalAmount)}
                   </p>
                 </div>
@@ -372,7 +374,7 @@ export default function DebtDetailPage() {
                           <h4 className="font-semibold">
                             Oppgjør #{index + 1}
                           </h4>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500" suppressHydrationWarning>
                             Foreslått {new Date(settlement.proposedAt).toLocaleDateString('no-NO')}
                           </p>
                         </div>
@@ -384,33 +386,33 @@ export default function DebtDetailPage() {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <p className="text-gray-500">Opprinnelig</p>
-                          <p className="font-semibold">
+                          <p className="font-semibold" suppressHydrationWarning>
                             {formatCurrency(settlement.originalAmount)}
                           </p>
                         </div>
-                        
+
                         {settlement.settledAmount && (
                           <div>
                             <p className="text-gray-500">Oppgjørsbeløp</p>
-                            <p className="font-semibold text-green-600">
+                            <p className="font-semibold text-green-600" suppressHydrationWarning>
                               {formatCurrency(settlement.settledAmount)}
                             </p>
                           </div>
                         )}
-                        
+
                         {settlement.savedAmount && (
                           <div>
                             <p className="text-gray-500">Spart</p>
-                            <p className="font-semibold text-green-600">
+                            <p className="font-semibold text-green-600" suppressHydrationWarning>
                               {formatCurrency(settlement.savedAmount)}
                             </p>
                           </div>
                         )}
-                        
+
                         {settlement.platformFee && (
                           <div>
                             <p className="text-gray-500">Plattformavgift</p>
-                            <p className="font-semibold">
+                            <p className="font-semibold" suppressHydrationWarning>
                               {formatCurrency(settlement.platformFee)}
                             </p>
                           </div>
@@ -418,7 +420,7 @@ export default function DebtDetailPage() {
                       </div>
 
                       {settlement.completedAt && (
-                        <p className="text-sm text-gray-500 mt-2">
+                        <p className="text-sm text-gray-500 mt-2" suppressHydrationWarning>
                           Fullført {new Date(settlement.completedAt).toLocaleDateString('no-NO')}
                         </p>
                       )}
@@ -505,18 +507,18 @@ export default function DebtDetailPage() {
                   <div className="w-2 h-2 bg-damocles-accent rounded-full mt-2"></div>
                   <div>
                     <p className="font-medium">Gjeld opprettet</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500" suppressHydrationWarning>
                       {new Date(debt.createdAt).toLocaleDateString('no-NO')}
                     </p>
                   </div>
                 </div>
-                
+
                 {debt.updatedAt !== debt.createdAt && (
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-gray-400 rounded-full mt-2"></div>
                     <div>
                       <p className="font-medium">Sist oppdatert</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500" suppressHydrationWarning>
                         {new Date(debt.updatedAt).toLocaleDateString('no-NO')}
                       </p>
                     </div>
