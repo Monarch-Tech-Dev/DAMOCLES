@@ -395,7 +395,7 @@ export default function NationalPDIPage() {
 
         {/* Footer */}
         <div className="text-center text-gray-500 text-sm mt-8">
-          <p>Data updated every 5 minutes • Last update: {new Date(data.lastUpdated).toLocaleString('no-NO')}</p>
+          <p suppressHydrationWarning>Data updated every 5 minutes • Last update: {new Date(data.lastUpdated).toLocaleString('no-NO')}</p>
           <p className="mt-2">
             Powered by <a href="/" className="text-blue-400 hover:text-blue-300">DAMOCLES</a> •
             Consumer Protection Platform

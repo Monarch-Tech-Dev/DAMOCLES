@@ -101,8 +101,12 @@ export function RiskScoreDashboard({
             const trends = await trendResponse.json();
             setTrendData(trends);
           } else {
+            // Generate mock data only on client side to avoid hydration mismatch
             setTrendData(generateMockTrendData());
           }
+        } else {
+          // Generate initial trend data on client side
+          setTrendData(generateMockTrendData());
         }
 
         // Fetch comparison data if enabled
@@ -111,11 +115,13 @@ export function RiskScoreDashboard({
             const summary = await damoclesApi.getRiskSummary();
             setComparisonData(summary.collectors || []);
           } catch (err) {
+            // Generate mock data only on client side
             setComparisonData(generateMockComparisonData());
           }
         }
       } catch (err) {
         console.error('Error fetching additional data:', err);
+        // Generate mock data only on client side
         setTrendData(generateMockTrendData());
         setComparisonData(generateMockComparisonData());
       }
@@ -378,15 +384,21 @@ export function RiskScoreDashboard({
             <Card>
               <Title className="text-base sm:text-lg">Risk Score Trends</Title>
               <Text className="text-sm">30-day historical risk analysis</Text>
-              <AreaChart
-                className="h-64 sm:h-72 mt-4 sm:mt-6"
-                data={formatTrendChart(trendData)}
-                index="date"
-                categories={["Risk Score", "Trust Score", "Violations"]}
-                colors={["red", "green", "orange"]}
-                showAnimation={true}
-                showTooltip={true}
-              />
+              {trendData.length > 0 ? (
+                <AreaChart
+                  className="h-64 sm:h-72 mt-4 sm:mt-6"
+                  data={formatTrendChart(trendData)}
+                  index="date"
+                  categories={["Risk Score", "Trust Score", "Violations"]}
+                  colors={["red", "green", "orange"]}
+                  showAnimation={true}
+                  showTooltip={true}
+                />
+              ) : (
+                <div className="h-64 sm:h-72 mt-4 sm:mt-6 flex items-center justify-center">
+                  <LoadingSpinner size="lg" />
+                </div>
+              )}
             </Card>
           </TabPanel>
 

@@ -128,7 +128,7 @@ export default function AdminDashboard() {
           <Text className="text-slate-600">Platform overview and critical metrics</Text>
         </div>
         <div className="flex items-center space-x-3">
-          <Text className="text-sm text-slate-500">
+          <Text className="text-sm text-slate-500" suppressHydrationWarning>
             Last updated: {lastRefresh.toLocaleTimeString()}
           </Text>
           <Button
