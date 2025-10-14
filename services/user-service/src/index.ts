@@ -53,6 +53,7 @@ import { creditorRoutes } from './routes/creditors';
 import { documentRoutes } from './routes/documents';
 import { emailRoutes } from './routes/email';
 import { eventRoutes } from './routes/events';
+import { internalRoutes } from './routes/internal';
 
 fastify.register(authRoutes, { prefix: '/api/auth' });
 fastify.register(userRoutes, { prefix: '/api/users' });
@@ -60,6 +61,7 @@ fastify.register(debtRoutes, { prefix: '/api/debts' });
 fastify.register(creditorRoutes, { prefix: '/api/creditors' });
 fastify.register(documentRoutes, { prefix: '/api/documents' });
 fastify.register(emailRoutes, { prefix: '/api/email' });
+fastify.register(internalRoutes, { prefix: '/api/internal' });
 // fastify.register(eventRoutes, { prefix: '/api/events' }); // TODO: Fix TypeScript errors and re-enable
 
 // Error handling
