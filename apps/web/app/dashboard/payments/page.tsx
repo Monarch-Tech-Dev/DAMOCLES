@@ -281,7 +281,7 @@ export default function PaymentsPage() {
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="flex items-center gap-2 text-sm text-gray-500" suppressHydrationWarning>
                   <AlertCircle className="h-4 w-4" />
                   Due: {new Date(invoice.dueDate).toLocaleDateString('no-NO')}
                 </div>
@@ -309,7 +309,7 @@ export default function PaymentsPage() {
                   <div className="space-y-1">
                     <p className="font-medium">{payment.debt.creditorName}</p>
                     <p className="text-sm text-gray-600">{payment.description}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500" suppressHydrationWarning>
                       {new Date(payment.processedAt).toLocaleDateString('no-NO')} • {payment.method.toUpperCase()}
                     </p>
                   </div>

@@ -7,13 +7,13 @@ import { motion } from 'framer-motion'
 import {
   ArrowLeftIcon,
   PencilIcon,
-    CheckCircleIcon,
+  CheckCircleIcon,
   ClockIcon,
   DocumentTextIcon,
   ChatBubbleLeftRightIcon,
-  BanknotesIcon
+  BanknotesIcon,
+  XCircleIcon
 } from '@heroicons/react/24/outline'
-import { ExclamationTriangleIcon } from '@heroicons/react/24/solid'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -162,7 +162,7 @@ export default function DebtDetailPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'active': return <ExclamationTriangleIcon className="w-4 h-4" />
+      case 'active': return <XCircleIcon className="w-4 h-4" />
       case 'negotiating': return <ClockIcon className="w-4 h-4" />
       case 'settled': return <CheckCircleIcon className="w-4 h-4" />
       default: return null

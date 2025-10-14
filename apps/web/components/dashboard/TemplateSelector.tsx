@@ -9,11 +9,11 @@ import {
   DocumentTextIcon,
   GlobeAltIcon,
   CheckCircleIcon,
-  ExclamationTriangleIcon,
   InformationCircleIcon,
   LanguageIcon,
   BuildingOffice2Icon,
   ScaleIcon,
+  XCircleIcon,
 } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import { useTemplateSelection } from '@/lib/damocles-api';
@@ -198,7 +198,7 @@ export function TemplateSelector({
 
   const getConfidenceIcon = (confidence: number) => {
     if (confidence >= 0.8) return CheckCircleIcon;
-    if (confidence >= 0.6) return ExclamationTriangleIcon;
+    if (confidence >= 0.6) return XCircleIcon;
     return InformationCircleIcon;
   };
 

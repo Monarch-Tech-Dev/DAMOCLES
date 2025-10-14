@@ -259,14 +259,14 @@ export default function ProfilePage() {
                   <Calendar className="inline h-3 w-3 mr-1" />
                   Medlem siden
                 </p>
-                <p className="text-sm text-slate-900">{formatDate(user?.createdAt)}</p>
+                <p className="text-sm text-slate-900" suppressHydrationWarning>{formatDate(user?.createdAt)}</p>
               </div>
               <div>
                 <p className="text-xs text-slate-600 mb-1">
                   <Calendar className="inline h-3 w-3 mr-1" />
                   Sist innlogget
                 </p>
-                <p className="text-sm text-slate-900">{formatDate(user?.lastLoginAt)}</p>
+                <p className="text-sm text-slate-900" suppressHydrationWarning>{formatDate(user?.lastLoginAt)}</p>
               </div>
             </div>
           </div>
