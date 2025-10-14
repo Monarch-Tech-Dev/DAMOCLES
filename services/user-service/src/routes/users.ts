@@ -20,7 +20,38 @@ const UpdateProfileSchema = z.object({
 export async function userRoutes(fastify: FastifyInstance) {
   // Add authentication middleware
   fastify.addHook('preHandler', authenticateUser);
-  
+
+  // Get current user (for token verification)
+  fastify.get('/me', async (request: FastifyRequest, reply: FastifyReply) => {
+    const userId = (request as any).user.userId;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        tier: true,
+        shieldTier: true,
+        bankIdVerified: true,
+        vippsVerified: true,
+        tokenBalance: true,
+        onboardingStatus: true,
+        phoneNumber: true,
+        subscriptionTier: true,
+        createdAt: true,
+        lastLoginAt: true,
+        updatedAt: true
+      }
+    });
+
+    if (!user) {
+      return reply.status(404).send({ error: 'User not found' });
+    }
+
+    return reply.send(user);
+  });
+
   // Get user profile
   fastify.get('/profile', async (request: FastifyRequest, reply: FastifyReply) => {
     const userId = (request as any).user.userId;
