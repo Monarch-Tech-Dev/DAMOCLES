@@ -1,14 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   Plus,
   Search,
   Filter,
   AlertTriangle,
   CheckCircle,
-  Clock
+  Clock,
+  Edit2,
+  Trash2,
+  X,
+  Check
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,10 +34,17 @@ interface Debt {
 }
 
 export default function DebtsPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
   const [debts, setDebts] = useState<Debt[]>([])
   const [apiUrl, setApiUrl] = useState('')
+  const [selectedDebts, setSelectedDebts] = useState<Set<string>>(new Set())
+  const [editingDebt, setEditingDebt] = useState<string | null>(null)
+  const [editAmount, setEditAmount] = useState<number>(0)
+  const [editStatus, setEditStatus] = useState<string>('')
+  const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
     // Set API URL on client side to avoid hydration mismatch
@@ -79,11 +90,127 @@ export default function DebtsPage() {
     }
   }
 
-  // Filter debts based on search term
-  const filteredDebts = debts.filter(debt =>
-    debt.creditor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    debt.creditor.type.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const handleUpdateDebt = async (debtId: string, updates: { currentAmount?: number; status?: string }) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${apiUrl}/api/debts/${debtId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updates)
+      })
+
+      if (response.ok) {
+        toast.success('Gjeld oppdatert')
+        fetchDebts()
+        setEditingDebt(null)
+      } else {
+        toast.error('Kunne ikke oppdatere gjeld')
+      }
+    } catch (error) {
+      console.error('Error updating debt:', error)
+      toast.error('Nettverksfeil ved oppdatering')
+    }
+  }
+
+  const handleDeleteDebt = async (debtId: string) => {
+    if (!confirm('Er du sikker på at du vil slette denne gjeldsposten?')) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${apiUrl}/api/debts/${debtId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        toast.success('Gjeld slettet')
+        fetchDebts()
+        selectedDebts.delete(debtId)
+        setSelectedDebts(new Set(selectedDebts))
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Kunne ikke slette gjeld')
+      }
+    } catch (error) {
+      console.error('Error deleting debt:', error)
+      toast.error('Nettverksfeil ved sletting')
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedDebts.size === 0) return
+    if (!confirm(`Er du sikker på at du vil slette ${selectedDebts.size} gjeldsposter?`)) {
+      return
+    }
+
+    const promises = Array.from(selectedDebts).map(debtId => handleDeleteDebt(debtId))
+    await Promise.all(promises)
+    setSelectedDebts(new Set())
+  }
+
+  const handleBulkStatusChange = async (newStatus: string) => {
+    if (selectedDebts.size === 0) return
+
+    const promises = Array.from(selectedDebts).map(debtId =>
+      handleUpdateDebt(debtId, { status: newStatus })
+    )
+    await Promise.all(promises)
+    setSelectedDebts(new Set())
+  }
+
+  const toggleSelectDebt = (debtId: string) => {
+    const newSelected = new Set(selectedDebts)
+    if (newSelected.has(debtId)) {
+      newSelected.delete(debtId)
+    } else {
+      newSelected.add(debtId)
+    }
+    setSelectedDebts(newSelected)
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedDebts.size === filteredDebts.length) {
+      setSelectedDebts(new Set())
+    } else {
+      setSelectedDebts(new Set(filteredDebts.map(d => d.id)))
+    }
+  }
+
+  const startEditing = (debt: Debt) => {
+    setEditingDebt(debt.id)
+    setEditAmount(debt.currentAmount)
+    setEditStatus(debt.status)
+  }
+
+  const cancelEditing = () => {
+    setEditingDebt(null)
+    setEditAmount(0)
+    setEditStatus('')
+  }
+
+  const saveEdit = () => {
+    if (editingDebt) {
+      handleUpdateDebt(editingDebt, {
+        currentAmount: editAmount,
+        status: editStatus
+      })
+    }
+  }
+
+  // Filter debts based on search term and status
+  const filteredDebts = debts.filter(debt => {
+    const matchesSearch = debt.creditor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      debt.creditor.type.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === 'all' || debt.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
 
   if (loading) {
     return (
@@ -113,16 +240,17 @@ export default function DebtsPage() {
               Administrer og spor dine gjeldsposter
             </p>
           </div>
-          <Link href="/dashboard/debts/add">
-            <Button className="bg-blue-600 hover:bg-blue-700 shadow-sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Legg til gjeld
-            </Button>
-          </Link>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700 shadow-sm"
+            onClick={() => router.push('/dashboard/debts/add')}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Legg til gjeld
+          </Button>
         </div>
 
         {/* Search and Filter */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
             <Input
@@ -132,11 +260,67 @@ export default function DebtsPage() {
               className="pl-10 bg-white/80 backdrop-blur-sm border-slate-200 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
-          <Button variant="outline" className="bg-white/80 backdrop-blur-sm border-slate-200 hover:bg-slate-50">
+          <Button
+            variant="outline"
+            className="bg-white/80 backdrop-blur-sm border-slate-200 hover:bg-slate-50"
+            onClick={() => setShowFilters(!showFilters)}
+          >
             <Filter className="w-4 h-4 mr-2" />
             Filter
           </Button>
         </div>
+
+        {/* Filter Options */}
+        {showFilters && (
+          <Card className="bg-white/80 backdrop-blur-sm border-slate-200 shadow-sm mb-6">
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">Alle</option>
+                    <option value="active">Aktive</option>
+                    <option value="negotiating">Under forhandling</option>
+                    <option value="resolved">Løst</option>
+                    <option value="settled">Gjort opp</option>
+                  </select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Bulk Actions */}
+        {selectedDebts.size > 0 && (
+          <Card className="bg-blue-50 border-blue-200 shadow-sm mb-6">
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <p className="text-sm font-medium text-slate-900">
+                  {selectedDebts.size} gjeld valgt
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => handleBulkStatusChange('active')}>
+                    Marker som aktiv
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleBulkStatusChange('negotiating')}>
+                    Marker som forhandling
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleBulkStatusChange('resolved')}>
+                    Marker som løst
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={handleBulkDelete}>
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Slett valgte
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
@@ -197,31 +381,120 @@ export default function DebtsPage() {
           </Card>
         </div>
 
+        {/* Select All */}
+        {filteredDebts.length > 0 && (
+          <div className="mb-4">
+            <label className="flex items-center space-x-2 text-sm text-slate-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedDebts.size === filteredDebts.length && filteredDebts.length > 0}
+                onChange={toggleSelectAll}
+                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span>Velg alle ({filteredDebts.length})</span>
+            </label>
+          </div>
+        )}
+
         {/* Debt List */}
         {filteredDebts.length > 0 ? (
           <div className="space-y-4">
             {filteredDebts.map((debt) => (
               <Card key={debt.id} className="bg-white/80 backdrop-blur-sm border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200">
                 <CardContent className="p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-semibold text-slate-900">{debt.creditor.name}</h3>
-                        <Badge variant={debt.status === 'active' ? 'destructive' : debt.status === 'negotiating' ? 'default' : 'secondary'}>
-                          {debt.status === 'active' ? 'Aktiv' : debt.status === 'negotiating' ? 'Forhandling' : 'Løst'}
-                        </Badge>
+                  <div className="flex flex-col space-y-4">
+                    {/* Top Row: Checkbox and Creditor Info */}
+                    <div className="flex items-start space-x-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedDebts.has(debt.id)}
+                        onChange={() => toggleSelectDebt(debt.id)}
+                        className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="text-lg font-semibold text-slate-900">{debt.creditor.name}</h3>
+                          {editingDebt === debt.id ? (
+                            <select
+                              value={editStatus}
+                              onChange={(e) => setEditStatus(e.target.value)}
+                              className="px-2 py-1 text-sm border border-slate-300 rounded-md"
+                            >
+                              <option value="active">Aktiv</option>
+                              <option value="negotiating">Forhandling</option>
+                              <option value="resolved">Løst</option>
+                              <option value="settled">Gjort opp</option>
+                            </select>
+                          ) : (
+                            <Badge variant={debt.status === 'active' ? 'destructive' : debt.status === 'negotiating' ? 'default' : 'secondary'}>
+                              {debt.status === 'active' ? 'Aktiv' : debt.status === 'negotiating' ? 'Forhandling' : debt.status === 'resolved' ? 'Løst' : 'Gjort opp'}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-slate-600 text-sm">{debt.creditor.type}</p>
+                        <p className="text-xs text-slate-500 mt-1" suppressHydrationWarning>
+                          Opprettet: {new Date(debt.createdAt).toLocaleDateString('no-NO')}
+                        </p>
                       </div>
-                      <p className="text-slate-600 text-sm">{debt.creditor.type}</p>
-                      <p className="text-xs text-slate-500 mt-1" suppressHydrationWarning>Opprettet: {new Date(debt.createdAt).toLocaleDateString('no-NO')}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-slate-900">
-                        {debt.currentAmount.toLocaleString()} NOK
-                      </p>
-                      <div className="flex space-x-2 mt-2">
-                        <Link href={`/dashboard/debts/${debt.id}`}>
-                          <Button size="sm" variant="outline">Se detaljer</Button>
-                        </Link>
+
+                    {/* Bottom Row: Amount and Actions */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 pl-8">
+                      <div>
+                        {editingDebt === debt.id ? (
+                          <div className="flex items-center space-x-2">
+                            <Input
+                              type="number"
+                              value={editAmount}
+                              onChange={(e) => setEditAmount(Number(e.target.value))}
+                              className="w-40"
+                            />
+                            <span className="text-slate-600">NOK</span>
+                          </div>
+                        ) : (
+                          <p className="text-2xl font-bold text-slate-900">
+                            {debt.currentAmount.toLocaleString()} NOK
+                          </p>
+                        )}
+                        <p className="text-xs text-slate-500 mt-1">
+                          Opprinnelig: {debt.originalAmount.toLocaleString()} NOK
+                        </p>
+                      </div>
+                      <div className="flex space-x-2">
+                        {editingDebt === debt.id ? (
+                          <>
+                            <Button size="sm" variant="outline" onClick={saveEdit}>
+                              <Check className="w-4 h-4 mr-1" />
+                              Lagre
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={cancelEditing}>
+                              <X className="w-4 h-4 mr-1" />
+                              Avbryt
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => router.push(`/dashboard/debts/${debt.id}`)}
+                            >
+                              Se detaljer
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => startEditing(debt)}>
+                              <Edit2 className="w-4 h-4 mr-1" />
+                              Rediger
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteDebt(debt.id)}
+                              disabled={debt.status === 'settled'}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -256,9 +529,12 @@ export default function DebtsPage() {
               <p className="text-slate-600 mb-6">
                 Du har ikke lagt til noen gjeld ennå.
               </p>
-              <Link href="/dashboard/debts/add">
-                <Button className="bg-blue-600 hover:bg-blue-700">Legg til din første gjeld</Button>
-              </Link>
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => router.push('/dashboard/debts/add')}
+              >
+                Legg til din første gjeld
+              </Button>
             </CardContent>
           </Card>
         )}
