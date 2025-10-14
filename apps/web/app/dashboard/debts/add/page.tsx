@@ -39,18 +39,19 @@ export default function AddDebtPage() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [searchingCreditors, setSearchingCreditors] = useState(false)
-  
+  const [apiUrl, setApiUrl] = useState('')
+
   // Form data
   const [selectedCreditor, setSelectedCreditor] = useState<Creditor | null>(null)
   const [originalAmount, setOriginalAmount] = useState('')
   const [currentAmount, setCurrentAmount] = useState('')
   const [accountNumber, setAccountNumber] = useState('')
-  
+
   // Creditor search
   const [creditorSearch, setCreditorSearch] = useState('')
   const [creditors, setCreditors] = useState<Creditor[]>([])
   const [creditorTypes, setCreditorTypes] = useState<CreditorType[]>([])
-  
+
   // New creditor form
   const [showNewCreditorForm, setShowNewCreditorForm] = useState(false)
   const [newCreditorName, setNewCreditorName] = useState('')
@@ -58,14 +59,20 @@ export default function AddDebtPage() {
   const [newCreditorType, setNewCreditorType] = useState('')
   const [newCreditorEmail, setNewCreditorEmail] = useState('')
 
+  // Set API URL on client side to avoid hydration mismatch
+  useEffect(() => {
+    const url = process.env.NEXT_PUBLIC_API_URL ||
+      (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+        ? window.location.origin
+        : 'http://localhost:3001');
+    setApiUrl(url);
+  }, []);
+
   const searchCreditors = async (searchTerm: string = '') => {
+    if (!apiUrl) return;
     setSearchingCreditors(true)
     try {
       const token = localStorage.getItem('token')
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? window.location.origin
-          : 'http://localhost:3001');
 
       const params = new URLSearchParams()
       if (searchTerm) params.append('search', searchTerm)
@@ -90,12 +97,8 @@ export default function AddDebtPage() {
   }
 
   const fetchCreditorTypes = async () => {
+    if (!apiUrl) return;
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? window.location.origin
-          : 'http://localhost:3001');
-
       const response = await fetch(`${apiUrl}/api/creditors/types`)
 
       if (response.ok) {
@@ -131,6 +134,7 @@ export default function AddDebtPage() {
       return
     }
 
+    if (!apiUrl) return;
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
@@ -138,11 +142,6 @@ export default function AddDebtPage() {
         toast.error('Du må være logget inn')
         return
       }
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? window.location.origin
-          : 'http://localhost:3001');
 
       const response = await fetch(`${apiUrl}/api/creditors`, {
         method: 'POST',
@@ -206,6 +205,7 @@ export default function AddDebtPage() {
       return
     }
 
+    if (!apiUrl) return;
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
@@ -213,11 +213,6 @@ export default function AddDebtPage() {
         toast.error('Du må være logget inn')
         return
       }
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? window.location.origin
-          : 'http://localhost:3001');
 
       const response = await fetch(`${apiUrl}/api/debts`, {
         method: 'POST',
