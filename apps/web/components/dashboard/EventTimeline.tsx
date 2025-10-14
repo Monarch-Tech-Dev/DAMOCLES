@@ -8,12 +8,12 @@ import {
   ClockIcon,
   DocumentIcon,
   ShieldCheckIcon,
-  ExclamationTriangleIcon,
   LinkIcon,
   UserIcon,
   CheckCircleIcon,
   XCircleIcon
 } from '@heroicons/react/24/outline';
+// XCircleIcon already imported from outline above
 import { cn } from '@/lib/utils';
 import { useEventTimeline } from '@/lib/damocles-api';
 
@@ -46,7 +46,7 @@ interface EventTimelineProps {
 
 const eventTypeIcons = {
   GDPR_REQUEST: DocumentIcon,
-  VIOLATION_DETECTED: ExclamationTriangleIcon,
+  VIOLATION_DETECTED: XCircleIcon,
   BLOCKCHAIN_EVIDENCE: LinkIcon,
   RISK_ASSESSMENT: ShieldCheckIcon,
   RESPONSE_RECEIVED: UserIcon,
