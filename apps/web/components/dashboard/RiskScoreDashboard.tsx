@@ -24,11 +24,13 @@ import {
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import {
   ShieldCheckIcon,
-  ExclamationTriangleIcon,
   ChartBarIcon,
-  TrendingUpIcon,
-  TrendingDownIcon,
 } from '@heroicons/react/24/outline';
+import {
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+} from '@heroicons/react/20/solid';
+import { XCircleIcon } from '@heroicons/react/24/outline';
 import { useRiskScore, damoclesApi } from '@/lib/damocles-api';
 
 interface RiskScoreData {
@@ -144,9 +146,9 @@ export function RiskScoreDashboard({
 
     switch (trend.direction) {
       case 'up':
-        return <TrendingUpIcon className="h-4 w-4 text-red-500" />;
+        return <ArrowTrendingUpIcon className="h-4 w-4 text-red-500" />;
       case 'down':
-        return <TrendingDownIcon className="h-4 w-4 text-green-500" />;
+        return <ArrowTrendingDownIcon className="h-4 w-4 text-green-500" />;
       default:
         return <div className="h-4 w-4" />;
     }
@@ -185,7 +187,7 @@ export function RiskScoreDashboard({
     return (
       <Card className={className}>
         <div className="text-center py-8">
-          <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-400 mb-4" />
+          <XCircleIcon className="mx-auto h-12 w-12 text-red-400 mb-4" />
           <Text className="text-red-600">{error.message}</Text>
           <button
             onClick={refetch}
@@ -268,7 +270,7 @@ export function RiskScoreDashboard({
                         <Text className="text-sm">Violation Score</Text>
                         <Metric className="text-xl sm:text-2xl">{displayData.violationScore}</Metric>
                       </div>
-                      <ExclamationTriangleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 flex-shrink-0" />
+                      <XCircleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-red-500 flex-shrink-0" />
                     </Flex>
                     <ProgressBar
                       value={displayData.violationScore}

@@ -95,6 +95,7 @@ const subscriptionTiers: SubscriptionTier[] = [
 export default function SubscriptionPage() {
   const [currentTier, setCurrentTier] = useState('Free')
   const [loading, setLoading] = useState(false)
+  const [nextPaymentDate, setNextPaymentDate] = useState('')
 
   const handleUpgrade = async (tierName: string) => {
     setLoading(true)
@@ -104,6 +105,11 @@ export default function SubscriptionPage() {
       setLoading(false)
     }, 1500)
   }
+
+  React.useEffect(() => {
+    // Set date only on client side to avoid hydration mismatch
+    setNextPaymentDate(new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString())
+  }, [])
 
   const totalRecovered = 2450 // Mock data
   const commissionEarned = totalRecovered * 0.25
@@ -125,7 +131,7 @@ export default function SubscriptionPage() {
             <Text>
               {currentTier === 'Free'
                 ? 'Upgrade to unlock automated features'
-                : `Billed monthly • Next payment: ${new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString()}`
+                : `Billed monthly${nextPaymentDate ? ` • Next payment: ${nextPaymentDate}` : ''}`
               }
             </Text>
           </div>

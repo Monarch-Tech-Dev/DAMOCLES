@@ -9,9 +9,10 @@ import {
   DocumentTextIcon,
   ClockIcon,
   CheckCircleIcon,
-  PaperAirplaneIcon
+  PaperAirplaneIcon,
+  XCircleIcon
 } from '@heroicons/react/24/outline'
-import { ExclamationTriangleIcon } from '@heroicons/react/24/solid'
+// XCircleIcon to be imported with outline icons
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -232,7 +233,7 @@ export default function GDPRRequestPage() {
       case 'pending': return <ClockIcon className="w-4 h-4" />
       case 'sent': return <PaperAirplaneIcon className="w-4 h-4" />
       case 'responded': return <CheckCircleIcon className="w-4 h-4" />
-      case 'escalated': return <ExclamationTriangleIcon className="w-4 h-4" />
+      case 'escalated': return <XCircleIcon className="w-4 h-4" />
       default: return <DocumentTextIcon className="w-4 h-4" />
     }
   }
@@ -367,7 +368,7 @@ export default function GDPRRequestPage() {
                       <h4 className="font-semibold">
                         Forespørsel #{request.reference_id}
                       </h4>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500" suppressHydrationWarning>
                         Opprettet {new Date(request.created_at).toLocaleDateString('no-NO')}
                       </p>
                     </div>
@@ -402,7 +403,7 @@ export default function GDPRRequestPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
                         <p className="text-gray-500">Sendt</p>
-                        <p className="font-semibold">
+                        <p className="font-semibold" suppressHydrationWarning>
                           {new Date(request.sent_at).toLocaleDateString('no-NO')}
                         </p>
                       </div>
@@ -410,7 +411,7 @@ export default function GDPRRequestPage() {
                       {request.response_due && (
                         <div>
                           <p className="text-gray-500">Svar frist</p>
-                          <p className="font-semibold">
+                          <p className="font-semibold" suppressHydrationWarning>
                             {new Date(request.response_due).toLocaleDateString('no-NO')}
                           </p>
                         </div>
