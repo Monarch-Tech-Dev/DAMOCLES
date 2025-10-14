@@ -14,6 +14,17 @@ model User {
   name                  String?
   passwordHash          String?  @map("password_hash")
   phoneNumber           String?  @map("phone_number")
+
+  // Address fields - required for GDPR legal identity verification
+  streetAddress         String?  @map("street_address")
+  postalCode            String?  @map("postal_code")
+  city                  String?
+  country               String?  @default("Norway")
+  dateOfBirth           DateTime? @map("date_of_birth")
+
+  // Profile completion tracking
+  gdprProfileComplete   Boolean  @default(false) @map("gdpr_profile_complete")
+
   vippsVerified         Boolean  @default(false) @map("vipps_verified")
   vippsUserId           String?  @unique @map("vipps_user_id")
   bankIdVerified        Boolean  @default(false) @map("bankid_verified")
@@ -35,6 +46,7 @@ model User {
   platformEmails        PlatformEmail[]
   invoices              Invoice[]
   payments              Payment[]
+  documents             Document[]
 
   @@map("users")
 }
@@ -79,6 +91,7 @@ model Debt {
   creditor         Creditor @relation(fields: [creditorId], references: [id])
   settlements      Settlement[]
   invoices         Invoice[]
+  documents        Document[]
 
   @@map("debts")
 }
@@ -94,6 +107,7 @@ model GdprRequest {
   responseDue         DateTime? @map("response_due")
   responseReceivedAt  DateTime? @map("response_received_at")
   trackingPixelViewed Boolean   @default(false) @map("tracking_pixel_viewed")
+  vippsVerifiedAtSend Boolean   @default(false) @map("vipps_verified_at_send") // Vipps verification status at time of sending
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
 
@@ -101,6 +115,7 @@ model GdprRequest {
   creditor            Creditor  @relation(fields: [creditorId], references: [id])
   violations          Violation[]
   responses           GdprResponse[]
+  documents           Document[]
 
   @@map("gdpr_requests")
 }
@@ -116,6 +131,26 @@ model GdprResponse {
   request         GdprRequest @relation(fields: [requestId], references: [id])
 
   @@map("gdpr_responses")
+}
+
+model Document {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  gdprRequestId   String?  @map("gdpr_request_id")
+  debtId          String?  @map("debt_id")
+  fileName        String   @map("file_name")
+  fileType        String   @map("file_type") // 'bill', 'invoice', 'correspondence', 'identity', 'other'
+  mimeType        String   @map("mime_type") // 'application/pdf', 'image/png', etc.
+  fileSize        Int      @map("file_size") // in bytes
+  filePath        String   @map("file_path") // Storage path or URL
+  description     String?
+  uploadedAt      DateTime @default(now()) @map("uploaded_at")
+
+  user            User     @relation(fields: [userId], references: [id])
+  gdprRequest     GdprRequest? @relation(fields: [gdprRequestId], references: [id])
+  debt            Debt?    @relation(fields: [debtId], references: [id])
+
+  @@map("documents")
 }
 
 model Violation {

@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
+import multipart from '@fastify/multipart';
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 
@@ -21,6 +22,12 @@ fastify.register(cors, {
 });
 
 fastify.register(helmet);
+
+fastify.register(multipart, {
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB
+  }
+});
 
 fastify.register(rateLimit, {
   max: parseInt(process.env.API_RATE_LIMIT || '100'),
@@ -43,12 +50,16 @@ import { authRoutes } from './routes/auth';
 import { userRoutes } from './routes/users';
 import { debtRoutes } from './routes/debts';
 import { creditorRoutes } from './routes/creditors';
+import { documentRoutes } from './routes/documents';
+import { emailRoutes } from './routes/email';
 import { eventRoutes } from './routes/events';
 
 fastify.register(authRoutes, { prefix: '/api/auth' });
 fastify.register(userRoutes, { prefix: '/api/users' });
 fastify.register(debtRoutes, { prefix: '/api/debts' });
 fastify.register(creditorRoutes, { prefix: '/api/creditors' });
+fastify.register(documentRoutes, { prefix: '/api/documents' });
+fastify.register(emailRoutes, { prefix: '/api/email' });
 // fastify.register(eventRoutes, { prefix: '/api/events' }); // TODO: Fix TypeScript errors and re-enable
 
 // Error handling

@@ -10,7 +10,11 @@ import {
   ClockIcon,
   CheckCircleIcon,
   PaperAirplaneIcon,
-  XCircleIcon
+  XCircleIcon,
+  UserIcon,
+  EnvelopeIcon,
+  EyeIcon,
+  ArrowUturnLeftIcon
 } from '@heroicons/react/24/outline'
 // XCircleIcon to be imported with outline icons
 import { Button } from '@/components/ui/button'
@@ -61,6 +65,23 @@ interface GDPRRequest {
   created_at: string
 }
 
+interface UserProfile {
+  gdprProfileComplete: boolean
+  name?: string
+  email: string
+}
+
+interface EmailTracking {
+  id: string
+  subject: string
+  status: string
+  sentAt?: string
+  deliveredAt?: string
+  respondedAt?: string
+  trackingPixelViewed: boolean
+  createdAt: string
+}
+
 // Helper function to safely parse JWT token
 const getUserIdFromToken = (token: string | null): string | null => {
   try {
@@ -80,33 +101,61 @@ export default function GDPRRequestPage() {
   const router = useRouter()
   const [debt, setDebt] = useState<Debt | null>(null)
   const [gdprRequests, setGdprRequests] = useState<GDPRRequest[]>([])
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [sending, setSending] = useState('')
   const [mounted, setMounted] = useState(false)
+  const [apiUrl, setApiUrl] = useState('')
+  const [gdprApiUrl, setGdprApiUrl] = useState('')
+  const [emailHistory, setEmailHistory] = useState<Record<string, EmailTracking[]>>({})
+
+  // Set API URLs on client side to avoid hydration mismatch
+  useEffect(() => {
+    const url = process.env.NEXT_PUBLIC_API_URL ||
+      (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+        ? window.location.origin
+        : 'http://localhost:3001');
+    setApiUrl(url);
+
+    const gdprUrl = process.env.NEXT_PUBLIC_GDPR_ENGINE_URL ||
+      (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+        ? `${window.location.origin}/gdpr-api`
+        : 'http://localhost:8001');
+    setGdprApiUrl(gdprUrl);
+  }, []);
 
   const fetchData = async () => {
+    if (!apiUrl || !gdprApiUrl) return;
+
+    console.log('Fetching debt and GDPR data...', { debtId: params.id, apiUrl, gdprApiUrl })
+
     try {
       const token = localStorage.getItem('token')
 
-      // Get debt details
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? window.location.origin
-          : 'http://localhost:3001');
+      // Fetch user profile to check if GDPR profile is complete
+      const profileResponse = await fetch(`${apiUrl}/api/users/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
 
-      // GDPR Engine URL
-      const gdprApiUrl = process.env.NEXT_PUBLIC_GDPR_ENGINE_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? `${window.location.origin}/gdpr-api`
-          : 'http://localhost:8001');
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json()
+        setUserProfile({
+          gdprProfileComplete: profileData.user.gdprProfileComplete,
+          name: profileData.user.name,
+          email: profileData.user.email
+        })
+      }
 
       const debtResponse = await fetch(`${apiUrl}/api/debts/${params.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
+      console.log('Debt fetch response:', debtResponse.status)
+
       if (debtResponse.ok) {
         const debtData = await debtResponse.json()
+        console.log('Debt data:', debtData)
         setDebt(debtData.debt)
 
         // Get user ID from token safely
@@ -122,10 +171,16 @@ export default function GDPRRequestPage() {
           headers: { 'Content-Type': 'application/json' }
         })
 
+        console.log('GDPR fetch response:', gdprResponse.status)
+
         if (gdprResponse.ok) {
           const gdprData = await gdprResponse.json()
+          console.log('GDPR data:', gdprData)
           setGdprRequests(gdprData.requests || [])
         }
+      } else {
+        console.error('Debt not found, status:', debtResponse.status)
+        toast.error('Gjeld ikke funnet')
       }
     } catch (error) {
       console.error('Error fetching data:', error)
@@ -136,17 +191,26 @@ export default function GDPRRequestPage() {
   }
 
   useEffect(() => {
-    if (params.id) {
+    if (params.id && apiUrl && gdprApiUrl) {
       fetchData()
     }
-  }, [params.id])
+  }, [params.id, apiUrl, gdprApiUrl])
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   const generateGDPRRequest = async () => {
-    if (!debt) return
+    if (!debt || !gdprApiUrl) return
+
+    // Check if profile is complete before generating GDPR request
+    if (!userProfile?.gdprProfileComplete) {
+      toast.error('Du må fullføre profilen din før du kan generere GDPR forespørsler')
+      // Save current path to return after profile completion
+      sessionStorage.setItem('profileCompleteReturnUrl', window.location.pathname)
+      router.push('/dashboard/profile/complete')
+      return
+    }
 
     setGenerating(true)
     try {
@@ -160,10 +224,7 @@ export default function GDPRRequestPage() {
         return
       }
 
-      const gdprApiUrl = process.env.NEXT_PUBLIC_GDPR_ENGINE_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? `${window.location.origin}/gdpr-api`
-          : 'http://localhost:8001');
+      console.log('Generating GDPR request...', { userId, creditorId: debt.creditor.id, gdprApiUrl })
 
       const response = await fetch(`${gdprApiUrl}/gdpr/generate`, {
         method: 'POST',
@@ -177,11 +238,16 @@ export default function GDPRRequestPage() {
         })
       })
 
+      console.log('Generate response status:', response.status)
+
       if (response.ok) {
         const data = await response.json()
+        console.log('GDPR request generated:', data)
         toast.success('GDPR forespørsel generert!')
         await fetchData() // Refresh data
       } else {
+        const error = await response.json()
+        console.error('Failed to generate GDPR request:', error)
         throw new Error('Failed to generate GDPR request')
       }
     } catch (error) {
@@ -193,28 +259,67 @@ export default function GDPRRequestPage() {
   }
 
   const sendGDPRRequest = async (requestId: string) => {
+    if (!apiUrl) return
+
     setSending(requestId)
     try {
-      const gdprApiUrl = process.env.NEXT_PUBLIC_GDPR_ENGINE_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? `${window.location.origin}/gdpr-api`
-          : 'http://localhost:8001');
+      const token = localStorage.getItem('token')
+      console.log('Sending GDPR request via email...', { requestId, apiUrl })
 
-      const response = await fetch(`${gdprApiUrl}/gdpr/send/${requestId}`, {
-        method: 'POST'
+      const response = await fetch(`${apiUrl}/api/email/send-gdpr`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          gdprRequestId: requestId
+        })
       })
 
+      console.log('Send response status:', response.status)
+
       if (response.ok) {
-        toast.success('GDPR forespørsel sendt!')
+        const data = await response.json()
+        console.log('GDPR request sent via email:', data)
+        toast.success(`GDPR forespørsel sendt til ${data.sentTo}!`)
+        console.log('Refreshing data after send...')
         await fetchData() // Refresh data
+        await fetchEmailHistory(requestId) // Fetch email history
+        console.log('Data refreshed')
       } else {
-        throw new Error('Failed to send GDPR request')
+        const error = await response.json()
+        console.error('Failed to send GDPR request:', error)
+        toast.error(error.error || 'Feil ved sending av GDPR forespørsel')
       }
     } catch (error) {
       console.error('Error sending GDPR request:', error)
       toast.error('Feil ved sending av GDPR forespørsel')
     } finally {
       setSending('')
+    }
+  }
+
+  const fetchEmailHistory = async (requestId: string) => {
+    if (!apiUrl) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${apiUrl}/api/email/gdpr/${requestId}/emails`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setEmailHistory(prev => ({
+          ...prev,
+          [requestId]: data.emails
+        }))
+      }
+    } catch (error) {
+      console.error('Error fetching email history:', error)
     }
   }
 
@@ -312,6 +417,43 @@ export default function GDPRRequestPage() {
           </div>
         </Card>
 
+        {/* Profile Incomplete Warning */}
+        {userProfile && !userProfile.gdprProfileComplete && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <Card className="p-6 bg-yellow-50 border-yellow-200">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <XCircleIcon className="w-6 h-6 text-yellow-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-yellow-900 mb-2">
+                    Profil ufullstendig
+                  </h3>
+                  <p className="text-sm text-yellow-800 mb-4">
+                    For å generere lovlige GDPR-forespørsler må vi kunne verifisere din identitet.
+                    I henhold til GDPR Artikkel 12(6) kan kreditorer kreve identitetsbekreftelse før
+                    de utleverer personopplysninger.
+                  </p>
+                  <Button
+                    onClick={() => {
+                      sessionStorage.setItem('profileCompleteReturnUrl', window.location.pathname)
+                      router.push('/dashboard/profile/complete')
+                    }}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                  >
+                    <UserIcon className="w-4 h-4 mr-2" />
+                    Fullfør profil
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Generate New Request */}
         <Card className="p-6 mb-6">
           <div className="flex items-center justify-between">
@@ -323,7 +465,7 @@ export default function GDPRRequestPage() {
             </div>
             <Button
               onClick={generateGDPRRequest}
-              disabled={generating}
+              disabled={generating || !userProfile?.gdprProfileComplete}
               className="bg-damocles-accent hover:bg-indigo-700"
             >
               {generating ? (
@@ -419,13 +561,69 @@ export default function GDPRRequestPage() {
                     </div>
                   )}
 
+                  {/* Email Tracking Timeline */}
+                  {request.status.toLowerCase() !== 'pending' && mounted && (
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <h5 className="text-sm font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                        <EnvelopeIcon className="w-4 h-4" />
+                        E-postsporing
+                      </h5>
+                      <div className="space-y-2">
+                        {emailHistory[request.id]?.length > 0 ? (
+                          emailHistory[request.id].map((email, idx) => (
+                            <div key={email.id} className="text-sm">
+                              <div className="flex items-center gap-2 mb-1">
+                                <CheckCircleIcon className="w-4 h-4 text-green-600" />
+                                <span className="font-medium">Sendt</span>
+                                <span className="text-gray-500" suppressHydrationWarning>
+                                  {email.sentAt && new Date(email.sentAt).toLocaleString('no-NO')}
+                                </span>
+                              </div>
+                              {email.deliveredAt && (
+                                <div className="flex items-center gap-2 mb-1 ml-6">
+                                  <CheckCircleIcon className="w-4 h-4 text-green-600" />
+                                  <span className="font-medium">Levert</span>
+                                  <span className="text-gray-500" suppressHydrationWarning>
+                                    {new Date(email.deliveredAt).toLocaleString('no-NO')}
+                                  </span>
+                                </div>
+                              )}
+                              {email.trackingPixelViewed && (
+                                <div className="flex items-center gap-2 mb-1 ml-6">
+                                  <EyeIcon className="w-4 h-4 text-blue-600" />
+                                  <span className="font-medium">Åpnet av mottaker</span>
+                                </div>
+                              )}
+                              {email.respondedAt && (
+                                <div className="flex items-center gap-2 ml-6">
+                                  <ArrowUturnLeftIcon className="w-4 h-4 text-indigo-600" />
+                                  <span className="font-medium">Svar mottatt</span>
+                                  <span className="text-gray-500" suppressHydrationWarning>
+                                    {new Date(email.respondedAt).toLocaleString('no-NO')}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <button
+                            onClick={() => fetchEmailHistory(request.id)}
+                            className="text-sm text-damocles-accent hover:underline"
+                          >
+                            Last inn e-posthistorikk
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {request.content && mounted && (
                     <details className="mt-4">
-                      <summary className="cursor-pointer text-sm text-damocles-accent font-medium">
-                        Vis forespørsel innhold
+                      <summary className="cursor-pointer text-sm text-damocles-accent font-medium hover:underline">
+                        Vis fullstendig forespørsel innhold
                       </summary>
-                      <div className="mt-2 p-3 bg-gray-50 rounded text-sm max-h-40 overflow-y-auto">
-                        <div dangerouslySetInnerHTML={{ __html: sanitizeContent(request.content, 500) }} />
+                      <div className="mt-2 p-4 bg-gray-50 rounded text-sm max-h-96 overflow-y-auto border border-gray-200">
+                        <div dangerouslySetInnerHTML={{ __html: sanitizeContent(request.content) }} />
                       </div>
                     </details>
                   )}
