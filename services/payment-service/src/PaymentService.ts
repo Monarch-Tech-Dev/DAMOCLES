@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { createLogger } from 'winston';
+import { VippsClient } from './VippsClient';
 
 export interface PaymentResult {
   success: boolean;
@@ -42,6 +43,7 @@ const paymentSchema = z.object({
 
 export class PaymentService {
   private stripe: Stripe;
+  private vipps: VippsClient;
   private prisma: PrismaClient;
   private logger = createLogger({
     level: 'info',
@@ -57,6 +59,7 @@ export class PaymentService {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
       apiVersion: '2024-10-28.acacia'
     });
+    this.vipps = new VippsClient();
     this.prisma = new PrismaClient();
   }
 
@@ -235,8 +238,14 @@ export class PaymentService {
   async processVippsPayment(
     invoiceId: string,
     phoneNumber: string
-  ): Promise<PaymentResult> {
+  ): Promise<PaymentResult & { vippsUrl?: string }> {
     try {
+      // Check if Vipps is configured
+      if (!this.vipps.isConfigured()) {
+        this.logger.warn('Vipps not configured, falling back to manual processing');
+        return this.processVippsPaymentManual(invoiceId, phoneNumber);
+      }
+
       const invoice = await this.prisma.invoice.findUnique({
         where: { id: invoiceId },
         include: { user: true }
@@ -246,31 +255,78 @@ export class PaymentService {
         return { success: false, error: 'Invoice not found', amount: 0, fees: 0 };
       }
 
-      // Vipps integration would go here
-      // For now, we'll create a payment intent that requires manual processing
-      const vippsPayment = await this.prisma.payment.create({
+      if (invoice.status === 'paid') {
+        return { success: false, error: 'Invoice already paid', amount: 0, fees: 0 };
+      }
+
+      // Format phone number
+      const formattedPhone = VippsClient.formatPhoneNumber(phoneNumber);
+
+      // Convert NOK to øre (1 NOK = 100 øre)
+      const amountInOre = invoice.totalDue * 100;
+
+      // Validate amount
+      if (!VippsClient.validateAmount(amountInOre)) {
+        return {
+          success: false,
+          error: 'Invalid amount',
+          amount: 0,
+          fees: 0
+        };
+      }
+
+      // Create Vipps payment
+      const vippsPayment = await this.vipps.initiatePayment({
+        merchantOrderId: `INV-${invoice.id}`,
+        amount: amountInOre,
+        phoneNumber: formattedPhone,
+        description: `DAMOCLES Success Fee - Recovery ${invoice.recoveryAmount} NOK`,
+        callbackUrl: `${process.env.WEB_URL || 'https://damocles.no'}/api/webhook/vipps`,
+        returnUrl: `${process.env.WEB_URL || 'https://damocles.no'}/payment/success`,
+        userId: invoice.userId,
+        metadata: {
+          invoiceId: invoice.id,
+          caseId: invoice.caseId,
+          type: 'success_fee'
+        }
+      });
+
+      // Store payment record
+      await this.prisma.payment.create({
         data: {
           invoiceId: invoice.id,
           userId: invoice.userId,
           amount: invoice.totalDue,
           method: 'vipps',
           status: 'processing',
-          phoneNumber,
+          phoneNumber: formattedPhone,
+          externalId: vippsPayment.orderId,
           description: `DAMOCLES Success Fee - Case ${invoice.caseId.slice(-8)}`
         }
       });
 
-      this.logger.info('Vipps payment initiated', {
-        paymentId: vippsPayment.id,
+      // Update invoice status
+      await this.prisma.invoice.update({
+        where: { id: invoiceId },
+        data: {
+          status: 'processing',
+          paymentMethod: 'vipps'
+        }
+      });
+
+      this.logger.info('Vipps payment initiated via API', {
+        orderId: vippsPayment.orderId,
         invoiceId,
-        phoneNumber: phoneNumber.slice(-4) // Log only last 4 digits for privacy
+        amount: invoice.totalDue,
+        phoneNumber: formattedPhone.slice(-4)
       });
 
       return {
         success: true,
-        paymentId: vippsPayment.id,
+        paymentId: vippsPayment.orderId,
         amount: invoice.totalDue,
-        fees: invoice.processingFee
+        fees: invoice.processingFee,
+        vippsUrl: vippsPayment.url
       };
 
     } catch (error) {
@@ -285,6 +341,150 @@ export class PaymentService {
         amount: 0,
         fees: 0
       };
+    }
+  }
+
+  /**
+   * Fallback: Process Vipps payment manually (when API not configured)
+   */
+  private async processVippsPaymentManual(
+    invoiceId: string,
+    phoneNumber: string
+  ): Promise<PaymentResult> {
+    try {
+      const invoice = await this.prisma.invoice.findUnique({
+        where: { id: invoiceId },
+        include: { user: true }
+      });
+
+      if (!invoice) {
+        return { success: false, error: 'Invoice not found', amount: 0, fees: 0 };
+      }
+
+      // Create payment intent that requires manual processing
+      const vippsPayment = await this.prisma.payment.create({
+        data: {
+          invoiceId: invoice.id,
+          userId: invoice.userId,
+          amount: invoice.totalDue,
+          method: 'vipps',
+          status: 'processing',
+          phoneNumber,
+          description: `DAMOCLES Success Fee - Case ${invoice.caseId.slice(-8)}`
+        }
+      });
+
+      this.logger.info('Vipps payment initiated (manual processing)', {
+        paymentId: vippsPayment.id,
+        invoiceId,
+        phoneNumber: phoneNumber.slice(-4)
+      });
+
+      return {
+        success: true,
+        paymentId: vippsPayment.id,
+        amount: invoice.totalDue,
+        fees: invoice.processingFee
+      };
+
+    } catch (error) {
+      this.logger.error('Vipps manual payment failed', {
+        error: error.message,
+        invoiceId
+      });
+
+      return {
+        success: false,
+        error: error.message,
+        amount: 0,
+        fees: 0
+      };
+    }
+  }
+
+  /**
+   * Handle Vipps webhook callback
+   */
+  async handleVippsCallback(orderId: string): Promise<void> {
+    try {
+      // Get payment details from Vipps
+      const paymentDetails = await this.vipps.getPaymentDetails(orderId);
+
+      // Find invoice by order ID
+      const payment = await this.prisma.payment.findFirst({
+        where: { externalId: orderId },
+        include: { invoice: true }
+      });
+
+      if (!payment) {
+        this.logger.error('Payment not found for Vipps callback', { orderId });
+        return;
+      }
+
+      // Update payment status based on Vipps status
+      if (paymentDetails.status === 'SALE' || paymentDetails.status === 'RESERVE') {
+        // Payment successful
+        await this.prisma.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: 'completed',
+            completedAt: new Date()
+          }
+        });
+
+        // Mark invoice as paid
+        await this.prisma.invoice.update({
+          where: { id: payment.invoiceId },
+          data: {
+            status: 'paid',
+            paidAt: new Date(),
+            paymentId: orderId
+          }
+        });
+
+        // Update debt record
+        await this.prisma.debt.update({
+          where: { id: payment.invoice.caseId },
+          data: {
+            platformFeeStatus: 'paid',
+            platformFeePaidAt: new Date()
+          }
+        });
+
+        this.logger.info('Vipps payment completed', {
+          orderId,
+          invoiceId: payment.invoiceId,
+          amount: payment.amount
+        });
+
+        // Capture the payment if it's only reserved
+        if (paymentDetails.status === 'RESERVE') {
+          await this.vipps.capturePayment(orderId);
+          this.logger.info('Vipps payment captured', { orderId });
+        }
+
+      } else if (paymentDetails.status === 'CANCEL' || paymentDetails.status === 'FAILED') {
+        // Payment failed or cancelled
+        await this.prisma.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: 'failed',
+            error: `Payment ${paymentDetails.status.toLowerCase()}`
+          }
+        });
+
+        this.logger.warn('Vipps payment failed', {
+          orderId,
+          status: paymentDetails.status
+        });
+      }
+
+    } catch (error) {
+      this.logger.error('Vipps callback handling failed', {
+        error: error.message,
+        orderId
+      });
+      throw error;
     }
   }
 

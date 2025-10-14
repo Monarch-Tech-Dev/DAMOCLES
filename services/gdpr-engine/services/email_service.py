@@ -1,85 +1,125 @@
-import smtplib
 import os
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
-from typing import Optional
+import logging
+from typing import Optional, Dict, Any
+import aiohttp
+
+logger = logging.getLogger(__name__)
 
 class EmailService:
     def __init__(self):
-        self.smtp_server = os.getenv("SMTP_SERVER", "localhost")
-        self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
-        self.smtp_username = os.getenv("SMTP_USERNAME", "")
-        self.smtp_password = os.getenv("SMTP_PASSWORD", "")
+        # SendGrid configuration
+        self.sendgrid_api_key = os.getenv("SENDGRID_API_KEY", "")
+        self.sendgrid_api_url = "https://api.sendgrid.com/v3/mail/send"
+        self.from_email = os.getenv("GDPR_FROM_EMAIL", "gdpr@damocles.no")
+        self.from_name = os.getenv("GDPR_FROM_NAME", "DAMOCLES GDPR Service")
+
+        # Development mode check
+        self.is_dev_mode = not self.sendgrid_api_key or self.sendgrid_api_key == "your_sendgrid_api_key_here"
         
     async def send_gdpr_request_email(
-        self, 
-        to_email: str, 
+        self,
+        to_email: str,
         from_email: str,
         from_name: str,
-        subject: str, 
-        content: str, 
+        subject: str,
+        content: str,
         cc_emails: Optional[list] = None,
         tracking_id: Optional[str] = None
-    ):
-        """Send GDPR request via email with tracking and CC options"""
-        
+    ) -> Dict[str, Any]:
+        """Send GDPR request via SendGrid API with tracking and CC options"""
+
         try:
-            # Create multipart message
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = subject
-            msg['From'] = f"{from_name} <{from_email}>"
-            msg['To'] = to_email
-            
-            if cc_emails:
-                msg['Cc'] = ', '.join(cc_emails)
-            
-            # Add HTML content
-            html_part = MIMEText(content, 'html', 'utf-8')
-            msg.attach(html_part)
-            
-            # Development mode - print instead of send
-            if self.smtp_server == "localhost":
-                print(f"\n📧 GDPR EMAIL SENT (DEV MODE)")
-                print(f"To: {to_email}")
-                print(f"From: {from_name} <{from_email}>")
-                print(f"Subject: {subject}")
+            # Development mode - log instead of send
+            if self.is_dev_mode:
+                logger.info(f"\n📧 GDPR EMAIL (DEV MODE)")
+                logger.info(f"To: {to_email}")
+                logger.info(f"From: {from_name} <{from_email}>")
+                logger.info(f"Reply-To: {self.from_email}")
+                logger.info(f"Subject: {subject}")
                 if cc_emails:
-                    print(f"CC: {', '.join(cc_emails)}")
-                print(f"Content length: {len(content)} characters")
-                print(f"Tracking ID: {tracking_id}")
-                print("✅ Email logged for development\n")
-                
+                    logger.info(f"CC: {', '.join(cc_emails)}")
+                logger.info(f"Content length: {len(content)} characters")
+                logger.info(f"Tracking ID: {tracking_id}")
+                logger.info("✅ Email logged (SendGrid not configured)\n")
+
                 return {
-                    "status": "sent_dev", 
+                    "status": "sent_dev",
                     "message_id": f"dev-{tracking_id}",
                     "timestamp": "development"
                 }
-            
-            # Production SMTP sending (when configured)
-            else:
-                server = smtplib.SMTP(self.smtp_server, self.smtp_port)
-                server.starttls()
-                
-                if self.smtp_username and self.smtp_password:
-                    server.login(self.smtp_username, self.smtp_password)
-                
-                recipients = [to_email]
-                if cc_emails:
-                    recipients.extend(cc_emails)
-                
-                server.send_message(msg, to_addrs=recipients)
-                server.quit()
-                
-                return {
-                    "status": "sent", 
-                    "message_id": f"smtp-{tracking_id}",
-                    "recipients": recipients
+
+            # Production SendGrid API sending
+            personalizations = [{
+                "to": [{"email": to_email}],
+                "subject": subject
+            }]
+
+            # Add CC recipients if specified
+            if cc_emails:
+                personalizations[0]["cc"] = [{"email": email} for email in cc_emails]
+
+            # Custom headers for tracking
+            custom_args = {
+                "tracking_id": tracking_id or "unknown",
+                "request_type": "gdpr_article_15"
+            }
+
+            # SendGrid API payload
+            payload = {
+                "personalizations": personalizations,
+                "from": {
+                    "email": self.from_email,
+                    "name": self.from_name
+                },
+                "reply_to": {
+                    "email": f"gdpr+{tracking_id}@damocles.no",
+                    "name": "DAMOCLES GDPR Response"
+                },
+                "subject": subject,
+                "content": [
+                    {
+                        "type": "text/html",
+                        "value": content
+                    }
+                ],
+                "custom_args": custom_args,
+                "tracking_settings": {
+                    "click_tracking": {"enable": True},
+                    "open_tracking": {"enable": True}
                 }
-                
+            }
+
+            # Send via SendGrid API
+            headers = {
+                "Authorization": f"Bearer {self.sendgrid_api_key}",
+                "Content-Type": "application/json"
+            }
+
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    self.sendgrid_api_url,
+                    json=payload,
+                    headers=headers
+                ) as response:
+                    if response.status == 202:
+                        response_data = await response.text()
+                        logger.info(f"✅ GDPR email sent via SendGrid to {to_email}")
+
+                        return {
+                            "status": "sent",
+                            "message_id": f"sendgrid-{tracking_id}",
+                            "recipients": [to_email] + (cc_emails or [])
+                        }
+                    else:
+                        error_text = await response.text()
+                        logger.error(f"❌ SendGrid API error ({response.status}): {error_text}")
+                        return {
+                            "status": "failed",
+                            "error": f"SendGrid returned {response.status}: {error_text}"
+                        }
+
         except Exception as e:
-            print(f"❌ Failed to send GDPR email: {e}")
+            logger.error(f"❌ Failed to send GDPR email: {e}")
             return {"status": "failed", "error": str(e)}
         
     async def send_notification_email(
