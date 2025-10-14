@@ -297,6 +297,41 @@ fastify.post('/api/webhook/stripe', async (request, reply) => {
 });
 
 /**
+ * Vipps webhook handler
+ */
+fastify.post('/api/webhook/vipps', async (request, reply) => {
+  try {
+    const { orderId } = request.body as { orderId: string };
+
+    if (!orderId) {
+      return reply.code(400).send({
+        success: false,
+        error: 'Missing orderId'
+      });
+    }
+
+    // Process the Vipps callback
+    await paymentService.handleVippsCallback(orderId);
+
+    fastify.log.info('Vipps webhook processed', { orderId });
+
+    return { received: true };
+
+  } catch (error) {
+    fastify.log.error('Vipps webhook error', {
+      error: error.message,
+      body: request.body
+    });
+
+    // Return 200 to prevent Vipps from retrying
+    return {
+      received: false,
+      error: error.message
+    };
+  }
+});
+
+/**
  * Health check endpoint
  */
 fastify.get('/api/health', async (request, reply) => {
@@ -348,6 +383,7 @@ const start = async () => {
     fastify.log.info('- GET /api/admin/revenue-stats - Revenue statistics (admin)');
     fastify.log.info('- POST /api/webhook/recovery-confirmed - Recovery confirmation webhook');
     fastify.log.info('- POST /api/webhook/stripe - Stripe webhook handler');
+    fastify.log.info('- POST /api/webhook/vipps - Vipps webhook handler');
 
   } catch (err) {
     fastify.log.error(err);

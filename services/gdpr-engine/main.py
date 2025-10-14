@@ -1,4 +1,4 @@
-from fastapi import FastAPI, BackgroundTasks, Depends, HTTPException, status
+from fastapi import FastAPI, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional, Dict, Any
@@ -278,6 +278,55 @@ async def get_creditor_stats(creditor_id: str):
             detail="Failed to fetch creditor statistics"
         )
 
+# SendGrid Inbound Email Webhook
+@app.post("/webhook/sendgrid/inbound")
+async def sendgrid_inbound_webhook(
+    request: Request,
+    background_tasks: BackgroundTasks
+):
+    """Handle inbound email responses from creditors via SendGrid"""
+    try:
+        # Parse SendGrid inbound parse webhook
+        form_data = await request.form()
+
+        # Extract email data
+        to_email = form_data.get("to", "")
+        from_email = form_data.get("from", "")
+        subject = form_data.get("subject", "")
+        text_body = form_data.get("text", "")
+        html_body = form_data.get("html", "")
+
+        # Extract tracking ID from reply-to address (gdpr+{request_id}@damocles.no)
+        request_id = None
+        if "gdpr+" in to_email:
+            try:
+                request_id = to_email.split("gdpr+")[1].split("@")[0]
+            except:
+                logger.warning(f"Could not extract request_id from {to_email}")
+
+        if not request_id:
+            logger.warning(f"Inbound email without valid tracking: {to_email}")
+            return {"status": "ignored", "reason": "no_tracking_id"}
+
+        logger.info(f"📬 Inbound GDPR response for request {request_id} from {from_email}")
+
+        # Process response in background
+        response_content = html_body.encode('utf-8') if html_body else text_body.encode('utf-8')
+
+        background_tasks.add_task(
+            gdpr_engine.process_gdpr_response,
+            request_id,
+            response_content,
+            "email"
+        )
+
+        return {"status": "received", "request_id": request_id}
+
+    except Exception as e:
+        logger.error(f"Error processing inbound email webhook: {e}")
+        # Don't raise exception - we don't want SendGrid to retry
+        return {"status": "error", "message": str(e)}
+
 # Trigger sword protocol
 @app.post("/sword/trigger/{creditor_id}")
 async def trigger_sword_protocol(
@@ -287,22 +336,22 @@ async def trigger_sword_protocol(
     try:
         # Check if threshold is met
         stats = await db.get_creditor_violation_stats(creditor_id)
-        
+
         if stats["total_violations"] < 100:  # Threshold
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Violation threshold not met"
             )
-        
+
         # Trigger sword protocol in background
         background_tasks.add_task(
             gdpr_engine.trigger_sword_protocol,
             creditor_id,
             stats
         )
-        
+
         return {"status": "sword_triggered"}
-        
+
     except HTTPException:
         raise
     except Exception as e:
