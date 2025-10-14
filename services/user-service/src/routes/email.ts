@@ -71,6 +71,31 @@ export async function emailRoutes(fastify: FastifyInstance) {
         });
       }
 
+      // Store email in PlatformEmail for tracking
+      await prisma.platformEmail.create({
+        data: {
+          userId: gdprRequest.userId,
+          creditorId: gdprRequest.creditorId,
+          direction: 'outbound',
+          fromEmail: 'gdpr@damocles.no',
+          toEmail: creditorEmail,
+          ccEmails: '[]',
+          subject: `GDPR Artikkel 15 Forespørsel - ${gdprRequest.referenceId}`,
+          bodyHtml: html,
+          bodyText: text,
+          userApproved: true,
+          status: 'sent',
+          sentAt: new Date(),
+          trackingId: `gdpr-${gdprRequestId}-${Date.now()}`,
+          messageId: result.messageId,
+          metadata: JSON.stringify({
+            gdpr_request_id: gdprRequestId,
+            creditor_email: creditorEmail,
+            creditor_name: gdprRequest.creditor.name
+          })
+        }
+      });
+
       // Update GDPR request status
       const responseDue = new Date();
       responseDue.setDate(responseDue.getDate() + 30); // GDPR 30 day deadline

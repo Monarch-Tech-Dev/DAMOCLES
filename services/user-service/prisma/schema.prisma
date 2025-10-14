@@ -364,29 +364,30 @@ model UserAuthorization {
 }
 
 model PlatformEmail {
-  id              String    @id @default(cuid())
-  userId          String    @map("user_id")
-  creditorId      String    @map("creditor_id")
-  direction       String    // 'outbound' | 'inbound'
-  fromEmail       String    @map("from_email")
-  toEmail         String    @map("to_email")
-  ccEmails        String    @map("cc_emails") // JSON array
-  subject         String
-  bodyHtml        String    @map("body_html")
-  bodyText        String    @map("body_text")
-  templateUsed    String?   @map("template_used")
-  userApproved    Boolean   @map("user_approved") @default(false)
-  status          String    // 'draft', 'pending_approval', 'approved', 'sent', 'delivered', 'responded', 'failed'
-  sentAt          DateTime? @map("sent_at")
-  deliveredAt     DateTime? @map("delivered_at")
-  respondedAt     DateTime? @map("responded_at")
-  trackingId      String    @unique @map("tracking_id")
-  messageId       String?   @unique @map("message_id")
-  inReplyTo       String?   @map("in_reply_to")
-  references      String?   @map("references")
-  metadata        String?   // JSON - parsing results, strategy, etc.
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id                  String    @id @default(cuid())
+  userId              String    @map("user_id")
+  creditorId          String    @map("creditor_id")
+  direction           String    // 'outbound' | 'inbound'
+  fromEmail           String    @map("from_email")
+  toEmail             String    @map("to_email")
+  ccEmails            String    @map("cc_emails") // JSON array
+  subject             String
+  bodyHtml            String    @map("body_html")
+  bodyText            String    @map("body_text")
+  templateUsed        String?   @map("template_used")
+  userApproved        Boolean   @map("user_approved") @default(false)
+  status              String    // 'draft', 'pending_approval', 'approved', 'sent', 'delivered', 'responded', 'failed'
+  sentAt              DateTime? @map("sent_at")
+  deliveredAt         DateTime? @map("delivered_at")
+  respondedAt         DateTime? @map("responded_at")
+  trackingPixelViewed Boolean   @default(false) @map("tracking_pixel_viewed")
+  trackingId          String    @unique @map("tracking_id")
+  messageId           String?   @unique @map("message_id")
+  inReplyTo           String?   @map("in_reply_to")
+  references          String?   @map("references")
+  metadata            String?   // JSON - parsing results, strategy, etc.
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
 
   user            User      @relation(fields: [userId], references: [id])
   creditor        Creditor  @relation(fields: [creditorId], references: [id])
