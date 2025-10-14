@@ -95,10 +95,16 @@ class GDPREngine:
         # Get user's account info with this creditor if available
         account_info = await self._get_user_account_info(user.id, creditor.id)
         
-        # Render GDPR request content
+        # Render GDPR request content with full identity verification data
         content = template.render(
             user_name=user.name or "Bruker",  # Use "User" if name not available
             user_email=user.email,
+            street_address=user.street_address if hasattr(user, 'street_address') else None,
+            postal_code=user.postal_code if hasattr(user, 'postal_code') else None,
+            city=user.city if hasattr(user, 'city') else None,
+            country=user.country if hasattr(user, 'country') else 'Norway',
+            date_of_birth=user.date_of_birth.strftime('%d.%m.%Y') if hasattr(user, 'date_of_birth') and user.date_of_birth else None,
+            phone_number=user.phone_number if hasattr(user, 'phone_number') else None,
             personal_number="***",  # Masked for security
             creditor_name=creditor.name,
             organization_number=creditor.organization_number,

@@ -17,8 +17,13 @@
         E-post: {{ contact_email }}</p>
         
         <p><strong>Fra: {{ user_name }}</strong><br>
+        {% if street_address %}Adresse: {{ street_address }}<br>{% endif %}
+        {% if postal_code and city %}{{ postal_code }} {{ city }}<br>{% endif %}
+        {% if country and country != 'Norway' %}{{ country }}<br>{% endif %}
+        {% if date_of_birth %}F.dato: {{ date_of_birth }}<br>{% endif %}
+        {% if phone_number %}Telefon: {{ phone_number }}<br>{% endif %}
         E-post: {{ user_email }}</p>
-        
+
         <hr style="margin: 30px 0;">
         
         <h3>GDPR Forespørsel - Spesiell Focus på Inkassovirksomhet</h3>
