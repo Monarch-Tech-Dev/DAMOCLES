@@ -33,104 +33,117 @@ class Database:
         return True
         
     async def get_user(self, user_id: str) -> Optional[User]:
-        """Fetch user from user-service database"""
+        """Fetch user from user-service via HTTP API"""
         import os
+        import aiohttp
+        import logging
         from datetime import datetime
 
         try:
-            # Query user-service database directly
-            query = """
-                SELECT
-                    id, email, name, phone_number, street_address,
-                    postal_code, city, country, date_of_birth,
-                    risk_score, shield_tier, token_balance,
-                    onboarding_status, gdpr_profile_complete,
-                    vipps_verified, vipps_sub, is_active,
-                    created_at, updated_at
-                FROM users
-                WHERE id = $1
-            """
+            user_service_url = os.getenv('USER_SERVICE_URL', 'http://localhost:3001')
+            service_api_key = os.getenv('SERVICE_API_KEY', 'dev-service-key-12345')
 
-            # Use connection to user-service database
-            user_db_url = os.getenv('USER_DB_URL', os.getenv('DATABASE_URL'))
+            url = f"{user_service_url}/api/internal/users/{user_id}"
+            headers = {'x-service-api-key': service_api_key}
 
-            import asyncpg
-            conn = await asyncpg.connect(user_db_url)
-            try:
-                row = await conn.fetchrow(query, user_id)
-                if not row:
-                    return None
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers) as response:
+                    if response.status == 404:
+                        logging.warning(f"User {user_id} not found")
+                        return None
 
-                return User(
-                    id=row['id'],
-                    email=row['email'],
-                    name=row.get('name'),
-                    phone_number=row.get('phone_number'),
-                    street_address=row.get('street_address'),
-                    postal_code=row.get('postal_code'),
-                    city=row.get('city'),
-                    country=row.get('country'),
-                    date_of_birth=row.get('date_of_birth'),
-                    risk_score=float(row.get('risk_score', 0.5)),
-                    shield_tier=row.get('shield_tier', 'bronze'),
-                    token_balance=float(row.get('token_balance', 0.0)),
-                    onboarding_status=row.get('onboarding_status', 'PENDING'),
-                    is_active=row.get('is_active', True),
-                    created_at=row['created_at'],
-                    updated_at=row['updated_at']
-                )
-            finally:
-                await conn.close()
+                    if response.status != 200:
+                        logging.error(f"Error fetching user {user_id}: HTTP {response.status}")
+                        return None
+
+                    data = await response.json()
+                    user_data = data.get('user')
+
+                    if not user_data:
+                        return None
+
+                    # Convert date strings to date/datetime objects
+                    date_of_birth = None
+                    if user_data.get('dateOfBirth'):
+                        try:
+                            date_of_birth = datetime.fromisoformat(user_data['dateOfBirth'].replace('Z', '+00:00')).date()
+                        except:
+                            pass
+
+                    created_at = datetime.fromisoformat(user_data['createdAt'].replace('Z', '+00:00'))
+                    updated_at = datetime.fromisoformat(user_data['updatedAt'].replace('Z', '+00:00'))
+
+                    return User(
+                        id=user_data['id'],
+                        email=user_data['email'],
+                        name=user_data.get('name'),
+                        phone_number=user_data.get('phoneNumber'),
+                        street_address=user_data.get('streetAddress'),
+                        postal_code=user_data.get('postalCode'),
+                        city=user_data.get('city'),
+                        country=user_data.get('country'),
+                        date_of_birth=date_of_birth,
+                        risk_score=float(user_data.get('riskScore', 0.5)),
+                        shield_tier=user_data.get('shieldTier', 'bronze'),
+                        token_balance=float(user_data.get('tokenBalance', 0.0)),
+                        onboarding_status=user_data.get('onboardingStatus', 'PENDING'),
+                        is_active=user_data.get('isActive', True),
+                        created_at=created_at,
+                        updated_at=updated_at
+                    )
 
         except Exception as e:
-            import logging
             logging.error(f"Error fetching user {user_id}: {e}")
             return None
         
     async def get_creditor(self, creditor_id: str) -> Optional[Creditor]:
-        """Fetch creditor from user-service database"""
+        """Fetch creditor from user-service via HTTP API"""
         import os
+        import aiohttp
+        import logging
         from datetime import datetime
 
         try:
-            # Query user-service database directly
-            query = """
-                SELECT
-                    id, name, organization_number, type, privacy_email,
-                    violation_score, total_violations, average_settlement_rate,
-                    is_active, created_at, updated_at
-                FROM creditors
-                WHERE id = $1
-            """
+            user_service_url = os.getenv('USER_SERVICE_URL', 'http://localhost:3001')
+            service_api_key = os.getenv('SERVICE_API_KEY', 'dev-service-key-12345')
 
-            # Use connection to user-service database
-            user_db_url = os.getenv('USER_DB_URL', os.getenv('DATABASE_URL'))
+            url = f"{user_service_url}/api/internal/creditors/{creditor_id}"
+            headers = {'x-service-api-key': service_api_key}
 
-            import asyncpg
-            conn = await asyncpg.connect(user_db_url)
-            try:
-                row = await conn.fetchrow(query, creditor_id)
-                if not row:
-                    return None
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers) as response:
+                    if response.status == 404:
+                        logging.warning(f"Creditor {creditor_id} not found")
+                        return None
 
-                return Creditor(
-                    id=row['id'],
-                    name=row['name'],
-                    organization_number=row.get('organization_number'),
-                    type=row.get('type', 'default'),
-                    privacy_email=row.get('privacy_email'),
-                    violation_score=float(row.get('violation_score', 0.0)),
-                    total_violations=int(row.get('total_violations', 0)),
-                    average_settlement_rate=float(row.get('average_settlement_rate', 0.0)),
-                    is_active=row.get('is_active', True),
-                    created_at=row['created_at'],
-                    updated_at=row['updated_at']
-                )
-            finally:
-                await conn.close()
+                    if response.status != 200:
+                        logging.error(f"Error fetching creditor {creditor_id}: HTTP {response.status}")
+                        return None
+
+                    data = await response.json()
+                    creditor_data = data.get('creditor')
+
+                    if not creditor_data:
+                        return None
+
+                    created_at = datetime.fromisoformat(creditor_data['createdAt'].replace('Z', '+00:00'))
+                    updated_at = datetime.fromisoformat(creditor_data['updatedAt'].replace('Z', '+00:00'))
+
+                    return Creditor(
+                        id=creditor_data['id'],
+                        name=creditor_data['name'],
+                        organization_number=creditor_data.get('organizationNumber'),
+                        type=creditor_data.get('type', 'default'),
+                        privacy_email=creditor_data.get('privacyEmail'),
+                        violation_score=float(creditor_data.get('violationScore', 0.0)),
+                        total_violations=int(creditor_data.get('totalViolations', 0)),
+                        average_settlement_rate=float(creditor_data.get('averageSettlementRate', 0.0)),
+                        is_active=creditor_data.get('isActive', True),
+                        created_at=created_at,
+                        updated_at=updated_at
+                    )
 
         except Exception as e:
-            import logging
             logging.error(f"Error fetching creditor {creditor_id}: {e}")
             return None
         
