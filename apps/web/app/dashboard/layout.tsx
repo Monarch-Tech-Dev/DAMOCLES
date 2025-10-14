@@ -73,9 +73,7 @@ export default function DashboardLayout({
   }
 
   // Check if user has admin access
-  const isAdmin = user?.role === 'admin' ||
-                  user?.email?.includes('admin') ||
-                  user?.isAdmin === true
+  const isAdmin = user?.role === 'admin' || user?.isAdmin === true
 
   const handleLogout = () => {
     logout()
