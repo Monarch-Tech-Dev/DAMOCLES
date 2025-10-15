@@ -109,7 +109,7 @@ export async function creditorRoutes(fastify: FastifyInstance) {
   fastify.post('/', { preHandler: authenticateUser }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const body = CreateCreditorSchema.parse(request.body);
-      
+
       // Check if creditor already exists
       const existingCreditor = await prisma.creditor.findFirst({
         where: {
@@ -119,9 +119,9 @@ export async function creditorRoutes(fastify: FastifyInstance) {
           ]
         }
       });
-      
+
       if (existingCreditor) {
-        return reply.status(409).send({ 
+        return reply.status(409).send({
           error: 'Creditor already exists',
           creditor: {
             id: existingCreditor.id,
@@ -130,7 +130,7 @@ export async function creditorRoutes(fastify: FastifyInstance) {
           }
         });
       }
-      
+
       const creditor = await prisma.creditor.create({
         data: {
           ...body,
@@ -146,12 +146,60 @@ export async function creditorRoutes(fastify: FastifyInstance) {
           violationScore: true
         }
       });
-      
+
       return reply.status(201).send({ creditor });
-      
+
     } catch (error) {
       if (error instanceof z.ZodError) {
         return reply.status(400).send({ error: 'Validation error', details: error.errors });
+      }
+      throw error;
+    }
+  });
+
+  // Delete creditor (authenticated users only)
+  fastify.delete('/:creditorId', { preHandler: authenticateUser }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { creditorId } = request.params as { creditorId: string };
+
+      // Check if creditor exists
+      const creditor = await prisma.creditor.findUnique({
+        where: { id: creditorId },
+        include: {
+          _count: {
+            select: {
+              debts: true
+            }
+          }
+        }
+      });
+
+      if (!creditor) {
+        return reply.status(404).send({ error: 'Creditor not found' });
+      }
+
+      // Check if creditor has associated debts
+      if (creditor._count.debts > 0) {
+        return reply.status(400).send({
+          error: 'Cannot delete creditor with existing debts',
+          debtCount: creditor._count.debts,
+          message: `This creditor has ${creditor._count.debts} associated debt(s). Please remove or reassign the debts before deleting the creditor.`
+        });
+      }
+
+      // Delete the creditor
+      await prisma.creditor.delete({
+        where: { id: creditorId }
+      });
+
+      return reply.status(200).send({
+        success: true,
+        message: `Creditor "${creditor.name}" has been deleted successfully`
+      });
+
+    } catch (error: any) {
+      if (error.code === 'P2025') {
+        return reply.status(404).send({ error: 'Creditor not found' });
       }
       throw error;
     }
