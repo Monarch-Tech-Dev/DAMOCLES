@@ -65,32 +65,62 @@ export default function AddDebtPage() {
       (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
         ? window.location.origin
         : 'http://localhost:3001');
+    console.log('[DEBUG] Add Debt - Environment:', {
+      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+      hostname: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
+      origin: typeof window !== 'undefined' ? window.location.origin : 'unknown',
+      computedApiUrl: url
+    })
     setApiUrl(url);
   }, []);
 
   const searchCreditors = async (searchTerm: string = '') => {
-    if (!apiUrl) return;
+    if (!apiUrl) {
+      console.log('[DEBUG] searchCreditors - apiUrl not set yet')
+      return;
+    }
+    console.log('[DEBUG] searchCreditors - Fetching from:', `${apiUrl}/api/creditors`)
     setSearchingCreditors(true)
     try {
       const token = localStorage.getItem('token')
+      console.log('[DEBUG] searchCreditors - Token exists:', !!token)
 
       const params = new URLSearchParams()
       if (searchTerm) params.append('search', searchTerm)
 
-      const response = await fetch(`${apiUrl}/api/creditors?${params}`, {
+      const url = `${apiUrl}/api/creditors?${params}`
+      console.log('[DEBUG] searchCreditors - Full URL:', url)
+
+      const response = await fetch(url, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      })
+
+      console.log('[DEBUG] searchCreditors - Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
       })
 
       if (response.ok) {
         const data = await response.json()
+        console.log('[DEBUG] searchCreditors - Received creditors:', data.creditors?.length || 0)
         setCreditors(data.creditors || [])
       } else {
-        console.error('Failed to fetch creditors:', response.statusText)
+        const errorText = await response.text().catch(() => 'Could not read error')
+        console.error('[DEBUG] searchCreditors - Failed:', {
+          status: response.status,
+          error: errorText
+        })
         toast.error('Kunne ikke laste kreditorer')
       }
     } catch (error) {
-      console.error('Error searching creditors:', error)
-      toast.error('Nettverksfeil ved lasting av kreditorer')
+      console.error('[DEBUG] searchCreditors - Error:', error)
+      if (error instanceof TypeError) {
+        console.error('[DEBUG] searchCreditors - Network error - cannot reach API')
+        toast.error('Nettverksfeil - kan ikke nå serveren')
+      } else {
+        toast.error('Nettverksfeil ved lasting av kreditorer')
+      }
     } finally {
       setSearchingCreditors(false)
     }
