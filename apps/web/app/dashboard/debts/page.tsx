@@ -52,6 +52,12 @@ export default function DebtsPage() {
       (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
         ? window.location.origin
         : 'http://localhost:3001');
+    console.log('[DEBUG] Mine gjeld - Environment:', {
+      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+      hostname: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
+      origin: typeof window !== 'undefined' ? window.location.origin : 'unknown',
+      computedApiUrl: url
+    })
     setApiUrl(url)
   }, [])
 
@@ -62,29 +68,54 @@ export default function DebtsPage() {
   }, [apiUrl])
 
   const fetchDebts = async () => {
+    console.log('[DEBUG] fetchDebts called with apiUrl:', apiUrl)
     try {
       const token = localStorage.getItem('token')
+      console.log('[DEBUG] Token exists:', !!token)
+
       if (!token) {
+        console.warn('[DEBUG] No token found - user not authenticated')
         setLoading(false)
         return
       }
 
-      const response = await fetch(`${apiUrl}/api/debts`, {
+      const url = `${apiUrl}/api/debts`
+      console.log('[DEBUG] Fetching debts from:', url)
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
 
+      console.log('[DEBUG] Fetch debts response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      })
+
       if (response.ok) {
         const data = await response.json()
+        console.log('[DEBUG] Debts data received:', data)
+        console.log('[DEBUG] Number of debts:', data.debts?.length || 0)
         setDebts(data.debts || [])
       } else {
-        console.error('Failed to fetch debts')
+        const errorText = await response.text().catch(() => 'Could not read error')
+        console.error('[DEBUG] Failed to fetch debts:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        })
         toast.error('Kunne ikke laste gjeld')
       }
     } catch (error) {
-      console.error('Error fetching debts:', error)
-      toast.error('Nettverksfeil ved lasting av gjeld')
+      console.error('[DEBUG] Error fetching debts:', error)
+      if (error instanceof TypeError) {
+        console.error('[DEBUG] Network error - cannot reach API')
+        toast.error('Nettverksfeil - kan ikke nå serveren')
+      } else {
+        toast.error('Nettverksfeil ved lasting av gjeld')
+      }
     } finally {
       setLoading(false)
     }
