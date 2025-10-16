@@ -116,7 +116,7 @@ export function PDICalculatorFlow() {
     setUserIsVulnerable(score < 40 || debtServiceRatio > 50);
 
     // Generate insights
-    const insights = [];
+    const insights: string[] = [];
     if (creditUtilization > 70) {
       insights.push('Your credit utilization is dangerously high - this is your top priority');
     }
@@ -138,7 +138,7 @@ export function PDICalculatorFlow() {
     }
 
     // Check for DAMOCLES triggers
-    const damoclesFlags = [];
+    const damoclesFlags: string[] = [];
     if (score < 40) {
       damoclesFlags.push('Automatic GDPR violation scanning triggered');
     }
