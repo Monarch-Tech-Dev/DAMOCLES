@@ -1,3 +1,12 @@
+import sys
+import os
+from pathlib import Path
+
+# Ensure the current directory is in Python path for module imports
+current_dir = Path(__file__).parent
+if str(current_dir) not in sys.path:
+    sys.path.insert(0, str(current_dir))
+
 from fastapi import FastAPI, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
@@ -7,7 +16,6 @@ import asyncio
 import aiohttp
 import asyncpg
 import redis.asyncio as redis
-import os
 from dotenv import load_dotenv
 import logging
 
