@@ -75,34 +75,57 @@ export default function DebtDetailPage() {
   }, []);
 
   const fetchDebt = async () => {
-    if (!apiUrl) return;
+    if (!apiUrl) {
+      console.log('Waiting for apiUrl...')
+      return;
+    }
+    console.log('Fetching debt:', params.id, 'from:', apiUrl)
     try {
       const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('No token found')
+        toast.error('Du må være logget inn')
+        router.push('/dashboard')
+        setLoading(false)
+        return
+      }
 
-      const response = await fetch(`${apiUrl}/api/debts/${params.id}`, {
+      const url = `${apiUrl}/api/debts/${params.id}`
+      console.log('Fetching from URL:', url)
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
-      
+
+      console.log('Response status:', response.status)
+
       if (response.ok) {
         const data = await response.json()
+        console.log('Debt data received:', data)
         setDebt(data.debt)
         setEditAmount(data.debt.currentAmount.toString())
         setEditStatus(data.debt.status)
       } else if (response.status === 404) {
+        console.error('Debt not found')
         toast.error('Gjeld ikke funnet')
         router.push('/dashboard/debts')
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Error response:', errorData)
+        toast.error('Feil ved henting av gjeld')
       }
     } catch (error) {
       console.error('Error fetching debt:', error)
-      toast.error('Feil ved henting av gjeld')
+      toast.error('Nettverksfeil ved henting av gjeld')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
+    console.log('useEffect triggered - params.id:', params.id, 'apiUrl:', apiUrl)
     if (params.id && apiUrl) {
       fetchDebt()
     }
