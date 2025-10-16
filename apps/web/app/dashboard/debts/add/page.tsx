@@ -221,19 +221,35 @@ export default function AddDebtPage() {
   }
 
   const submitDebt = async () => {
+    console.log('Submit debt called')
     if (!selectedCreditor || !originalAmount || !currentAmount) {
+      console.error('Missing required fields:', { selectedCreditor, originalAmount, currentAmount })
       toast.error('Alle påkrevde felt må fylles ut')
       return
     }
 
-    if (!apiUrl) return;
+    if (!apiUrl) {
+      console.error('API URL not set')
+      return;
+    }
+
+    console.log('Submitting debt to:', `${apiUrl}/api/debts`)
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
       if (!token) {
+        console.error('No authentication token')
         toast.error('Du må være logget inn')
         return
       }
+
+      const payload = {
+        creditorId: selectedCreditor.id,
+        originalAmount: parseFloat(originalAmount),
+        currentAmount: parseFloat(currentAmount),
+        accountNumber: accountNumber || undefined
+      }
+      console.log('Debt payload:', payload)
 
       const response = await fetch(`${apiUrl}/api/debts`, {
         method: 'POST',
@@ -241,20 +257,20 @@ export default function AddDebtPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          creditorId: selectedCreditor.id,
-          originalAmount: parseFloat(originalAmount),
-          currentAmount: parseFloat(currentAmount),
-          accountNumber: accountNumber || undefined
-        })
+        body: JSON.stringify(payload)
       })
+
+      console.log('Response status:', response.status)
 
       if (response.ok) {
         const data = await response.json()
+        console.log('Debt created successfully:', data)
         toast.success('Gjeld lagt til')
-        router.push('/dashboard/debts')
+        // Use replace to ensure we refresh the debts list
+        router.replace('/dashboard/debts')
       } else {
         const data = await response.json()
+        console.error('Error response:', data)
         toast.error(data.error || 'Feil ved opprettelse av gjeld')
       }
     } catch (error) {
