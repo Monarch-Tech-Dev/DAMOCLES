@@ -18,7 +18,8 @@ import {
   DollarSign,
   Database,
   Brain,
-  Activity
+  Activity,
+  Share2
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -32,6 +33,7 @@ const adminNavigation = [
   { name: 'Learning Evolution', href: '/admin/learning', icon: Brain },
   { name: 'Platform Analytics', href: '/admin/analytics', icon: BarChart3 },
   { name: 'Technical Analytics', href: '/admin/technical', icon: Activity },
+  { name: 'Social Media Bot', href: '/admin/social-bot', icon: Share2 },
   { name: 'Document Processing', href: '/admin/documents', icon: FileText },
   { name: 'Revenue Management', href: '/admin/revenue', icon: DollarSign },
   { name: 'System Status', href: '/admin/system', icon: Database },
