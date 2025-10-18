@@ -301,6 +301,7 @@ payment.*
 docs/TOKEN_ACTIVATION_STRATEGY.md
 
 # Internal Business Documents (DO NOT COMMIT TO OPEN SOURCE)
+OPEN_CORE_ARCHITECTURE.md
 docs/TOKEN_ACTIVATION_STRATEGY.md
 docs/GDPR_ENGINE_CAPABILITIES.md
 docs/TRUST_ENGINE_CAPABILITIES.md
@@ -400,3 +401,12 @@ scripts/prepare-mainnet-wallet.sh
 apps/web/.env.production.local
 deploy.sh
 *.tsbuildinfo
+
+# PROPRIETARY: Social Media Bot (Business Edge - NOT Open Source)
+# This is our competitive advantage for viral growth
+services/social-media-bot/
+apps/web/app/admin/social-bot/
+**/social-bot/**
+**/social-media-bot/**
+SOCIAL_MEDIA_*.md
+**/VIRAL_*.md
