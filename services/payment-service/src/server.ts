@@ -5,8 +5,10 @@ import rateLimit from '@fastify/rate-limit';
 import { PaymentService } from './PaymentService';
 import { z } from 'zod';
 import dotenv from 'dotenv';
+import path from 'path';
 
-dotenv.config();
+// Explicitly load .env from payment-service directory
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const fastify = Fastify({
   logger: {
@@ -367,7 +369,8 @@ fastify.get('/api/metrics', async (request, reply) => {
 // Start server
 const start = async () => {
   try {
-    const port = parseInt(process.env.PORT || '8009', 10);
+    // Force payment service to use port 8009 to avoid conflicts
+    const port = 8009;
     const host = process.env.HOST || '0.0.0.0';
 
     await fastify.listen({ port, host });
