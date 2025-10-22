@@ -194,11 +194,17 @@ env.bak/
 venv.bak/
 .pytest_cache/
 
-# AI/ML
-models/
+# AI/ML - Block trained model files, not code
+# models/ - DON'T use this, it blocks Python Pydantic models too!
 *.h5
 *.pkl
 *.joblib
+*.pth
+*.onnx
+*.pb
+*.tflite
+trained_models/
+checkpoints/
 
 # Go
 *.exe
