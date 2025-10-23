@@ -283,3 +283,54 @@ class Database:
 
         print(f"Warning: GDPR request {request_id} not found in memory")
         return False
+
+    async def get_last_gdpr_request_for_creditor(
+        self,
+        user_id: str,
+        creditor_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Get the most recent GDPR request for a user-creditor pair"""
+        from datetime import datetime
+
+        # Query user-service API for the most recent request
+        import os
+        import aiohttp
+        import logging
+
+        try:
+            user_service_url = os.getenv('USER_SERVICE_URL', 'http://localhost:3001')
+            service_api_key = os.getenv('SERVICE_API_KEY', 'dev-service-key-12345')
+
+            url = f"{user_service_url}/api/internal/gdpr-requests/last"
+            headers = {'x-service-api-key': service_api_key}
+            params = {
+                'user_id': user_id,
+                'creditor_id': creditor_id
+            }
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers, params=params) as response:
+                    if response.status == 404:
+                        # No previous request found
+                        return None
+
+                    if response.status != 200:
+                        logging.error(f"Error fetching last GDPR request: HTTP {response.status}")
+                        return None
+
+                    data = await response.json()
+                    request_data = data.get('request')
+
+                    if not request_data:
+                        return None
+
+                    # Convert timestamp strings
+                    created_at_str = request_data.get('createdAt')
+                    if created_at_str:
+                        request_data['created_at'] = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+
+                    return request_data
+
+        except Exception as e:
+            logging.error(f"Error fetching last GDPR request: {e}")
+            return None
