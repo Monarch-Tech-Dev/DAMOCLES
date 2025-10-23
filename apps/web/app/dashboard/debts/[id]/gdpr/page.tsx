@@ -96,6 +96,17 @@ const getUserIdFromToken = (token: string | null): string | null => {
   }
 };
 
+interface CooldownStatus {
+  can_send: boolean
+  cooldown_active: boolean
+  message: string
+  cooldown_ends_at?: string
+  remaining_seconds?: number
+  remaining_hours?: number
+  remaining_days?: number
+  last_request_date?: string
+}
+
 export default function GDPRRequestPage() {
   const params = useParams()
   const router = useRouter()
@@ -109,6 +120,7 @@ export default function GDPRRequestPage() {
   const [apiUrl, setApiUrl] = useState('')
   const [gdprApiUrl, setGdprApiUrl] = useState('')
   const [emailHistory, setEmailHistory] = useState<Record<string, EmailTracking[]>>({})
+  const [cooldownStatus, setCooldownStatus] = useState<CooldownStatus | null>(null)
 
   // Set API URLs on client side to avoid hydration mismatch
   useEffect(() => {
@@ -124,6 +136,26 @@ export default function GDPRRequestPage() {
         : 'http://localhost:8001');
     setGdprApiUrl(gdprUrl);
   }, []);
+
+  const checkCooldownStatus = async (userId: string, creditorId: string) => {
+    if (!gdprApiUrl) return;
+
+    try {
+      const response = await fetch(
+        `${gdprApiUrl}/gdpr/cooldown-status?user_id=${userId}&creditor_id=${creditorId}`,
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        setCooldownStatus(data)
+      }
+    } catch (error) {
+      console.error('Error checking cooldown status:', error)
+    }
+  }
 
   const fetchData = async () => {
     if (!apiUrl || !gdprApiUrl) return;
@@ -165,6 +197,9 @@ export default function GDPRRequestPage() {
           router.push('/login')
           return
         }
+
+        // Check cooldown status
+        await checkCooldownStatus(userId, debtData.debt.creditor.id)
 
         // Get GDPR requests for this user
         const gdprResponse = await fetch(`${gdprApiUrl}/gdpr/requests/${userId}`, {
@@ -245,6 +280,19 @@ export default function GDPRRequestPage() {
         console.log('GDPR request generated:', data)
         toast.success('GDPR forespørsel generert!')
         await fetchData() // Refresh data
+      } else if (response.status === 429) {
+        // Handle cooldown error
+        const error = await response.json()
+        console.log('Cooldown error:', error)
+        const errorDetail = error.detail || {}
+        const message = errorDetail.message || 'Du må vente før du kan sende en ny forespørsel til denne kreditoren'
+        toast.error(message, { duration: 5000 })
+        // Refresh cooldown status
+        const token = localStorage.getItem('token')
+        const userId = getUserIdFromToken(token)
+        if (userId) {
+          await checkCooldownStatus(userId, debt.creditor.id)
+        }
       } else {
         const error = await response.json()
         console.error('Failed to generate GDPR request:', error)
@@ -454,6 +502,71 @@ export default function GDPRRequestPage() {
           </motion.div>
         )}
 
+        {/* Legal Timeline Guidance - Aligned with Sacred Architecture */}
+        {cooldownStatus && cooldownStatus.cooldown_active && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <Card className="p-6 bg-blue-50 border-blue-200">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <ClockIcon className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                    Du har sendt en forespørsel – nå venter vi på svar
+                  </h3>
+                  <p className="text-sm text-blue-800 mb-3">
+                    Du sendte en GDPR-forespørsel til {debt.creditor.name}. I følge GDPR Artikkel 12
+                    har de <strong>30 dager på å svare</strong>. La oss gi dem tid til å svare før vi sender neste forespørsel.
+                  </p>
+
+                  <div className="bg-white/50 rounded-lg p-3 mb-3">
+                    <p className="text-xs font-semibold text-blue-900 mb-1">Hva skjer nå?</p>
+                    <ul className="text-xs text-blue-800 space-y-1">
+                      <li>• Vi overvåker om kreditoren svarer innen fristen</li>
+                      <li>• Hvis de svarer: Vi analyserer svaret for overtredelser</li>
+                      <li>• Hvis de ikke svarer: Vi hjelper deg med eskalering til Datatilsynet</li>
+                    </ul>
+                  </div>
+
+                  {cooldownStatus.last_request_date && (
+                    <p className="text-xs text-blue-700 mb-2" suppressHydrationWarning>
+                      <strong>Sendt:</strong> {new Date(cooldownStatus.last_request_date).toLocaleDateString('no-NO', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  )}
+
+                  {cooldownStatus.cooldown_ends_at && (
+                    <p className="text-xs text-blue-700 mb-3" suppressHydrationWarning>
+                      <strong>Kan sende ny:</strong> {new Date(cooldownStatus.cooldown_ends_at).toLocaleDateString('no-NO', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  )}
+
+                  <div className="bg-blue-100/50 border-l-4 border-blue-400 p-3 rounded">
+                    <p className="text-xs text-blue-900">
+                      <strong>💡 Hvorfor vente?</strong> Flere forespørsler før de får tid til å svare
+                      kan svekke din sak juridisk. Vi hjelper deg med å være strategisk, ikke bare rask.
+                      Tålmodighet er makt når du kjenner dine rettigheter.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Generate New Request */}
         <Card className="p-6 mb-6">
           <div className="flex items-center justify-between">
@@ -462,14 +575,25 @@ export default function GDPRRequestPage() {
               <p className="text-gray-600">
                 Generer automatisk GDPR Artikkel 15 forespørsel for denne kreditoren
               </p>
+              {cooldownStatus && cooldownStatus.cooldown_active && (
+                <p className="text-sm text-blue-600 mt-2">
+                  <ClockIcon className="w-4 h-4 inline mr-1" />
+                  Tilgjengelig om {cooldownStatus.remaining_days || 0} dager, {(cooldownStatus.remaining_hours || 0) % 24} timer
+                </p>
+              )}
             </div>
             <Button
               onClick={generateGDPRRequest}
-              disabled={generating || !userProfile?.gdprProfileComplete}
-              className="bg-damocles-accent hover:bg-indigo-700"
+              disabled={generating || !userProfile?.gdprProfileComplete || (cooldownStatus?.cooldown_active ?? false)}
+              className="bg-damocles-accent hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {generating ? (
                 'Genererer...'
+              ) : cooldownStatus?.cooldown_active ? (
+                <>
+                  <ClockIcon className="w-4 h-4 mr-2" />
+                  Venter...
+                </>
               ) : (
                 <>
                   <DocumentTextIcon className="w-4 h-4 mr-2" />

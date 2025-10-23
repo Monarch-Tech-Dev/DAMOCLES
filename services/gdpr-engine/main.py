@@ -33,6 +33,10 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# GDPR Request Cooldown Configuration
+# Prevents spam by limiting how often users can send requests to the same creditor
+GDPR_REQUEST_COOLDOWN_HOURS = int(os.getenv("GDPR_REQUEST_COOLDOWN_HOURS", "168"))  # Default: 7 days (168 hours)
+
 app = FastAPI(
     title="DAMOCLES GDPR Engine",
     description="Automated GDPR request generation and violation detection",
@@ -95,28 +99,68 @@ async def generate_gdpr_request(
         # Get user and creditor data
         user = await db.get_user(request.user_id)
         creditor = await db.get_creditor(request.creditor_id)
-        
+
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
-        
+
         if not creditor:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Creditor not found"
             )
-        
+
+        # Check for cooldown period to prevent spam
+        last_request = await db.get_last_gdpr_request_for_creditor(
+            request.user_id,
+            request.creditor_id
+        )
+
+        if last_request:
+            last_created_at = last_request.get('created_at')
+            if last_created_at:
+                time_since_last = datetime.now(last_created_at.tzinfo) - last_created_at
+                cooldown_period = timedelta(hours=GDPR_REQUEST_COOLDOWN_HOURS)
+
+                if time_since_last < cooldown_period:
+                    # Calculate remaining cooldown time
+                    remaining_time = cooldown_period - time_since_last
+                    remaining_days = int(remaining_time.total_seconds() / 86400)
+                    remaining_hours = int((remaining_time.total_seconds() % 86400) / 3600)
+                    remaining_minutes = int((remaining_time.total_seconds() % 3600) / 60)
+
+                    # Sacred Architecture: Educational & empowering message, not restrictive
+                    if remaining_days > 0:
+                        time_message = f"Du kan sende en ny forespørsel om {remaining_days} dager og {remaining_hours} timer"
+                    else:
+                        time_message = f"Du kan sende en ny forespørsel om {remaining_hours} timer og {remaining_minutes} minutter"
+
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail={
+                            "error": "Legal timeline in progress",
+                            "message": f"Du har allerede sendt en GDPR-forespørsel til denne kreditoren. I følge GDPR har de 30 dager på å svare. La oss gi dem tid til å svare først. {time_message}.",
+                            "user_friendly_message": "Vi hjelper deg med å være strategisk. Å vente på svar er smartere enn å sende flere forespørsler.",
+                            "legal_context": "GDPR Artikkel 12: Kreditoren har 30 dager svarfrist",
+                            "cooldown_ends_at": (last_created_at + cooldown_period).isoformat(),
+                            "remaining_seconds": int(remaining_time.total_seconds()),
+                            "next_steps": "Vi overvåker om kreditoren svarer. Hvis de ikke svarer innen fristen, hjelper vi deg med eskalering."
+                        }
+                    )
+
         # Generate GDPR request
         gdpr_request = await gdpr_engine.generate_gdpr_request(user, creditor)
-        
+
         return {
             "request_id": gdpr_request.id,
             "status": "generated",
             "content_preview": gdpr_request.content[:200] + "..."
         }
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error generating GDPR request: {e}")
         raise HTTPException(
@@ -201,6 +245,76 @@ async def process_gdpr_response(
             detail="Failed to process GDPR response"
         )
 
+# Check GDPR request cooldown status
+@app.get("/gdpr/cooldown-status")
+async def check_cooldown_status(
+    user_id: str,
+    creditor_id: str
+):
+    """Check if user can send a new GDPR request to a specific creditor"""
+    try:
+        last_request = await db.get_last_gdpr_request_for_creditor(
+            user_id,
+            creditor_id
+        )
+
+        if not last_request:
+            return {
+                "can_send": True,
+                "cooldown_active": False,
+                "message": "No previous request found. You can send a GDPR request."
+            }
+
+        last_created_at = last_request.get('created_at')
+        if not last_created_at:
+            return {
+                "can_send": True,
+                "cooldown_active": False,
+                "message": "You can send a GDPR request."
+            }
+
+        time_since_last = datetime.now(last_created_at.tzinfo) - last_created_at
+        cooldown_period = timedelta(hours=GDPR_REQUEST_COOLDOWN_HOURS)
+
+        if time_since_last < cooldown_period:
+            remaining_time = cooldown_period - time_since_last
+            remaining_hours = int(remaining_time.total_seconds() / 3600)
+            remaining_minutes = int((remaining_time.total_seconds() % 3600) / 60)
+            remaining_days = remaining_hours // 24
+            remaining_hours_in_day = remaining_hours % 24
+
+            cooldown_ends_at = last_created_at + cooldown_period
+
+            # Sacred Architecture: Educational, not restrictive
+            return {
+                "can_send": False,
+                "cooldown_active": True,
+                "message": f"Du har sendt en GDPR-forespørsel. Kreditoren har 30 dager på å svare i følge GDPR Artikkel 12.",
+                "timeline_info": "Vi anbefaler å vente på svar før du sender en ny forespørsel. Dette styrker din juridiske posisjon.",
+                "cooldown_ends_at": cooldown_ends_at.isoformat(),
+                "remaining_seconds": int(remaining_time.total_seconds()),
+                "remaining_hours": remaining_hours,
+                "remaining_days": remaining_days,
+                "last_request_date": last_created_at.isoformat(),
+                "legal_deadline": "30 dager fra sending",
+                "what_happens_next": "Vi overvåker om kreditoren svarer. Hvis ikke, hjelper vi deg eskalere til Datatilsynet."
+            }
+        else:
+            return {
+                "can_send": True,
+                "cooldown_active": False,
+                "message": "Du kan nå sende en ny GDPR-forespørsel hvis du trenger det.",
+                "last_request_date": last_created_at.isoformat(),
+                "recommendation": "Sjekk først om du har fått svar på din forrige forespørsel."
+            }
+
+    except Exception as e:
+        logger.error(f"Error checking cooldown status: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to check cooldown status"
+        )
+
 # Get GDPR requests for user
 @app.get("/gdpr/requests/{user_id}")
 async def get_user_gdpr_requests(
@@ -216,9 +330,9 @@ async def get_user_gdpr_requests(
             limit=limit,
             offset=offset
         )
-        
+
         return {"requests": requests}
-        
+
     except Exception as e:
         logger.error(f"Error fetching GDPR requests: {e}")
         raise HTTPException(
