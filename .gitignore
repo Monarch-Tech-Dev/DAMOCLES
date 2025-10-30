@@ -416,3 +416,15 @@ apps/web/app/admin/social-bot/
 **/social-media-bot/**
 SOCIAL_MEDIA_*.md
 **/VIRAL_*.md
+
+# Internal Session Documentation and Setup Guides (INTERNAL ONLY)
+SENTRY_SETUP.md
+DATABASE_BACKUP_GUIDE.md
+SESSION_SUMMARY_*.md
+**/SESSION_*.md
+PLATFORM_STATUS*.md
+TECHNICAL_ARCHITECTURE*.md
+DEVELOPMENT_STATUS*.md
+COMING-SOON-README.md
+LANGUAGE_AUDIT_SUMMARY.md
+PORT_ASSIGNMENTS.md
