@@ -67,10 +67,9 @@ export default function DebtDetailPage() {
 
   // Set API URL on client side to avoid hydration mismatch
   useEffect(() => {
-    const url = process.env.NEXT_PUBLIC_API_URL ||
-      (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-        ? window.location.origin
-        : 'http://localhost:3001');
+    const url = typeof window !== 'undefined'
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_API_URL || '');
     setApiUrl(url);
   }, []);
 
