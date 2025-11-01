@@ -46,6 +46,7 @@ services:
       DATABASE_URL: postgresql://damocles_user:${DB_PASSWORD:-damocles_dev_password}@postgres:5432/damocles
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
       REDIS_URL: redis://redis:6379
+      SERVICE_API_KEY: ${SERVICE_API_KEY:-dev-service-key-12345}
     ports:
       - "3001:3001"
     depends_on:
@@ -71,6 +72,7 @@ services:
       USER_SERVICE_URL: http://user-service:3001
       TRUST_ENGINE_URL: http://trust-engine:3003
       BLOCKCHAIN_SERVICE_URL: http://blockchain-service:8021
+      SERVICE_API_KEY: ${SERVICE_API_KEY:-dev-service-key-12345}
       SMTP_SERVER: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USERNAME: ${SMTP_USER:-}
