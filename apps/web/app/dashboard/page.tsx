@@ -54,8 +54,10 @@ export default function DashboardPage() {
 
   const fetchUserProgress = async () => {
     try {
-      // Fetch debts and profile
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      // Fetch debts and profile - use window.location.origin in browser
+      const apiUrl = typeof window !== 'undefined'
+        ? window.location.origin
+        : (process.env.NEXT_PUBLIC_API_URL || '');
       const token = localStorage.getItem('token');
 
       const [debtsResponse, profileResponse] = await Promise.all([
