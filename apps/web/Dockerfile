@@ -16,6 +16,8 @@ CMD ["npm", "run", "dev"]
 
 # Builder stage for production
 FROM base AS builder
+ARG NEXT_PUBLIC_API_URL=""
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 COPY package*.json ./
 COPY apps/web/package*.json ./apps/web/
 COPY services/user-service/package*.json ./services/user-service/
