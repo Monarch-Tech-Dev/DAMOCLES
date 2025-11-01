@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -170,8 +170,42 @@ model Violation {
 
   gdprRequest     GdprRequest? @relation(fields: [gdprRequestId], references: [id])
   creditor        Creditor     @relation(fields: [creditorId], references: [id])
+  reviews         ViolationReview[]
 
   @@map("violations")
+}
+
+model ViolationReview {
+  id                String   @id @default(cuid())
+  violationId       String   @map("violation_id")
+  reviewerId        String?  @map("reviewer_id") // Admin/expert who reviewed
+  reviewerEmail     String?  @map("reviewer_email")
+  reviewType        String   @map("review_type") // 'human_validation', 'user_feedback', 'expert_audit'
+
+  // Review outcome
+  isCorrect         Boolean  @map("is_correct") // Is this a true positive?
+  shouldBeDetected  Boolean  @default(true) @map("should_be_detected") // Should algo have detected this?
+  correctType       String?  @map("correct_type") // If type is wrong, what should it be?
+  correctSeverity   String?  @map("correct_severity") // If severity is wrong, what should it be?
+
+  // Feedback details
+  feedback          String?  // Human explanation
+  confidenceRating  Float?   @map("confidence_rating") // Reviewer's confidence (0-1)
+  improvementSuggestion String? @map("improvement_suggestion") // How to improve detection
+
+  // Training data flag
+  useForTraining    Boolean  @default(true) @map("use_for_training") // Include in future training
+
+  // Metadata
+  reviewedAt        DateTime @default(now()) @map("reviewed_at")
+  reviewDuration    Int?     @map("review_duration") // Seconds spent reviewing
+
+  violation         Violation @relation(fields: [violationId], references: [id], onDelete: Cascade)
+
+  @@index([violationId])
+  @@index([reviewType])
+  @@index([isCorrect])
+  @@map("violation_reviews")
 }
 
 model Settlement {
@@ -419,11 +453,22 @@ model Invoice {
   id                  String    @id @default(cuid())
   userId              String    @map("user_id")
   caseId              String    @map("case_id") // Debt ID
+  regionalConfigId    String?   @map("regional_config_id") // Regional fee configuration
+
+  // Amounts
   recoveryAmount      Float     @map("recovery_amount")
-  platformFee         Float     @map("platform_fee") // 25% of recovery
-  vatAmount           Float     @map("vat_amount") // 25% VAT on platform fee
+  platformFee         Float     @map("platform_fee") // Calculated from regional config
+  platformFeePercent  Float     @default(0.25) @map("platform_fee_percent") // Percentage used
+  vatAmount           Float     @map("vat_amount") // Calculated from regional VAT rate
+  vatRate             Float     @default(0.25) @map("vat_rate") // VAT rate used
   processingFee       Float     @map("processing_fee") // Payment processing fee
   totalDue            Float     @map("total_due") // platformFee + vat + processing
+
+  // Currency
+  currency            String    @default("NOK") // ISO 4217
+  exchangeRate        Float?    @map("exchange_rate") // If converted from another currency
+
+  // Status
   status              String    @default("pending") // 'pending', 'paid', 'overdue', 'cancelled'
   description         String?
   dueDate             DateTime  @map("due_date")
@@ -435,8 +480,10 @@ model Invoice {
 
   user                User      @relation(fields: [userId], references: [id])
   debt                Debt      @relation(fields: [caseId], references: [id])
+  regionalConfig      RegionalConfig? @relation(fields: [regionalConfigId], references: [id])
   payments            Payment[]
 
+  @@index([regionalConfigId])
   @@map("invoices")
 }
 
@@ -459,6 +506,104 @@ model Payment {
   user                User      @relation(fields: [userId], references: [id])
 
   @@map("payments")
+}
+
+// ==============================================================================
+// REGIONAL CONFIGURATION MODELS (Multi-Country Expansion)
+// ==============================================================================
+
+model RegionalConfig {
+  id                    String   @id @default(cuid())
+  countryCode           String   @unique @map("country_code") // ISO 3166-1 alpha-2 (NO, SE, DK, FI, DE, etc.)
+  countryName           String   @map("country_name") // "Norway", "Sweden", etc.
+  currency              String   @default("EUR") // ISO 4217 (NOK, SEK, DKK, EUR, etc.)
+  language              String   @default("en") // ISO 639-1 (no, sv, da, fi, en, de, etc.)
+  timezone              String   @default("UTC") // IANA timezone (Europe/Oslo, Europe/Stockholm, etc.)
+
+  // Platform Fee Configuration
+  platformFeePercentage Float    @default(0.25) @map("platform_fee_percentage") // Default 25%
+  minRecoveryAmount     Float    @default(100) @map("min_recovery_amount") // Minimum amount to process
+  maxRecoveryAmount     Float?   @map("max_recovery_amount") // Optional cap
+
+  // VAT/Tax Configuration
+  vatRate               Float    @default(0.25) @map("vat_rate") // Default 25% (Norway/Sweden/Denmark)
+  vatRegistrationNumber String?  @map("vat_registration_number") // Company VAT ID for this country
+  includeTaxInPrice     Boolean  @default(false) @map("include_tax_in_price") // Price display preference
+
+  // Payment Methods
+  enabledPaymentMethods String   @default("stripe,bank_transfer") @map("enabled_payment_methods") // CSV: stripe,vipps,swish,mobilepay,bank_transfer
+  defaultPaymentMethod  String   @default("stripe") @map("default_payment_method")
+
+  // Legal & Compliance
+  legalEntityName       String?  @map("legal_entity_name") // Company name in this country
+  legalEntityAddress    String?  @map("legal_entity_address")
+  supportEmail          String?  @map("support_email") // Country-specific support email
+  privacyPolicyUrl      String?  @map("privacy_policy_url") // Localized privacy policy
+  termsOfServiceUrl     String?  @map("terms_of_service_url") // Localized terms
+
+  // Feature Flags
+  isActive              Boolean  @default(true) @map("is_active") // Enable/disable country
+  allowNewRegistrations Boolean  @default(true) @map("allow_new_registrations")
+  maintenanceMode       Boolean  @default(false) @map("maintenance_mode")
+
+  // Metadata
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  invoices              Invoice[]
+  feeCustomizations     FeeCustomization[]
+
+  @@index([countryCode])
+  @@index([isActive])
+  @@map("regional_configs")
+}
+
+model FeeCustomization {
+  id                    String   @id @default(cuid())
+  regionalConfigId      String   @map("regional_config_id")
+  name                  String   // "premium_user", "high_value_case", "early_adopter", etc.
+  description           String?
+
+  // Fee Adjustments
+  feePercentageOverride Float?   @map("fee_percentage_override") // Override default platform fee
+  feeDiscount           Float?   @default(0) @map("fee_discount") // Percentage discount (0.1 = 10% off)
+  fixedFeeAmount        Float?   @map("fixed_fee_amount") // Fixed fee instead of percentage
+  minAmount             Float?   @map("min_amount") // Minimum fee cap
+  maxAmount             Float?   @map("max_amount") // Maximum fee cap
+
+  // Conditions
+  applicableToUserTiers String?  @map("applicable_to_user_tiers") // CSV: "Gold Shield,Platinum Shield"
+  minRecoveryAmount     Float?   @map("min_recovery_amount") // Only applies if recovery >= this
+  maxRecoveryAmount     Float?   @map("max_recovery_amount") // Only applies if recovery <= this
+  validFrom             DateTime? @map("valid_from")
+  validTo               DateTime? @map("valid_to")
+
+  // Metadata
+  isActive              Boolean  @default(true) @map("is_active")
+  priority              Int      @default(0) // Higher priority rules applied first
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  regionalConfig        RegionalConfig @relation(fields: [regionalConfigId], references: [id])
+
+  @@index([regionalConfigId])
+  @@index([isActive])
+  @@map("fee_customizations")
+}
+
+model CurrencyExchangeRate {
+  id                String   @id @default(cuid())
+  baseCurrency      String   @map("base_currency") // ISO 4217 (EUR)
+  targetCurrency    String   @map("target_currency") // ISO 4217 (NOK, SEK, etc.)
+  rate              Float    // Exchange rate (1 EUR = X NOK)
+  source            String   @default("ecb") // "ecb", "openexchangerates", "manual"
+  lastUpdated       DateTime @default(now()) @map("last_updated")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@unique([baseCurrency, targetCurrency])
+  @@index([baseCurrency])
+  @@index([targetCurrency])
+  @@map("currency_exchange_rates")
 }
 
 // ==============================================================================
