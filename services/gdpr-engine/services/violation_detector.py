@@ -45,11 +45,7 @@ class ViolationDetector:
             violations.extend(self._analyze_inkasso_document(content))
         elif document_type == "gdpr_response":
             violations.extend(self._analyze_gdpr_response(content))
-        
-        # Add mock violations if no patterns detected (for demo purposes)
-        if not violations:
-            violations = self._generate_mock_violations(document_type)
-        
+
         print(f"📊 Analyzed {document_type} document, found {len(violations)} violations")
         
         return violations
@@ -255,21 +251,3 @@ class ViolationDetector:
             score -= 0.2
 
         return min(1.0, max(0.0, score / total_categories))
-    
-    def _generate_mock_violations(self, document_type: str) -> List[Dict[str, Any]]:
-        """Generate mock violations for demonstration"""
-        mock_violations = [
-            {
-                "id": str(uuid.uuid4()),
-                "type": "data_retention_violation",
-                "severity": "high",
-                "confidence": 0.85,
-                "evidence": f"Analysis of {document_type} suggests data retention issues",
-                "legal_reference": "GDPR Article 5(1)(e)",
-                "estimated_damage": 300.0,
-                "description": "Potential violation of data minimization principle",
-                "created_at": datetime.now().isoformat()
-            }
-        ]
-        
-        return mock_violations
