@@ -84,10 +84,9 @@ export default function SettingsPage() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? window.location.origin
-          : 'http://localhost:3001');
+      const apiUrl = typeof window !== 'undefined'
+        ? window.location.origin
+        : (process.env.NEXT_PUBLIC_API_URL || '');
 
       const response = await fetch(`${apiUrl}/api/users/change-password`, {
         method: 'POST',
@@ -121,10 +120,9 @@ export default function SettingsPage() {
     setMessage(null)
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? window.location.origin
-          : 'http://localhost:3001');
+      const apiUrl = typeof window !== 'undefined'
+        ? window.location.origin
+        : (process.env.NEXT_PUBLIC_API_URL || '');
 
       const response = await fetch(`${apiUrl}/api/users/export-data`, {
         headers: {
@@ -158,10 +156,9 @@ export default function SettingsPage() {
     setMessage(null)
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? window.location.origin
-          : 'http://localhost:3001');
+      const apiUrl = typeof window !== 'undefined'
+        ? window.location.origin
+        : (process.env.NEXT_PUBLIC_API_URL || '');
 
       const response = await fetch(`${apiUrl}/api/users/me`, {
         method: 'DELETE',

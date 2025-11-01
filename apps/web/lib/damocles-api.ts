@@ -13,18 +13,14 @@ export interface APIError {
 
 export class DamoclesAPIClient {
   private getBaseUrl(localPort: number): string {
-    // Use environment variable if available
-    if (process.env.NEXT_PUBLIC_API_URL) {
-      return process.env.NEXT_PUBLIC_API_URL.replace(':3001', `:${localPort}`);
-    }
-
-    // In production (non-localhost), assume services are proxied through main domain
-    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    // In browser, always use window.location.origin for all services
+    // (all services are proxied through nginx in production)
+    if (typeof window !== 'undefined') {
       return window.location.origin;
     }
 
-    // Development fallback
-    return `http://localhost:${localPort}`;
+    // Server-side: use environment variable or default to localhost for development
+    return process.env.NEXT_PUBLIC_API_URL || `http://localhost:${localPort}`;
   }
 
   private baseUrls = {
