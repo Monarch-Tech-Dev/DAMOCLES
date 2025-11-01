@@ -12,7 +12,7 @@ CMD ["npm", "run", "dev"]
 
 # Builder stage for production
 FROM base AS builder
-RUN npm install --omit=dev
+RUN npm install
 COPY . .
 RUN npm run build
 
