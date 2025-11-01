@@ -61,10 +61,10 @@ export default function AddDebtPage() {
 
   // Set API URL on client side to avoid hydration mismatch
   useEffect(() => {
-    const url = process.env.NEXT_PUBLIC_API_URL ||
-      (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-        ? window.location.origin
-        : 'http://localhost:3001');
+    // Always use window.location.origin in browser (works for both dev and prod)
+    const url = typeof window !== 'undefined'
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_API_URL || '');
     console.log('[DEBUG] Add Debt - Environment:', {
       NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
       hostname: typeof window !== 'undefined' ? window.location.hostname : 'unknown',
