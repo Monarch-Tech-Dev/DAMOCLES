@@ -21,6 +21,7 @@ COPY apps/web/package*.json ./apps/web/
 COPY services/user-service/package*.json ./services/user-service/
 COPY services/user-service/prisma ./services/user-service/prisma
 RUN npm install
+RUN cd services/user-service && npx prisma generate
 COPY apps/web ./apps/web
 WORKDIR /app/apps/web
 RUN npm run build
