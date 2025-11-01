@@ -5,8 +5,12 @@ import rateLimit from '@fastify/rate-limit';
 import multipart from '@fastify/multipart';
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
+import { initializeSentry } from './sentry';
 
 dotenv.config();
+
+// Initialize Sentry as early as possible
+initializeSentry();
 
 const prisma = new PrismaClient();
 
@@ -54,6 +58,7 @@ import { documentRoutes } from './routes/documents';
 import { emailRoutes } from './routes/email';
 import { eventRoutes } from './routes/events';
 import { internalRoutes } from './routes/internal';
+import violationRoutes from './routes/violations';
 
 fastify.register(authRoutes, { prefix: '/api/auth' });
 fastify.register(userRoutes, { prefix: '/api/users' });
@@ -62,6 +67,7 @@ fastify.register(creditorRoutes, { prefix: '/api/creditors' });
 fastify.register(documentRoutes, { prefix: '/api/documents' });
 fastify.register(emailRoutes, { prefix: '/api/email' });
 fastify.register(internalRoutes, { prefix: '/api/internal' });
+fastify.register(violationRoutes);
 // fastify.register(eventRoutes, { prefix: '/api/events' }); // TODO: Fix TypeScript errors and re-enable
 
 // Error handling

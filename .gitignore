@@ -428,3 +428,26 @@ DEVELOPMENT_STATUS*.md
 COMING-SOON-README.md
 LANGUAGE_AUDIT_SUMMARY.md
 PORT_ASSIGNMENTS.md
+
+# Infrastructure and Scaling Guides (INTERNAL ONLY - Built during sessions)
+docs/DATABASE_SCALING_GUIDE.md
+docs/REDIS_CLUSTERING_GUIDE.md
+docs/REGIONAL_EXPANSION_GUIDE.md
+docs/BUILD_SESSION_SUMMARY.md
+docs/INTERNAL_DOCS_INVENTORY.md
+BUILD_SESSION_SUMMARY.md
+**/SCALING_*.md
+**/CLUSTERING_*.md
+**/EXPANSION_*.md
+**/INTERNAL_*.md
+**/BUILD_SESSION_*.md
+
+# Encrypted credentials (NEVER COMMIT)
+pod.txt
+pod.txt.gpg
+
+# Internal security audit reports
+SECURITY_AUDIT_REPORT_*.md
+
+# Internal test directories
+/tests/

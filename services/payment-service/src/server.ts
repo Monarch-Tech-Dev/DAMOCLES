@@ -6,9 +6,14 @@ import { PaymentService } from './PaymentService';
 import { z } from 'zod';
 import dotenv from 'dotenv';
 import path from 'path';
+import { authenticateUser, authenticateAdmin } from './middleware/auth';
+import { initializeSentry } from './sentry';
 
 // Explicitly load .env from payment-service directory
 dotenv.config({ path: path.join(__dirname, '../.env') });
+
+// Initialize Sentry as early as possible
+initializeSentry();
 
 const fastify = Fastify({
   logger: {
@@ -218,9 +223,10 @@ fastify.get('/api/user/:userId/invoices/pending', async (request, reply) => {
 /**
  * Get revenue statistics (admin only)
  */
-fastify.get('/api/admin/revenue-stats', async (request, reply) => {
+fastify.get('/api/admin/revenue-stats', {
+  preHandler: [authenticateUser, authenticateAdmin]
+}, async (request, reply) => {
   try {
-    // TODO: Add admin authentication middleware
     const stats = await paymentService.getRevenueStats();
 
     return {
@@ -346,9 +352,11 @@ fastify.get('/api/health', async (request, reply) => {
 });
 
 /**
- * Metrics endpoint for monitoring
+ * Metrics endpoint for monitoring (admin only)
  */
-fastify.get('/api/metrics', async (request, reply) => {
+fastify.get('/api/metrics', {
+  preHandler: [authenticateUser, authenticateAdmin]
+}, async (request, reply) => {
   try {
     const stats = await paymentService.getRevenueStats();
 
