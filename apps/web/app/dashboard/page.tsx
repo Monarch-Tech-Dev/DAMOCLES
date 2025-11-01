@@ -76,7 +76,7 @@ export default function DashboardPage() {
 
       // Calculate progress state from real data
       const state: UserProgressState = {
-        profileComplete: !!(profile.streetAddress && profile.dateOfBirth),
+        profileComplete: !!profile.gdprProfileComplete,
         debtCount: debts.length,
         gdprRequestsSent: debts.filter((d: any) => d.gdprRequestSent).length,
         responsesReceived: debts.filter((d: any) => d.responseReceived).length,
