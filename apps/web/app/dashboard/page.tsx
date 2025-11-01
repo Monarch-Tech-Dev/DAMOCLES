@@ -74,6 +74,16 @@ export default function DashboardPage() {
       const profileData = await profileResponse.json();
       const profile = profileData.user || {};
 
+      // DEBUG: Log profile data
+      console.log('[Dashboard] Profile data:', {
+        gdprProfileComplete: profile.gdprProfileComplete,
+        streetAddress: profile.streetAddress,
+        dateOfBirth: profile.dateOfBirth,
+        name: profile.name,
+        postalCode: profile.postalCode,
+        city: profile.city
+      });
+
       // Calculate progress state from real data
       const state: UserProgressState = {
         profileComplete: !!profile.gdprProfileComplete,
@@ -91,6 +101,12 @@ export default function DashboardPage() {
         swordTokenBalance: profile.tokenBalance || 0,
         shieldTier: profile.shieldTier || 'Bronze Shield',
       };
+
+      console.log('[Dashboard] Calculated progress state:', {
+        profileComplete: state.profileComplete,
+        debtCount: state.debtCount,
+        gdprRequestsSent: state.gdprRequestsSent
+      });
 
       setProgressState(state);
 
