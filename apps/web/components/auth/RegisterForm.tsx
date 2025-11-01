@@ -36,11 +36,10 @@ export default function RegisterForm() {
     }
 
     try {
-      // Use environment variable or fallback to relative URL in production
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? window.location.origin
-          : 'http://localhost:3001');
+      // Always use window.location.origin in browser (works for both dev and prod)
+      const apiUrl = typeof window !== 'undefined'
+        ? window.location.origin
+        : (process.env.NEXT_PUBLIC_API_URL || '');
 
       const response = await fetch(`${apiUrl}/api/auth/register-email`, {
         method: 'POST',

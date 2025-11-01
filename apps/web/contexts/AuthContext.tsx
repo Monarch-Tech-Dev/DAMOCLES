@@ -88,10 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setError(null);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-        (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-          ? window.location.origin
-          : 'http://localhost:3001');
+      // Always use window.location.origin in browser (works for both dev and prod)
+      const apiUrl = typeof window !== 'undefined'
+        ? window.location.origin
+        : (process.env.NEXT_PUBLIC_API_URL || '');
 
       const response = await fetch(`${apiUrl}/api/auth/login-email`, {
         method: 'POST',
