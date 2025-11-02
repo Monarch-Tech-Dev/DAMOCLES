@@ -119,4 +119,38 @@ export async function internalRoutes(fastify: FastifyInstance) {
 
     return reply.send({ request: lastRequest });
   });
+
+  // Get all pending GDPR requests (internal service-to-service)
+  // Used by escalation scheduler to find requests requiring follow-up
+  fastify.get('/gdpr-requests/pending', async (request: FastifyRequest, reply: FastifyReply) => {
+    const pendingRequests = await prisma.gdprRequest.findMany({
+      where: {
+        status: {
+          in: ['sent', 'pending', 'draft']
+        },
+        sentAt: {
+          not: null
+        },
+        responseReceivedAt: null
+      },
+      orderBy: {
+        sentAt: 'asc'
+      },
+      select: {
+        id: true,
+        userId: true,
+        creditorId: true,
+        referenceId: true,
+        status: true,
+        createdAt: true,
+        sentAt: true,
+        responseDue: true
+      }
+    });
+
+    return reply.send({
+      requests: pendingRequests,
+      count: pendingRequests.length
+    });
+  });
 }
