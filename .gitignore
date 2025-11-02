@@ -451,3 +451,6 @@ SECURITY_AUDIT_REPORT_*.md
 
 # Internal test directories
 /tests/
+
+# Internal documentation with sensitive information
+docs/internal/
