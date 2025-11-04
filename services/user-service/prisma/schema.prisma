@@ -40,6 +40,7 @@ model User {
   debts                 Debt[]
   gdprRequests          GdprRequest[]
   settlements           Settlement[]
+  settlementPayments    SettlementPayment[]
   tokenTransactions     TokenTransaction[]
   pdiProfile            PDIProfile?
   authorizations        UserAuthorization[]
@@ -90,6 +91,7 @@ model Debt {
   user             User     @relation(fields: [userId], references: [id])
   creditor         Creditor @relation(fields: [creditorId], references: [id])
   settlements      Settlement[]
+  settlementPayments SettlementPayment[]
   invoices         Invoice[]
   documents        Document[]
 
@@ -226,6 +228,50 @@ model Settlement {
   debt                  Debt      @relation(fields: [debtId], references: [id])
 
   @@map("settlements")
+}
+
+model SettlementPayment {
+  id                      String    @id @default(cuid())
+  userId                  String    @map("user_id")
+  debtId                  String    @map("debt_id")
+  creditorId              String    @map("creditor_id")
+  creditorName            String    @map("creditor_name")
+
+  // Payment amounts
+  settlementAmount        Float     @map("settlement_amount")  // Amount going to creditor
+  platformFee             Float     @map("platform_fee")       // 20% platform fee
+  totalAmount             Float     @map("total_amount")       // Total user pays (settlement + fee)
+
+  // Payment status
+  status                  String    @default("pending")        // 'pending', 'escrowed', 'completed', 'refunded', 'failed'
+  escrowStatus            String    @default("pending_payment") @map("escrow_status") // 'pending_payment', 'funds_held', 'funds_released', 'refunded'
+
+  // Stripe payment details
+  stripePaymentIntentId   String?   @unique @map("stripe_payment_intent_id")
+  paymentMethod           String?   @map("payment_method")     // 'stripe', 'vipps'
+
+  // Escrow lifecycle timestamps
+  createdAt               DateTime  @default(now()) @map("created_at")
+  paidAt                  DateTime? @map("paid_at")            // When user paid
+  expiresAt               DateTime? @map("expires_at")         // Escrow expiration (7 days)
+  releasedAt              DateTime? @map("released_at")        // When funds released to creditor
+  refundedAt              DateTime? @map("refunded_at")        // When refunded to user
+
+  // Confirmation & metadata
+  confirmationDetails     String?   @map("confirmation_details")
+  refundReason            String?   @map("refund_reason")
+  metadata                Json?                                // Additional data
+
+  // Relations
+  user                    User      @relation(fields: [userId], references: [id])
+  debt                    Debt      @relation(fields: [debtId], references: [id])
+
+  @@index([userId])
+  @@index([debtId])
+  @@index([creditorId])
+  @@index([status])
+  @@index([escrowStatus])
+  @@map("settlement_payments")
 }
 
 model TokenTransaction {
