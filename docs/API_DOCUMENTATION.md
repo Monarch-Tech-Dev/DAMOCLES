@@ -1,6 +1,8 @@
 # DAMOCLES API Documentation 🔧
 
 > **Version:** 2.0.0 | **Status:** Production Ready | **Updated:** January 2025
+>
+> 🔒 **Security Notice:** This documentation covers public-facing APIs only. Internal and partner APIs (Monitoring, Creditor Portal) are documented separately in `docs/internal/INTERNAL_API_DOCUMENTATION.md` for authorized personnel.
 
 ## 🎯 **Overview**
 
@@ -2172,142 +2174,39 @@ View all violations with dispute options.
 
 ---
 
-## 📊 **Monitoring & Health API** (`/monitoring`)
+## 🔒 **Internal & Partner APIs**
 
-Production monitoring for system health, performance, and alerting.
+The following APIs contain sensitive implementation details and are documented separately for internal/partner use only:
 
-### 🏥 **System Health**
+### **Monitoring & Health API** (`/monitoring`)
+System health monitoring, performance metrics, and alerting endpoints.
 
-#### `GET /monitoring/health`
-Get comprehensive system health status.
+**Access:** Internal DevOps team only  
+**Documentation:** See `docs/internal/INTERNAL_API_DOCUMENTATION.md` (internal only)
 
-**Response:**
-```json
-{
-  "success": true,
-  "status": "healthy",
-  "timestamp": "2025-01-04T20:00:00Z",
-  "system_resources": {
-    "status": "healthy",
-    "cpu_percent": 45.2,
-    "memory_percent": 62.8,
-    "memory_available_gb": 12.5,
-    "disk_percent": 58.3,
-    "disk_free_gb": 156.7,
-    "alerts": []
-  },
-  "services": {
-    "user_service": {
-      "status": "healthy",
-      "response_time_ms": 125,
-      "service_data": {"status": "operational"}
-    },
-    "payment_service": {
-      "status": "healthy",
-      "response_time_ms": 98,
-      "service_data": {"status": "operational"}
-    },
-    "gdpr_engine": {
-      "status": "healthy",
-      "response_time_ms": 156,
-      "service_data": {"status": "operational"}
-    }
-  },
-  "database": {
-    "status": "healthy",
-    "response_time_ms": 12.5,
-    "connection_pool": {
-      "active": 5,
-      "idle": 10,
-      "max": 20
-    }
-  },
-  "external_services": {
-    "stripe": {
-      "status": "healthy"
-    },
-    "vipps": {
-      "status": "assumed_healthy",
-      "note": "OAuth check not implemented"
-    },
-    "blockfrost": {
-      "status": "healthy",
-      "network": "mainnet"
-    }
-  },
-  "metrics": {
-    "total_requests": 15847,
-    "total_errors": 23,
-    "error_rate_percent": 0.15,
-    "response_times_ms": {
-      "average": 143.5,
-      "min": 45.2,
-      "max": 892.1
-    },
-    "last_health_check": "2025-01-04T20:00:00Z"
-  },
-  "recent_alerts": []
-}
-```
+**Available Endpoints:**
+- `GET /monitoring/health` - System health status
+- `GET /monitoring/metrics` - Performance metrics
+- `GET /monitoring/alerts` - System alerts
 
-**Status Values:**
-- `healthy` - All systems operational
-- `degraded` - Some non-critical issues detected
-- `unhealthy` - Critical systems down
+**Security Note:** These endpoints reveal system architecture and should be IP-restricted in production.
 
-#### `GET /monitoring/metrics`
-Get performance metrics.
+---
 
-**Response:**
-```json
-{
-  "success": true,
-  "metrics": {
-    "total_requests": 15847,
-    "total_errors": 23,
-    "error_rate_percent": 0.15,
-    "response_times_ms": {
-      "average": 143.5,
-      "min": 45.2,
-      "max": 892.1
-    },
-    "last_health_check": "2025-01-04T20:00:00Z"
-  }
-}
-```
+### **Creditor Portal API** (`/creditor-portal`)
+Partner API for creditors to manage GDPR responses, settlements, and compliance improvements.
 
-#### `GET /monitoring/alerts`
-Get recent system alerts.
+**Access:** Authorized creditor partners only  
+**Documentation:** See `docs/internal/INTERNAL_API_DOCUMENTATION.md` (internal only)
 
-**Query Parameters:**
-- `limit` - Number of alerts to return (default: 50)
+**Available Endpoints:**
+- `GET /creditor-portal/dashboard/{creditor_id}` - Compliance dashboard
+- `POST /creditor-portal/gdpr-response/{gdpr_request_id}` - Submit GDPR response
+- `POST /creditor-portal/settlement-response/{settlement_id}` - Settlement negotiation
+- `GET /creditor-portal/violations/{creditor_id}` - View violations
+- `POST /creditor-portal/improvement-plan/{creditor_id}` - Generate improvement plan
 
-**Response:**
-```json
-{
-  "success": true,
-  "alerts": [
-    {
-      "type": "high_cpu",
-      "message": "CPU usage at 85%",
-      "severity": "warning",
-      "timestamp": "2025-01-04T19:30:00Z"
-    },
-    {
-      "type": "payment_service_slow",
-      "message": "payment_service response time: 1250ms",
-      "severity": "warning",
-      "timestamp": "2025-01-04T19:25:00Z"
-    }
-  ],
-  "total_alerts": 2
-}
-```
-
-**Alert Severities:**
-- `critical` - Immediate action required
-- `warning` - Should be addressed soon
-- `info` - Informational only
+**Security Note:** Contains proprietary business logic and negotiation algorithms.
 
 ---
 
