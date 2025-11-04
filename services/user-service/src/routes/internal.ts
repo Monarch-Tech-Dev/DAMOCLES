@@ -153,4 +153,77 @@ export async function internalRoutes(fastify: FastifyInstance) {
       count: pendingRequests.length
     });
   });
+
+  // Get debt by ID (internal service-to-service)
+  // Used by settlement service to fetch debt details
+  fastify.get('/debts/:debtId', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { debtId } = request.params as { debtId: string };
+
+    const debt = await prisma.debt.findUnique({
+      where: { id: debtId },
+      select: {
+        id: true,
+        userId: true,
+        creditorId: true,
+        amount: true,
+        originalAmount: true,
+        reference: true,
+        description: true,
+        dueDate: true,
+        status: true,
+        accountNumber: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    if (!debt) {
+      return reply.status(404).send({ error: 'Debt not found' });
+    }
+
+    return reply.send({ debt });
+  });
+
+  // Get violations for user-creditor pair (internal service-to-service)
+  // Used by settlement service to analyze GDPR violations
+  fastify.get('/violations/user-creditor', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { user_id, creditor_id } = request.query as { user_id: string; creditor_id: string };
+
+    if (!user_id || !creditor_id) {
+      return reply.status(400).send({
+        error: 'Missing required parameters: user_id and creditor_id'
+      });
+    }
+
+    const violations = await prisma.violation.findMany({
+      where: {
+        gdprRequest: {
+          userId: user_id,
+          creditorId: creditor_id
+        }
+      },
+      select: {
+        id: true,
+        type: true,
+        severity: true,
+        status: true,
+        confidence: true,
+        evidence: true,
+        legalReference: true,
+        estimatedDamage: true,
+        description: true,
+        blockchainHash: true,
+        ipfsHash: true,
+        createdAt: true
+      },
+      orderBy: {
+        severity: 'desc'
+      }
+    });
+
+    return reply.send({
+      violations,
+      count: violations.length
+    });
+  });
 }
