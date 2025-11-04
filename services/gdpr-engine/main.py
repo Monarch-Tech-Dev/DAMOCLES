@@ -25,6 +25,7 @@ from models.user import User
 from services.gdpr_engine import GDPREngine
 from services.email_service import EmailService
 from services.violation_detector import ViolationDetector
+from services.settlement_service import SettlementService
 from database import Database
 
 load_dotenv()
@@ -65,6 +66,7 @@ db = Database()
 gdpr_engine = GDPREngine(db)
 email_service = EmailService()
 violation_detector = ViolationDetector()
+settlement_service = SettlementService()
 
 @app.on_event("startup")
 async def startup():
@@ -448,6 +450,95 @@ async def sendgrid_inbound_webhook(
         logger.error(f"Error processing inbound email webhook: {e}")
         # Don't raise exception - we don't want SendGrid to retry
         return {"status": "error", "message": str(e)}
+
+# Analyze settlement opportunity
+@app.post("/settlement/analyze")
+async def analyze_settlement(settlement_request: Dict[str, Any]):
+    """
+    Analyze settlement opportunity for a debt based on GDPR violations.
+
+    Request body:
+    {
+        "debt_id": "string",
+        "user_id": "string",
+        "creditor_id": "string"
+    }
+
+    Returns comprehensive settlement analysis including:
+    - GDPR violation damages
+    - Inkassoloven violations (excessive fees)
+    - Creditor risk score
+    - Settlement leverage
+    - Three settlement offers (conservative, recommended, aggressive)
+    - Settlement proposal template
+    - Negotiation strategy
+    """
+    try:
+        user_id = settlement_request.get("user_id")
+        creditor_id = settlement_request.get("creditor_id")
+        debt_id = settlement_request.get("debt_id")
+
+        if not all([user_id, creditor_id, debt_id]):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing required fields: user_id, creditor_id, debt_id"
+            )
+
+        # Get debt data from database
+        debt = await db.get_debt_by_id(debt_id)
+        if not debt:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Debt not found"
+            )
+
+        # Get creditor data
+        creditor = await db.get_creditor(creditor_id)
+        if not creditor:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Creditor not found"
+            )
+
+        # Get GDPR violations for this creditor
+        violations = await db.get_user_violations_for_creditor(user_id, creditor_id)
+
+        # Prepare data for settlement analysis
+        debt_data = {
+            "amount": float(debt.get("amount", 0)),
+            "originalAmount": float(debt.get("originalAmount", 0)),
+            "creditorName": creditor.get("name", "Unknown"),
+            "reference": debt.get("reference", "N/A")
+        }
+
+        creditor_data = {
+            "totalViolations": creditor.get("totalViolations", 0),
+            "violationScore": float(creditor.get("violationScore", 0)),
+            "type": creditor.get("type", "OTHER")
+        }
+
+        # Perform settlement analysis
+        analysis = await settlement_service.analyze_settlement_opportunity(
+            debt_data=debt_data,
+            violations=violations,
+            creditor_data=creditor_data
+        )
+
+        logger.info(f"💰 Settlement analysis completed for debt {debt_id}")
+        logger.info(f"   Leverage: {analysis['leverage']['leverage_level']}")
+        logger.info(f"   Recommended settlement: {analysis['settlement_offers']['recommended']['settlement_amount']} NOK")
+        logger.info(f"   Reduction: {analysis['settlement_offers']['recommended']['reduction_percentage']}%")
+
+        return analysis
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error analyzing settlement: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to analyze settlement: {str(e)}"
+        )
 
 # Trigger sword protocol
 @app.post("/sword/trigger/{creditor_id}")

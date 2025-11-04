@@ -334,3 +334,71 @@ class Database:
         except Exception as e:
             logging.error(f"Error fetching last GDPR request: {e}")
             return None
+
+    async def get_debt_by_id(self, debt_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch debt details from user-service via HTTP API"""
+        import os
+        import aiohttp
+        import logging
+
+        try:
+            user_service_url = os.getenv('USER_SERVICE_URL', 'http://localhost:3001')
+            service_api_key = os.getenv('SERVICE_API_KEY', 'dev-service-key-12345')
+
+            url = f"{user_service_url}/api/internal/debts/{debt_id}"
+            headers = {'x-service-api-key': service_api_key}
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers) as response:
+                    if response.status == 404:
+                        logging.warning(f"Debt {debt_id} not found")
+                        return None
+
+                    if response.status != 200:
+                        logging.error(f"Error fetching debt {debt_id}: HTTP {response.status}")
+                        return None
+
+                    data = await response.json()
+                    return data.get('debt')
+
+        except Exception as e:
+            logging.error(f"Error fetching debt {debt_id}: {e}")
+            return None
+
+    async def get_user_violations_for_creditor(
+        self,
+        user_id: str,
+        creditor_id: str
+    ) -> List[Dict[str, Any]]:
+        """Fetch all GDPR violations for a specific user-creditor pair"""
+        import os
+        import aiohttp
+        import logging
+
+        try:
+            user_service_url = os.getenv('USER_SERVICE_URL', 'http://localhost:3001')
+            service_api_key = os.getenv('SERVICE_API_KEY', 'dev-service-key-12345')
+
+            url = f"{user_service_url}/api/internal/violations/user-creditor"
+            headers = {'x-service-api-key': service_api_key}
+            params = {
+                'user_id': user_id,
+                'creditor_id': creditor_id
+            }
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers, params=params) as response:
+                    if response.status == 404:
+                        logging.info(f"No violations found for user {user_id} and creditor {creditor_id}")
+                        return []
+
+                    if response.status != 200:
+                        logging.error(f"Error fetching violations: HTTP {response.status}")
+                        return []
+
+                    data = await response.json()
+                    return data.get('violations', [])
+
+        except Exception as e:
+            logging.error(f"Error fetching violations for user {user_id} and creditor {creditor_id}: {e}")
+            return []
