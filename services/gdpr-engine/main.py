@@ -26,6 +26,8 @@ from services.gdpr_engine import GDPREngine
 from services.email_service import EmailService
 from services.violation_detector import ViolationDetector
 from services.settlement_service import SettlementService
+from services.negotiation_engine import NegotiationEngine
+from services.datatilsynet_service import DatatilsynetService
 from database import Database
 
 load_dotenv()
@@ -67,6 +69,8 @@ gdpr_engine = GDPREngine(db)
 email_service = EmailService()
 violation_detector = ViolationDetector()
 settlement_service = SettlementService()
+negotiation_engine = NegotiationEngine()
+datatilsynet_service = DatatilsynetService()
 
 @app.on_event("startup")
 async def startup():
@@ -538,6 +542,189 @@ async def analyze_settlement(settlement_request: Dict[str, Any]):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to analyze settlement: {str(e)}"
+        )
+
+# Evaluate creditor counter-offer
+@app.post("/negotiation/evaluate")
+async def evaluate_counter_offer(negotiation_request: Dict[str, Any]):
+    """
+    Evaluate a creditor's counter-offer and generate negotiation response.
+
+    Request body:
+    {
+        "settlement_id": "string",
+        "counter_offer_amount": float,
+        "original_settlement_analysis": {...},
+        "negotiation_history": [...],
+        "days_since_initial_offer": int
+    }
+
+    Returns:
+    - Evaluation of counter-offer quality
+    - Recommended action (ACCEPT / COUNTER / FINAL_OFFER / ESCALATE)
+    - Response offer with negotiation strategy
+    - Formal response letter
+    """
+    try:
+        counter_offer_amount = float(negotiation_request.get("counter_offer_amount"))
+        original_analysis = negotiation_request.get("original_settlement_analysis")
+        negotiation_history = negotiation_request.get("negotiation_history", [])
+        days_since_initial = int(negotiation_request.get("days_since_initial_offer", 0))
+
+        if not original_analysis:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing required field: original_settlement_analysis"
+            )
+
+        # Evaluate counter-offer
+        evaluation = await negotiation_engine.evaluate_counter_offer(
+            counter_offer_amount=counter_offer_amount,
+            original_settlement_analysis=original_analysis,
+            negotiation_history=negotiation_history,
+            days_since_initial_offer=days_since_initial
+        )
+
+        # Create formal response
+        debt_data = {
+            "reference": negotiation_request.get("debt_reference", "N/A"),
+            "amount": original_analysis["settlement_offers"]["comparison"]["original_debt"]
+        }
+
+        response_package = await negotiation_engine.create_negotiation_response(
+            evaluation=evaluation,
+            settlement_analysis=original_analysis,
+            debt_data=debt_data
+        )
+
+        logger.info(f"💼 Negotiation evaluation complete")
+        logger.info(f"   Counter-offer: {counter_offer_amount:.2f} NOK")
+        logger.info(f"   Recommendation: {evaluation['recommended_action']}")
+        if evaluation.get('response_offer'):
+            logger.info(f"   Our counter: {evaluation['response_offer']['amount']:.2f} NOK")
+
+        return {
+            "evaluation": evaluation,
+            "response": response_package,
+            "analysis_timestamp": datetime.now().isoformat()
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error evaluating counter-offer: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to evaluate counter-offer: {str(e)}"
+        )
+
+# Generate Datatilsynet complaint
+@app.post("/datatilsynet/generate-complaint")
+async def generate_datatilsynet_complaint(complaint_request: Dict[str, Any]):
+    """
+    Generate formal complaint to Datatilsynet (Norwegian DPA) for GDPR violations.
+
+    Request body:
+    {
+        "user_id": "string",
+        "creditor_id": "string",
+        "gdpr_request_id": "string"
+    }
+
+    Returns comprehensive complaint package including:
+    - Formal complaint letter in Norwegian
+    - Evidence package with all violations
+    - Legal analysis and precedent references
+    - Estimated administrative fine (GDPR Art. 83)
+    - Recommended enforcement actions
+    """
+    try:
+        user_id = complaint_request.get("user_id")
+        creditor_id = complaint_request.get("creditor_id")
+        gdpr_request_id = complaint_request.get("gdpr_request_id")
+
+        if not all([user_id, creditor_id, gdpr_request_id]):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing required fields: user_id, creditor_id, gdpr_request_id"
+            )
+
+        # Get user data
+        user = await db.get_user(user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+
+        # Get creditor data
+        creditor = await db.get_creditor(creditor_id)
+        if not creditor:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Creditor not found"
+            )
+
+        # Get GDPR request
+        gdpr_request = await db.get_gdpr_request(gdpr_request_id)
+        if not gdpr_request:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="GDPR request not found"
+            )
+
+        # Get violations for this request
+        violations = await db.get_violations_for_request(gdpr_request_id)
+
+        # Convert database objects to dicts
+        user_data = {
+            "name": user.get("name", ""),
+            "email": user.get("email", ""),
+            "address": user.get("address", ""),
+            "phone": user.get("phone", "")
+        }
+
+        creditor_data = {
+            "name": creditor.get("name", ""),
+            "org_number": creditor.get("org_number", ""),
+            "email": creditor.get("email", ""),
+            "address": creditor.get("address", ""),
+            "type": creditor.get("type", "OTHER"),
+            "total_violations": creditor.get("totalViolations", 0),
+            "historical_complaints": creditor.get("datatilsynetComplaints", 0)
+        }
+
+        gdpr_request_data = {
+            "id": gdpr_request.get("id"),
+            "reference": gdpr_request.get("reference"),
+            "sent_date": gdpr_request.get("sent_at"),
+            "deadline": gdpr_request.get("response_due"),
+            "status": gdpr_request.get("status"),
+            "tracking_number": gdpr_request.get("tracking_number")
+        }
+
+        # Generate complaint
+        complaint_package = await datatilsynet_service.generate_complaint(
+            user_data=user_data,
+            creditor_data=creditor_data,
+            gdpr_request=gdpr_request_data,
+            violations=violations
+        )
+
+        logger.info(f"📢 Datatilsynet complaint generated: {complaint_package['complaint_reference']}")
+        logger.info(f"   Creditor: {creditor_data['name']}")
+        logger.info(f"   Violations: {len(violations)}")
+        logger.info(f"   Estimated fine: {complaint_package['fine_estimate']['estimated_fine_nok']:,} NOK")
+
+        return complaint_package
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating Datatilsynet complaint: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate Datatilsynet complaint: {str(e)}"
         )
 
 # Trigger sword protocol

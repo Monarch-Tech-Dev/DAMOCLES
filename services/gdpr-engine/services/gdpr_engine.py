@@ -16,6 +16,7 @@ from services.violation_detector import ViolationDetector
 from services.blockchain_client import BlockchainClient
 from services.event_client import EventClient
 from services.template_selector import TemplateSelector
+from services.datatilsynet_service import DatatilsynetService
 from database import Database
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ class GDPREngine:
         self.blockchain_client = BlockchainClient()
         self.event_client = EventClient()
         self.template_selector = TemplateSelector()
+        self.datatilsynet_service = DatatilsynetService()
 
         # Initialize Jinja2 environment
         self.template_env = Environment(
@@ -539,21 +541,69 @@ class GDPREngine:
             await self.trigger_sword_protocol(creditor.id, [violation])
 
     async def _notify_datatilsynet(self, gdpr_request, user, creditor):
-        """Notify Norwegian Data Protection Authority"""
-        await self.email_service.send_datatilsynet_complaint(
-            subject=f"GDPR Violation - No Response from {creditor.name}",
-            creditor_info={
-                "name": creditor.name,
-                "org_number": creditor.organization_number,
-                "email": creditor.privacy_email
-            },
-            request_details={
-                "reference_id": gdpr_request.reference_id,
-                "sent_date": gdpr_request.sent_at,
-                "user_id": user.id,
-                "user_email": user.email
-            }
+        """Notify Norwegian Data Protection Authority with formal complaint"""
+
+        # Get violations for this request
+        violations = await self.db.get_violations_for_request(gdpr_request.id)
+
+        # Prepare data for complaint generation
+        user_data = {
+            "name": user.name if hasattr(user, 'name') else "",
+            "email": user.email,
+            "address": user.address if hasattr(user, 'address') else "",
+            "phone": user.phone if hasattr(user, 'phone') else ""
+        }
+
+        creditor_data = {
+            "name": creditor.name,
+            "org_number": creditor.organization_number if hasattr(creditor, 'organization_number') else "",
+            "email": creditor.privacy_email if hasattr(creditor, 'privacy_email') else creditor.email if hasattr(creditor, 'email') else "",
+            "address": creditor.address if hasattr(creditor, 'address') else "",
+            "type": creditor.type if hasattr(creditor, 'type') else "OTHER",
+            "total_violations": creditor.total_violations if hasattr(creditor, 'total_violations') else 0,
+            "historical_complaints": creditor.datatilsynet_complaints if hasattr(creditor, 'datatilsynet_complaints') else 0
+        }
+
+        gdpr_request_data = {
+            "id": gdpr_request.id,
+            "reference": gdpr_request.reference_id if hasattr(gdpr_request, 'reference_id') else "",
+            "sent_date": gdpr_request.sent_at,
+            "deadline": gdpr_request.response_due,
+            "status": gdpr_request.status,
+            "tracking_number": gdpr_request.tracking_number if hasattr(gdpr_request, 'tracking_number') else ""
+        }
+
+        # Generate formal complaint package
+        complaint_package = await self.datatilsynet_service.generate_complaint(
+            user_data=user_data,
+            creditor_data=creditor_data,
+            gdpr_request=gdpr_request_data,
+            violations=violations if violations else []
         )
+
+        logger.info(f"📢 Generated Datatilsynet complaint: {complaint_package['complaint_reference']}")
+        logger.info(f"   Estimated fine: {complaint_package['fine_estimate']['estimated_fine_nok']:,} NOK")
+
+        # Send formal complaint to Datatilsynet
+        await self.email_service.send_datatilsynet_formal_complaint(
+            subject=f"KLAGE - GDPR-BRUDD - {creditor.name} (Org.nr: {creditor_data['org_number']})",
+            complaint_package=complaint_package,
+            user_email=user.email,
+            creditor_name=creditor.name
+        )
+
+        # Store complaint record in database
+        await self.db.create_datatilsynet_complaint({
+            "gdpr_request_id": gdpr_request.id,
+            "user_id": user.id,
+            "creditor_id": creditor.id,
+            "complaint_reference": complaint_package['complaint_reference'],
+            "estimated_fine": complaint_package['fine_estimate']['estimated_fine_nok'],
+            "status": "submitted",
+            "complaint_letter": complaint_package['complaint_letter'],
+            "evidence_package": complaint_package['evidence_package'],
+            "submitted_at": datetime.now()
+        })
 
     async def _initiate_legal_proceedings(self, gdpr_request, user, creditor):
         """Initiate legal proceedings through forliksrådet (conciliation court)"""
