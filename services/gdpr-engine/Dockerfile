@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download spaCy Norwegian model
-RUN python -m spacy download nb_core_news_lg
+# Download spaCy Norwegian model (optional - will retry at runtime if needed)
+RUN python -m spacy download nb_core_news_lg || echo "SpaCy model download failed, will retry at runtime"
 
 COPY . .
 
