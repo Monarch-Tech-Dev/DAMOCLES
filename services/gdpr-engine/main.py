@@ -28,6 +28,7 @@ from services.violation_detector import ViolationDetector
 from services.settlement_service import SettlementService
 from services.negotiation_engine import NegotiationEngine
 from services.datatilsynet_service import DatatilsynetService
+from services.transparency_service import TransparencyService
 from database import Database
 
 load_dotenv()
@@ -71,6 +72,7 @@ violation_detector = ViolationDetector()
 settlement_service = SettlementService()
 negotiation_engine = NegotiationEngine()
 datatilsynet_service = DatatilsynetService()
+transparency_service = TransparencyService()
 
 @app.on_event("startup")
 async def startup():
@@ -761,15 +763,210 @@ async def trigger_sword_protocol(
             detail="Failed to trigger sword protocol"
         )
 
+# Generate transparency report for creditor
+@app.post("/transparency/creditor/{creditor_id}")
+async def generate_creditor_transparency_report(creditor_id: str):
+    """
+    Generate public transparency report for a creditor.
+
+    Returns:
+    - Compliance grade (A-F)
+    - Reputation score (0-100)
+    - Violation statistics
+    - GDPR response performance
+    - Datatilsynet complaint history
+    - Settlement behavior
+    - Public summary in Norwegian
+    """
+    try:
+        # Get creditor data
+        creditor = await db.get_creditor(creditor_id)
+        if not creditor:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Creditor not found"
+            )
+
+        # Get all related data
+        violations = await db.get_creditor_violations(creditor_id)
+        gdpr_requests = await db.get_creditor_gdpr_requests(creditor_id)
+        datatilsynet_complaints = await db.get_creditor_datatilsynet_complaints(creditor_id)
+        settlements = await db.get_creditor_settlements(creditor_id)
+
+        # Convert to dicts
+        creditor_data = {
+            "name": creditor.get("name", ""),
+            "org_number": creditor.get("org_number", ""),
+            "type": creditor.get("type", "INKASSO"),
+            "email": creditor.get("email", "")
+        }
+
+        # Generate transparency report
+        report = await transparency_service.generate_creditor_report(
+            creditor_data=creditor_data,
+            violations=violations if violations else [],
+            gdpr_requests=gdpr_requests if gdpr_requests else [],
+            datatilsynet_complaints=datatilsynet_complaints if datatilsynet_complaints else [],
+            settlements=settlements if settlements else []
+        )
+
+        logger.info(f"📊 Public transparency report generated for {creditor_data['name']}")
+        logger.info(f"   Grade: {report['compliance_grade']['grade']}")
+        logger.info(f"   Reputation: {report['reputation_score']}/100")
+
+        return report
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating transparency report: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate transparency report: {str(e)}"
+        )
+
+# Get public creditor leaderboard
+@app.get("/transparency/leaderboard")
+async def get_transparency_leaderboard(category: str = "all"):
+    """
+    Get public leaderboard ranking creditors by GDPR compliance.
+
+    Query params:
+    - category: "all", "best", "worst"
+
+    Returns:
+    - Ranked list of creditors
+    - Compliance grades
+    - Reputation scores
+    - Violation counts
+    """
+    try:
+        # Get all creditors
+        all_creditors = await db.get_all_creditors()
+
+        # Generate reports for all creditors
+        creditor_reports = []
+        for creditor in all_creditors:
+            creditor_id = creditor.get("id")
+
+            # Get data for each creditor
+            violations = await db.get_creditor_violations(creditor_id)
+            gdpr_requests = await db.get_creditor_gdpr_requests(creditor_id)
+            datatilsynet_complaints = await db.get_creditor_datatilsynet_complaints(creditor_id)
+            settlements = await db.get_creditor_settlements(creditor_id)
+
+            creditor_data = {
+                "name": creditor.get("name", ""),
+                "org_number": creditor.get("org_number", ""),
+                "type": creditor.get("type", "INKASSO")
+            }
+
+            # Generate report
+            report = await transparency_service.generate_creditor_report(
+                creditor_data=creditor_data,
+                violations=violations if violations else [],
+                gdpr_requests=gdpr_requests if gdpr_requests else [],
+                datatilsynet_complaints=datatilsynet_complaints if datatilsynet_complaints else [],
+                settlements=settlements if settlements else []
+            )
+            creditor_reports.append(report)
+
+        # Generate leaderboard
+        leaderboard = await transparency_service.generate_leaderboard(
+            creditor_reports=creditor_reports,
+            category=category
+        )
+
+        logger.info(f"📊 Public leaderboard generated ({category})")
+        logger.info(f"   Total creditors: {len(creditor_reports)}")
+
+        return leaderboard
+
+    except Exception as e:
+        logger.error(f"Error generating leaderboard: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate leaderboard: {str(e)}"
+        )
+
+# Get industry-wide transparency report
+@app.get("/transparency/industry/{industry}")
+async def get_industry_transparency_report(industry: str = "INKASSO"):
+    """
+    Get industry-wide GDPR compliance report.
+
+    Shows aggregate statistics for entire industry:
+    - Total violations
+    - Average compliance scores
+    - Grade distribution
+    - Worst offenders
+
+    Supported industries: INKASSO, BANK, TELECOM, OTHER
+    """
+    try:
+        # Get all creditors in industry
+        all_creditors = await db.get_creditors_by_industry(industry)
+
+        if not all_creditors or len(all_creditors) == 0:
+            return {
+                "industry": industry,
+                "message": "No data available for this industry",
+                "total_creditors": 0
+            }
+
+        # Generate reports for all creditors in industry
+        creditor_reports = []
+        for creditor in all_creditors:
+            creditor_id = creditor.get("id")
+
+            violations = await db.get_creditor_violations(creditor_id)
+            gdpr_requests = await db.get_creditor_gdpr_requests(creditor_id)
+            datatilsynet_complaints = await db.get_creditor_datatilsynet_complaints(creditor_id)
+            settlements = await db.get_creditor_settlements(creditor_id)
+
+            creditor_data = {
+                "name": creditor.get("name", ""),
+                "org_number": creditor.get("org_number", ""),
+                "type": creditor.get("type", "INKASSO")
+            }
+
+            report = await transparency_service.generate_creditor_report(
+                creditor_data=creditor_data,
+                violations=violations if violations else [],
+                gdpr_requests=gdpr_requests if gdpr_requests else [],
+                datatilsynet_complaints=datatilsynet_complaints if datatilsynet_complaints else [],
+                settlements=settlements if settlements else []
+            )
+            creditor_reports.append(report)
+
+        # Generate industry report
+        industry_report = await transparency_service.generate_industry_report(
+            creditor_reports=creditor_reports,
+            industry=industry
+        )
+
+        logger.info(f"📊 Industry transparency report generated for {industry}")
+        logger.info(f"   Total creditors: {len(creditor_reports)}")
+        logger.info(f"   Avg reputation: {industry_report['aggregate_statistics']['avg_reputation_score']}")
+
+        return industry_report
+
+    except Exception as e:
+        logger.error(f"Error generating industry report: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate industry report: {str(e)}"
+        )
+
 def _get_severity_breakdown(violations: List[Dict]) -> Dict[str, int]:
     """Get breakdown of violations by severity"""
     breakdown = {"critical": 0, "high": 0, "medium": 0, "low": 0}
-    
+
     for violation in violations:
         severity = violation.get("severity", "low")
         if severity in breakdown:
             breakdown[severity] += 1
-    
+
     return breakdown
 
 if __name__ == "__main__":
