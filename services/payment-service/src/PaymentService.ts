@@ -657,4 +657,453 @@ export class PaymentService {
 
     return session.url;
   }
+
+  /**
+   * ==========================================
+   * SETTLEMENT PAYMENT METHODS (ESCROW)
+   * ==========================================
+   *
+   * Settlement payments work differently from recovery fees:
+   * 1. User accepts settlement (e.g., 600 NOK for 6,000 NOK debt)
+   * 2. User pays settlement + 20% platform fee (720 NOK total)
+   * 3. Funds held in escrow pending creditor confirmation
+   * 4. When confirmed: 600 NOK → creditor, 120 NOK → DAMOCLES
+   * 5. If rejected: Full refund to user
+   */
+
+  private readonly SETTLEMENT_FEE_PERCENTAGE = 0.20; // 20% platform fee on settlements
+
+  /**
+   * Calculate settlement payment (settlement amount + 20% platform fee)
+   */
+  calculateSettlementPayment(settlementAmount: number): {
+    settlementAmount: number;
+    platformFee: number;
+    totalPayment: number;
+    creditorReceives: number;
+  } {
+    const platformFee = Math.round(settlementAmount * this.SETTLEMENT_FEE_PERCENTAGE);
+    const totalPayment = settlementAmount + platformFee;
+
+    return {
+      settlementAmount,
+      platformFee,
+      totalPayment,
+      creditorReceives: settlementAmount
+    };
+  }
+
+  /**
+   * Create settlement payment intent (escrow)
+   */
+  async createSettlementPayment(
+    userId: string,
+    debtId: string,
+    settlementAmount: number,
+    creditorId: string,
+    creditorName: string,
+    metadata?: Record<string, any>
+  ): Promise<{
+    success: boolean;
+    paymentId?: string;
+    totalAmount?: number;
+    error?: string;
+  }> {
+    try {
+      const calculation = this.calculateSettlementPayment(settlementAmount);
+
+      // Create payment record in escrow status
+      const settlementPayment = await this.prisma.settlementPayment.create({
+        data: {
+          userId,
+          debtId,
+          creditorId,
+          settlementAmount: calculation.settlementAmount,
+          platformFee: calculation.platformFee,
+          totalAmount: calculation.totalPayment,
+          status: 'pending',
+          escrowStatus: 'pending_payment',
+          creditorName,
+          metadata: metadata || {}
+        }
+      });
+
+      this.logger.info('Settlement payment created (escrow)', {
+        paymentId: settlementPayment.id,
+        userId,
+        debtId,
+        settlementAmount: calculation.settlementAmount,
+        totalPayment: calculation.totalPayment
+      });
+
+      return {
+        success: true,
+        paymentId: settlementPayment.id,
+        totalAmount: calculation.totalPayment
+      };
+
+    } catch (error) {
+      this.logger.error('Failed to create settlement payment', {
+        error: error.message,
+        userId,
+        debtId,
+        settlementAmount
+      });
+
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Process settlement payment via Stripe (funds held in escrow)
+   */
+  async processSettlementPaymentStripe(
+    settlementPaymentId: string,
+    paymentMethodId: string
+  ): Promise<PaymentResult> {
+    try {
+      const settlementPayment = await this.prisma.settlementPayment.findUnique({
+        where: { id: settlementPaymentId },
+        include: {
+          user: true,
+          debt: { include: { creditor: true } }
+        }
+      });
+
+      if (!settlementPayment) {
+        return {
+          success: false,
+          error: 'Settlement payment not found',
+          amount: 0,
+          fees: 0
+        };
+      }
+
+      if (settlementPayment.status !== 'pending') {
+        return {
+          success: false,
+          error: `Settlement payment already ${settlementPayment.status}`,
+          amount: 0,
+          fees: 0
+        };
+      }
+
+      // Create Stripe payment intent with automatic capture disabled (escrow)
+      const paymentIntent = await this.stripe.paymentIntents.create({
+        amount: settlementPayment.totalAmount * 100, // Convert to øre
+        currency: 'nok',
+        payment_method: paymentMethodId,
+        confirm: true,
+        capture_method: 'manual', // Hold funds in escrow
+        return_url: `${process.env.WEB_URL}/settlement/success`,
+        metadata: {
+          settlementPaymentId: settlementPayment.id,
+          userId: settlementPayment.userId,
+          debtId: settlementPayment.debtId,
+          creditorId: settlementPayment.creditorId,
+          type: 'settlement_escrow',
+          settlementAmount: settlementPayment.settlementAmount,
+          platformFee: settlementPayment.platformFee
+        },
+        description: `Settlement Payment - ${settlementPayment.creditorName} (${settlementPayment.settlementAmount} NOK)`,
+        receipt_email: settlementPayment.user.email
+      });
+
+      if (paymentIntent.status === 'requires_capture') {
+        // Funds authorized and held in escrow
+        await this.prisma.settlementPayment.update({
+          where: { id: settlementPaymentId },
+          data: {
+            status: 'escrowed',
+            escrowStatus: 'funds_held',
+            stripePaymentIntentId: paymentIntent.id,
+            paidAt: new Date(),
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days to capture
+          }
+        });
+
+        // Update debt status
+        await this.prisma.debt.update({
+          where: { id: settlementPayment.debtId },
+          data: {
+            status: 'settlement_escrowed'
+          }
+        });
+
+        this.logger.info('Settlement payment escrowed successfully', {
+          paymentIntentId: paymentIntent.id,
+          settlementPaymentId,
+          amount: settlementPayment.totalAmount
+        });
+
+        return {
+          success: true,
+          paymentId: paymentIntent.id,
+          amount: settlementPayment.totalAmount,
+          fees: 0
+        };
+      }
+
+      return {
+        success: false,
+        error: `Payment authorization failed: ${paymentIntent.status}`,
+        amount: settlementPayment.totalAmount,
+        fees: 0
+      };
+
+    } catch (error) {
+      this.logger.error('Settlement payment processing failed', {
+        error: error.message,
+        settlementPaymentId
+      });
+
+      return {
+        success: false,
+        error: error.message,
+        amount: 0,
+        fees: 0
+      };
+    }
+  }
+
+  /**
+   * Release settlement funds to creditor (capture Stripe payment)
+   */
+  async releaseSettlementFunds(
+    settlementPaymentId: string,
+    confirmationDetails?: string
+  ): Promise<{
+    success: boolean;
+    error?: string;
+    amountReleased?: number;
+    platformFeeCollected?: number;
+  }> {
+    try {
+      const settlementPayment = await this.prisma.settlementPayment.findUnique({
+        where: { id: settlementPaymentId }
+      });
+
+      if (!settlementPayment) {
+        return { success: false, error: 'Settlement payment not found' };
+      }
+
+      if (settlementPayment.escrowStatus !== 'funds_held') {
+        return {
+          success: false,
+          error: `Cannot release funds: status is ${settlementPayment.escrowStatus}`
+        };
+      }
+
+      if (!settlementPayment.stripePaymentIntentId) {
+        return {
+          success: false,
+          error: 'No Stripe payment intent found'
+        };
+      }
+
+      // Capture the payment (release from escrow)
+      const paymentIntent = await this.stripe.paymentIntents.capture(
+        settlementPayment.stripePaymentIntentId,
+        {
+          metadata: {
+            released_at: new Date().toISOString(),
+            confirmation_details: confirmationDetails || 'Settlement confirmed by creditor'
+          }
+        }
+      );
+
+      if (paymentIntent.status === 'succeeded') {
+        // Update settlement payment record
+        await this.prisma.settlementPayment.update({
+          where: { id: settlementPaymentId },
+          data: {
+            status: 'completed',
+            escrowStatus: 'funds_released',
+            releasedAt: new Date(),
+            confirmationDetails
+          }
+        });
+
+        // Update debt status
+        await this.prisma.debt.update({
+          where: { id: settlementPayment.debtId },
+          data: {
+            status: 'settled',
+            settledAt: new Date(),
+            settledAmount: settlementPayment.settlementAmount
+          }
+        });
+
+        this.logger.info('Settlement funds released to creditor', {
+          settlementPaymentId,
+          paymentIntentId: paymentIntent.id,
+          creditorReceives: settlementPayment.settlementAmount,
+          platformFeeCollected: settlementPayment.platformFee
+        });
+
+        return {
+          success: true,
+          amountReleased: settlementPayment.settlementAmount,
+          platformFeeCollected: settlementPayment.platformFee
+        };
+      }
+
+      return {
+        success: false,
+        error: `Payment capture failed: ${paymentIntent.status}`
+      };
+
+    } catch (error) {
+      this.logger.error('Failed to release settlement funds', {
+        error: error.message,
+        settlementPaymentId
+      });
+
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Refund settlement payment (if creditor rejects)
+   */
+  async refundSettlementPayment(
+    settlementPaymentId: string,
+    reason: string
+  ): Promise<{
+    success: boolean;
+    error?: string;
+    refundAmount?: number;
+  }> {
+    try {
+      const settlementPayment = await this.prisma.settlementPayment.findUnique({
+        where: { id: settlementPaymentId }
+      });
+
+      if (!settlementPayment) {
+        return { success: false, error: 'Settlement payment not found' };
+      }
+
+      if (settlementPayment.escrowStatus !== 'funds_held') {
+        return {
+          success: false,
+          error: `Cannot refund: funds already ${settlementPayment.escrowStatus}`
+        };
+      }
+
+      if (!settlementPayment.stripePaymentIntentId) {
+        return {
+          success: false,
+          error: 'No Stripe payment intent found'
+        };
+      }
+
+      // Cancel the payment intent (releases authorization without capture)
+      const paymentIntent = await this.stripe.paymentIntents.cancel(
+        settlementPayment.stripePaymentIntentId,
+        {
+          cancellation_reason: 'requested_by_customer'
+        }
+      );
+
+      if (paymentIntent.status === 'canceled') {
+        // Update settlement payment record
+        await this.prisma.settlementPayment.update({
+          where: { id: settlementPaymentId },
+          data: {
+            status: 'refunded',
+            escrowStatus: 'refunded',
+            refundedAt: new Date(),
+            refundReason: reason
+          }
+        });
+
+        // Update debt status
+        await this.prisma.debt.update({
+          where: { id: settlementPayment.debtId },
+          data: {
+            status: 'settlement_rejected'
+          }
+        });
+
+        this.logger.info('Settlement payment refunded', {
+          settlementPaymentId,
+          paymentIntentId: paymentIntent.id,
+          refundAmount: settlementPayment.totalAmount,
+          reason
+        });
+
+        return {
+          success: true,
+          refundAmount: settlementPayment.totalAmount
+        };
+      }
+
+      return {
+        success: false,
+        error: `Payment cancellation failed: ${paymentIntent.status}`
+      };
+
+    } catch (error) {
+      this.logger.error('Failed to refund settlement payment', {
+        error: error.message,
+        settlementPaymentId
+      });
+
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Get settlement payment details
+   */
+  async getSettlementPayment(settlementPaymentId: string) {
+    return this.prisma.settlementPayment.findUnique({
+      where: { id: settlementPaymentId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true
+          }
+        },
+        debt: {
+          select: {
+            id: true,
+            amount: true,
+            originalAmount: true,
+            creditorName: true,
+            status: true
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Get user's settlement payment history
+   */
+  async getUserSettlementPayments(userId: string) {
+    return this.prisma.settlementPayment.findMany({
+      where: { userId },
+      include: {
+        debt: {
+          select: {
+            creditorName: true,
+            amount: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
 }
