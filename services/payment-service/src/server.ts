@@ -306,6 +306,7 @@ fastify.post('/api/webhook/stripe', async (request, reply) => {
 
 /**
  * Vipps webhook handler
+ * Handles both recovery fee payments and settlement payments
  */
 fastify.post('/api/webhook/vipps', async (request, reply) => {
   try {
@@ -318,10 +319,16 @@ fastify.post('/api/webhook/vipps', async (request, reply) => {
       });
     }
 
-    // Process the Vipps callback
-    await paymentService.handleVippsCallback(orderId);
-
-    fastify.log.info('Vipps webhook processed', { orderId });
+    // Check if this is a settlement payment
+    if (orderId.startsWith('SETTLEMENT-')) {
+      // Handle settlement payment callback
+      await paymentService.handleVippsSettlementCallback(orderId);
+      fastify.log.info('Vipps settlement webhook processed', { orderId });
+    } else {
+      // Handle regular recovery fee payment callback
+      await paymentService.handleVippsCallback(orderId);
+      fastify.log.info('Vipps recovery fee webhook processed', { orderId });
+    }
 
     return { received: true };
 
@@ -386,23 +393,48 @@ fastify.post('/api/settlement/create', async (request, reply) => {
 
 /**
  * Process settlement payment (hold in escrow)
+ * Supports both Stripe and Vipps
  */
 fastify.post('/api/settlement/:settlementPaymentId/pay', async (request, reply) => {
   try {
     const { settlementPaymentId } = request.params as { settlementPaymentId: string };
-    const { paymentMethodId } = request.body as { paymentMethodId: string };
+    const { paymentMethodId, phoneNumber, paymentMethod } = request.body as {
+      paymentMethodId?: string;
+      phoneNumber?: string;
+      paymentMethod?: 'stripe' | 'vipps';
+    };
 
-    if (!paymentMethodId) {
-      return reply.code(400).send({
-        success: false,
-        error: 'Payment method ID required'
-      });
+    // Determine payment method
+    let result;
+
+    if (paymentMethod === 'vipps' || phoneNumber) {
+      // Vipps payment
+      if (!phoneNumber) {
+        return reply.code(400).send({
+          success: false,
+          error: 'Phone number required for Vipps payments'
+        });
+      }
+
+      result = await paymentService.processSettlementPaymentVipps(
+        settlementPaymentId,
+        phoneNumber
+      );
+
+    } else {
+      // Stripe payment
+      if (!paymentMethodId) {
+        return reply.code(400).send({
+          success: false,
+          error: 'Payment method ID required for Stripe payments'
+        });
+      }
+
+      result = await paymentService.processSettlementPaymentStripe(
+        settlementPaymentId,
+        paymentMethodId
+      );
     }
-
-    const result = await paymentService.processSettlementPaymentStripe(
-      settlementPaymentId,
-      paymentMethodId
-    );
 
     return result;
   } catch (error) {
@@ -415,16 +447,36 @@ fastify.post('/api/settlement/:settlementPaymentId/pay', async (request, reply) 
 
 /**
  * Release settlement funds to creditor
+ * Automatically detects payment method (Stripe or Vipps)
  */
 fastify.post('/api/settlement/:settlementPaymentId/release', async (request, reply) => {
   try {
     const { settlementPaymentId } = request.params as { settlementPaymentId: string };
     const { confirmationDetails } = request.body as { confirmationDetails?: string };
 
-    const result = await paymentService.releaseSettlementFunds(
-      settlementPaymentId,
-      confirmationDetails
-    );
+    // Get payment details to determine method
+    const settlement = await paymentService.getSettlementPayment(settlementPaymentId);
+
+    if (!settlement) {
+      return reply.code(404).send({
+        success: false,
+        error: 'Settlement payment not found'
+      });
+    }
+
+    // Release funds based on payment method
+    let result;
+    if (settlement.paymentMethod === 'vipps') {
+      result = await paymentService.releaseVippsSettlementFunds(
+        settlementPaymentId,
+        confirmationDetails
+      );
+    } else {
+      result = await paymentService.releaseSettlementFunds(
+        settlementPaymentId,
+        confirmationDetails
+      );
+    }
 
     return result;
   } catch (error) {
@@ -437,6 +489,7 @@ fastify.post('/api/settlement/:settlementPaymentId/release', async (request, rep
 
 /**
  * Refund settlement payment
+ * Automatically detects payment method (Stripe or Vipps)
  */
 fastify.post('/api/settlement/:settlementPaymentId/refund', async (request, reply) => {
   try {
@@ -450,10 +503,29 @@ fastify.post('/api/settlement/:settlementPaymentId/refund', async (request, repl
       });
     }
 
-    const result = await paymentService.refundSettlementPayment(
-      settlementPaymentId,
-      reason
-    );
+    // Get payment details to determine method
+    const settlement = await paymentService.getSettlementPayment(settlementPaymentId);
+
+    if (!settlement) {
+      return reply.code(404).send({
+        success: false,
+        error: 'Settlement payment not found'
+      });
+    }
+
+    // Refund based on payment method
+    let result;
+    if (settlement.paymentMethod === 'vipps') {
+      result = await paymentService.refundVippsSettlementPayment(
+        settlementPaymentId,
+        reason
+      );
+    } else {
+      result = await paymentService.refundSettlementPayment(
+        settlementPaymentId,
+        reason
+      );
+    }
 
     return result;
   } catch (error) {
