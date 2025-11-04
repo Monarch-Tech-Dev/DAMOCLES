@@ -30,6 +30,7 @@ from services.negotiation_engine import NegotiationEngine
 from services.datatilsynet_service import DatatilsynetService
 from services.transparency_service import TransparencyService
 from services.sword_service import SWORDService
+from services.creditor_portal_service import CreditorPortalService
 from database import Database
 
 load_dotenv()
@@ -75,6 +76,7 @@ negotiation_engine = NegotiationEngine()
 datatilsynet_service = DatatilsynetService()
 transparency_service = TransparencyService()
 sword_service = SWORDService()
+creditor_portal_service = CreditorPortalService()
 
 @app.on_event("startup")
 async def startup():
@@ -1150,6 +1152,216 @@ async def get_creditor_sword_tokens(creditor_id: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve SWORD tokens: {str(e)}"
         )
+
+# Creditor Portal: Get dashboard
+@app.get("/creditor-portal/dashboard/{creditor_id}")
+async def get_creditor_dashboard(creditor_id: str):
+    """
+    Get comprehensive dashboard for creditor portal.
+
+    Shows:
+    - Compliance grade and reputation score
+    - Urgent action items
+    - Pending GDPR requests
+    - Active settlements
+    - Datatilsynet complaints
+    - SWORD tokens
+    - Compliance trends
+    """
+    try:
+        # Get creditor data
+        creditor = await db.get_creditor(creditor_id)
+        if not creditor:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Creditor not found")
+
+        # Get all related data
+        gdpr_requests = await db.get_creditor_gdpr_requests(creditor_id)
+        violations = await db.get_creditor_violations(creditor_id)
+        settlements = await db.get_creditor_settlements(creditor_id)
+        datatilsynet_complaints = await db.get_creditor_datatilsynet_complaints(creditor_id)
+        sword_tokens = await db.get_creditor_sword_tokens(creditor_id)
+
+        # Get transparency report
+        creditor_data = {"name": creditor.get("name"), "org_number": creditor.get("org_number"), "type": creditor.get("type")}
+        transparency_report = await transparency_service.generate_creditor_report(
+            creditor_data=creditor_data,
+            violations=violations or [],
+            gdpr_requests=gdpr_requests or [],
+            datatilsynet_complaints=datatilsynet_complaints or [],
+            settlements=settlements or []
+        )
+
+        # Generate dashboard
+        dashboard = await creditor_portal_service.get_creditor_dashboard(
+            creditor_id=creditor_id,
+            creditor_data=creditor_data,
+            gdpr_requests=gdpr_requests or [],
+            violations=violations or [],
+            settlements=settlements or [],
+            datatilsynet_complaints=datatilsynet_complaints or [],
+            sword_tokens=sword_tokens or [],
+            transparency_report=transparency_report
+        )
+
+        logger.info(f"📊 Creditor dashboard accessed: {creditor_data['name']}")
+        return dashboard
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating creditor dashboard: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+# Creditor Portal: Respond to GDPR request
+@app.post("/creditor-portal/gdpr-response/{gdpr_request_id}")
+async def submit_gdpr_response(gdpr_request_id: str, response: Dict[str, Any]):
+    """
+    Allow creditor to respond to GDPR request.
+
+    Request body:
+    {
+        "creditor_id": "string",
+        "type": "full_response",
+        "data_provided": {...},
+        "processing_explanation": "string",
+        "data_deleted": false,
+        "notes": "string"
+    }
+    """
+    try:
+        creditor_id = response.get("creditor_id")
+        if not creditor_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing creditor_id")
+
+        # Submit response
+        result = await creditor_portal_service.respond_to_gdpr_request(
+            creditor_id=creditor_id,
+            gdpr_request_id=gdpr_request_id,
+            response_data=response
+        )
+
+        # Update GDPR request status
+        await db.update_gdpr_request_status(gdpr_request_id, "RESPONDED")
+
+        logger.info(f"✅ GDPR response submitted by creditor {creditor_id}")
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error submitting GDPR response: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+# Creditor Portal: Respond to settlement
+@app.post("/creditor-portal/settlement-response/{settlement_id}")
+async def submit_settlement_response(settlement_id: str, response: Dict[str, Any]):
+    """
+    Allow creditor to respond to settlement offer.
+
+    Request body:
+    {
+        "creditor_id": "string",
+        "action": "accept|reject|counter",
+        "counter_offer_amount": float (if action=counter),
+        "notes": "string"
+    }
+    """
+    try:
+        creditor_id = response.get("creditor_id")
+        action = response.get("action")
+
+        if not all([creditor_id, action]):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing required fields")
+
+        # Submit response
+        result = await creditor_portal_service.respond_to_settlement(
+            creditor_id=creditor_id,
+            settlement_id=settlement_id,
+            response_action=action,
+            counter_offer_amount=response.get("counter_offer_amount"),
+            notes=response.get("notes")
+        )
+
+        logger.info(f"💼 Settlement response: {action} by creditor {creditor_id}")
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error submitting settlement response: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+# Creditor Portal: View violations
+@app.get("/creditor-portal/violations/{creditor_id}")
+async def get_creditor_violations_portal(creditor_id: str, severity: Optional[str] = None, type: Optional[str] = None):
+    """Get all violations for creditor with optional filtering"""
+    try:
+        violations = await db.get_creditor_violations(creditor_id)
+
+        filters = {}
+        if severity:
+            filters["severity"] = severity
+        if type:
+            filters["type"] = type
+
+        result = await creditor_portal_service.view_violations(
+            creditor_id=creditor_id,
+            violations=violations or [],
+            filters=filters if filters else None
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error fetching creditor violations: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+# Creditor Portal: Request improvement plan
+@app.post("/creditor-portal/improvement-plan/{creditor_id}")
+async def request_improvement_plan(creditor_id: str, plan_request: Dict[str, Any]):
+    """
+    Generate action plan for creditor to improve compliance score.
+
+    Request body:
+    {
+        "target_grade": "A|B|C|D"
+    }
+    """
+    try:
+        target_grade = plan_request.get("target_grade", "B")
+
+        # Get current data
+        violations = await db.get_creditor_violations(creditor_id)
+        gdpr_requests = await db.get_creditor_gdpr_requests(creditor_id)
+
+        # Get transparency report for current grade
+        creditor = await db.get_creditor(creditor_id)
+        creditor_data = {"name": creditor.get("name"), "org_number": creditor.get("org_number"), "type": creditor.get("type")}
+        transparency_report = await transparency_service.generate_creditor_report(
+            creditor_data=creditor_data,
+            violations=violations or [],
+            gdpr_requests=gdpr_requests or [],
+            datatilsynet_complaints=[],
+            settlements=[]
+        )
+
+        current_grade = transparency_report.get("compliance_grade", {}).get("grade", "F")
+
+        # Generate improvement plan
+        plan = await creditor_portal_service.request_score_improvement_plan(
+            creditor_id=creditor_id,
+            current_grade=current_grade,
+            target_grade=target_grade,
+            violations=violations or [],
+            gdpr_requests=gdpr_requests or []
+        )
+
+        logger.info(f"📈 Improvement plan generated: {current_grade} → {target_grade}")
+        return plan
+
+    except Exception as e:
+        logger.error(f"Error generating improvement plan: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 def _get_severity_breakdown(violations: List[Dict]) -> Dict[str, int]:
     """Get breakdown of violations by severity"""
