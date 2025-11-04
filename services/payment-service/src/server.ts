@@ -340,6 +340,208 @@ fastify.post('/api/webhook/vipps', async (request, reply) => {
 });
 
 /**
+ * ==========================================
+ * SETTLEMENT PAYMENT ENDPOINTS (ESCROW)
+ * ==========================================
+ */
+
+/**
+ * Create settlement payment intent
+ */
+fastify.post('/api/settlement/create', async (request, reply) => {
+  try {
+    const {
+      userId,
+      debtId,
+      settlementAmount,
+      creditorId,
+      creditorName,
+      metadata
+    } = request.body as {
+      userId: string;
+      debtId: string;
+      settlementAmount: number;
+      creditorId: string;
+      creditorName: string;
+      metadata?: Record<string, any>;
+    };
+
+    const result = await paymentService.createSettlementPayment(
+      userId,
+      debtId,
+      settlementAmount,
+      creditorId,
+      creditorName,
+      metadata
+    );
+
+    return result;
+  } catch (error) {
+    reply.code(400).send({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Process settlement payment (hold in escrow)
+ */
+fastify.post('/api/settlement/:settlementPaymentId/pay', async (request, reply) => {
+  try {
+    const { settlementPaymentId } = request.params as { settlementPaymentId: string };
+    const { paymentMethodId } = request.body as { paymentMethodId: string };
+
+    if (!paymentMethodId) {
+      return reply.code(400).send({
+        success: false,
+        error: 'Payment method ID required'
+      });
+    }
+
+    const result = await paymentService.processSettlementPaymentStripe(
+      settlementPaymentId,
+      paymentMethodId
+    );
+
+    return result;
+  } catch (error) {
+    reply.code(400).send({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Release settlement funds to creditor
+ */
+fastify.post('/api/settlement/:settlementPaymentId/release', async (request, reply) => {
+  try {
+    const { settlementPaymentId } = request.params as { settlementPaymentId: string };
+    const { confirmationDetails } = request.body as { confirmationDetails?: string };
+
+    const result = await paymentService.releaseSettlementFunds(
+      settlementPaymentId,
+      confirmationDetails
+    );
+
+    return result;
+  } catch (error) {
+    reply.code(400).send({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Refund settlement payment
+ */
+fastify.post('/api/settlement/:settlementPaymentId/refund', async (request, reply) => {
+  try {
+    const { settlementPaymentId } = request.params as { settlementPaymentId: string };
+    const { reason } = request.body as { reason: string };
+
+    if (!reason) {
+      return reply.code(400).send({
+        success: false,
+        error: 'Refund reason required'
+      });
+    }
+
+    const result = await paymentService.refundSettlementPayment(
+      settlementPaymentId,
+      reason
+    );
+
+    return result;
+  } catch (error) {
+    reply.code(400).send({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Get settlement payment details
+ */
+fastify.get('/api/settlement/:settlementPaymentId', async (request, reply) => {
+  try {
+    const { settlementPaymentId } = request.params as { settlementPaymentId: string };
+
+    const settlement = await paymentService.getSettlementPayment(settlementPaymentId);
+
+    if (!settlement) {
+      return reply.code(404).send({
+        success: false,
+        error: 'Settlement payment not found'
+      });
+    }
+
+    return {
+      success: true,
+      settlement
+    };
+  } catch (error) {
+    reply.code(400).send({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Get user's settlement payment history
+ */
+fastify.get('/api/user/:userId/settlements', async (request, reply) => {
+  try {
+    const { userId } = request.params as { userId: string };
+
+    const settlements = await paymentService.getUserSettlementPayments(userId);
+
+    return {
+      success: true,
+      settlements
+    };
+  } catch (error) {
+    reply.code(400).send({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Calculate settlement payment amount
+ */
+fastify.post('/api/settlement/calculate', async (request, reply) => {
+  try {
+    const { settlementAmount } = request.body as { settlementAmount: number };
+
+    if (!settlementAmount || settlementAmount <= 0) {
+      return reply.code(400).send({
+        success: false,
+        error: 'Valid settlement amount required'
+      });
+    }
+
+    const calculation = paymentService.calculateSettlementPayment(settlementAmount);
+
+    return {
+      success: true,
+      calculation
+    };
+  } catch (error) {
+    reply.code(400).send({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * Health check endpoint
  */
 fastify.get('/api/health', async (request, reply) => {
@@ -385,12 +587,25 @@ const start = async () => {
 
     fastify.log.info(`Payment service running on http://${host}:${port}`);
     fastify.log.info('Available endpoints:');
+    fastify.log.info('');
+    fastify.log.info('Recovery Fee Endpoints (25% success fee):');
     fastify.log.info('- POST /api/calculate-fee - Calculate 25% success fee');
     fastify.log.info('- POST /api/generate-invoice - Generate payment invoice');
     fastify.log.info('- POST /api/process-payment - Process payment via Stripe/Vipps');
     fastify.log.info('- POST /api/create-payment-link/:invoiceId - Create Stripe checkout link');
     fastify.log.info('- GET /api/user/:userId/payments - Get payment history');
     fastify.log.info('- GET /api/user/:userId/invoices/pending - Get pending invoices');
+    fastify.log.info('');
+    fastify.log.info('Settlement Payment Endpoints (20% platform fee + escrow):');
+    fastify.log.info('- POST /api/settlement/calculate - Calculate settlement payment');
+    fastify.log.info('- POST /api/settlement/create - Create settlement payment intent');
+    fastify.log.info('- POST /api/settlement/:id/pay - Process payment (hold in escrow)');
+    fastify.log.info('- POST /api/settlement/:id/release - Release funds to creditor');
+    fastify.log.info('- POST /api/settlement/:id/refund - Refund to user');
+    fastify.log.info('- GET /api/settlement/:id - Get settlement details');
+    fastify.log.info('- GET /api/user/:userId/settlements - Get settlement history');
+    fastify.log.info('');
+    fastify.log.info('Admin & Webhooks:');
     fastify.log.info('- GET /api/admin/revenue-stats - Revenue statistics (admin)');
     fastify.log.info('- POST /api/webhook/recovery-confirmed - Recovery confirmation webhook');
     fastify.log.info('- POST /api/webhook/stripe - Stripe webhook handler');
