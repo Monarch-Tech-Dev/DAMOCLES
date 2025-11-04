@@ -1106,4 +1106,399 @@ export class PaymentService {
       orderBy: { createdAt: 'desc' }
     });
   }
+
+  /**
+   * Process settlement payment via Vipps (funds held in escrow)
+   */
+  async processSettlementPaymentVipps(
+    settlementPaymentId: string,
+    phoneNumber: string
+  ): Promise<PaymentResult & { vippsUrl?: string }> {
+    try {
+      const settlementPayment = await this.prisma.settlementPayment.findUnique({
+        where: { id: settlementPaymentId },
+        include: {
+          user: true,
+          debt: { include: { creditor: true } }
+        }
+      });
+
+      if (!settlementPayment) {
+        return {
+          success: false,
+          error: 'Settlement payment not found',
+          amount: 0,
+          fees: 0
+        };
+      }
+
+      if (settlementPayment.status !== 'pending') {
+        return {
+          success: false,
+          error: `Settlement payment already ${settlementPayment.status}`,
+          amount: 0,
+          fees: 0
+        };
+      }
+
+      // Check if Vipps is configured
+      if (!this.vipps.isConfigured()) {
+        return {
+          success: false,
+          error: 'Vipps payment not configured',
+          amount: 0,
+          fees: 0
+        };
+      }
+
+      // Format phone number
+      const formattedPhone = VippsClient.formatPhoneNumber(phoneNumber);
+
+      // Convert NOK to øre (1 NOK = 100 øre)
+      const amountInOre = settlementPayment.totalAmount * 100;
+
+      // Validate amount
+      if (!VippsClient.validateAmount(amountInOre)) {
+        return {
+          success: false,
+          error: 'Invalid amount',
+          amount: 0,
+          fees: 0
+        };
+      }
+
+      // Create Vipps payment (RESERVE mode - holds funds in escrow)
+      const vippsPayment = await this.vipps.initiatePayment({
+        merchantOrderId: `SETTLEMENT-${settlementPayment.id}`,
+        amount: amountInOre,
+        phoneNumber: formattedPhone,
+        description: `Settlement - ${settlementPayment.creditorName} (${settlementPayment.settlementAmount} NOK)`,
+        callbackUrl: `${process.env.WEB_URL || 'https://damocles.no'}/api/webhook/vipps`,
+        returnUrl: `${process.env.WEB_URL || 'https://damocles.no'}/settlement/success`,
+        userId: settlementPayment.userId,
+        metadata: {
+          settlementPaymentId: settlementPayment.id,
+          debtId: settlementPayment.debtId,
+          creditorId: settlementPayment.creditorId,
+          type: 'settlement_escrow',
+          settlementAmount: settlementPayment.settlementAmount,
+          platformFee: settlementPayment.platformFee
+        }
+      });
+
+      // Update settlement payment record
+      await this.prisma.settlementPayment.update({
+        where: { id: settlementPaymentId },
+        data: {
+          status: 'escrowed',
+          escrowStatus: 'funds_held',
+          stripePaymentIntentId: vippsPayment.orderId, // Store Vipps order ID
+          paymentMethod: 'vipps',
+          paidAt: new Date(),
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+        }
+      });
+
+      // Update debt status
+      await this.prisma.debt.update({
+        where: { id: settlementPayment.debtId },
+        data: {
+          status: 'settlement_escrowed'
+        }
+      });
+
+      this.logger.info('Vipps settlement payment escrowed', {
+        orderId: vippsPayment.orderId,
+        settlementPaymentId,
+        amount: settlementPayment.totalAmount,
+        phoneNumber: formattedPhone.slice(-4)
+      });
+
+      return {
+        success: true,
+        paymentId: vippsPayment.orderId,
+        amount: settlementPayment.totalAmount,
+        fees: 0,
+        vippsUrl: vippsPayment.url
+      };
+
+    } catch (error) {
+      this.logger.error('Vipps settlement payment failed', {
+        error: error.message,
+        settlementPaymentId
+      });
+
+      return {
+        success: false,
+        error: error.message,
+        amount: 0,
+        fees: 0
+      };
+    }
+  }
+
+  /**
+   * Release Vipps settlement funds to creditor
+   */
+  async releaseVippsSettlementFunds(
+    settlementPaymentId: string,
+    confirmationDetails?: string
+  ): Promise<{
+    success: boolean;
+    error?: string;
+    amountReleased?: number;
+    platformFeeCollected?: number;
+  }> {
+    try {
+      const settlementPayment = await this.prisma.settlementPayment.findUnique({
+        where: { id: settlementPaymentId }
+      });
+
+      if (!settlementPayment) {
+        return { success: false, error: 'Settlement payment not found' };
+      }
+
+      if (settlementPayment.escrowStatus !== 'funds_held') {
+        return {
+          success: false,
+          error: `Cannot release funds: status is ${settlementPayment.escrowStatus}`
+        };
+      }
+
+      if (!settlementPayment.stripePaymentIntentId) {
+        return {
+          success: false,
+          error: 'No Vipps order ID found'
+        };
+      }
+
+      // Capture the reserved payment (release from escrow)
+      await this.vipps.capturePayment(
+        settlementPayment.stripePaymentIntentId,
+        settlementPayment.totalAmount * 100 // Convert to øre
+      );
+
+      // Update settlement payment record
+      await this.prisma.settlementPayment.update({
+        where: { id: settlementPaymentId },
+        data: {
+          status: 'completed',
+          escrowStatus: 'funds_released',
+          releasedAt: new Date(),
+          confirmationDetails
+        }
+      });
+
+      // Update debt status
+      await this.prisma.debt.update({
+        where: { id: settlementPayment.debtId },
+        data: {
+          status: 'settled',
+          settledAt: new Date(),
+          settledAmount: settlementPayment.settlementAmount
+        }
+      });
+
+      this.logger.info('Vipps settlement funds released to creditor', {
+        settlementPaymentId,
+        orderId: settlementPayment.stripePaymentIntentId,
+        creditorReceives: settlementPayment.settlementAmount,
+        platformFeeCollected: settlementPayment.platformFee
+      });
+
+      return {
+        success: true,
+        amountReleased: settlementPayment.settlementAmount,
+        platformFeeCollected: settlementPayment.platformFee
+      };
+
+    } catch (error) {
+      this.logger.error('Failed to release Vipps settlement funds', {
+        error: error.message,
+        settlementPaymentId
+      });
+
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Refund Vipps settlement payment
+   */
+  async refundVippsSettlementPayment(
+    settlementPaymentId: string,
+    reason: string
+  ): Promise<{
+    success: boolean;
+    error?: string;
+    refundAmount?: number;
+  }> {
+    try {
+      const settlementPayment = await this.prisma.settlementPayment.findUnique({
+        where: { id: settlementPaymentId }
+      });
+
+      if (!settlementPayment) {
+        return { success: false, error: 'Settlement payment not found' };
+      }
+
+      if (settlementPayment.escrowStatus !== 'funds_held') {
+        return {
+          success: false,
+          error: `Cannot refund: funds already ${settlementPayment.escrowStatus}`
+        };
+      }
+
+      if (!settlementPayment.stripePaymentIntentId) {
+        return {
+          success: false,
+          error: 'No Vipps order ID found'
+        };
+      }
+
+      // Cancel the Vipps payment (releases reservation)
+      await this.vipps.cancelPayment(
+        settlementPayment.stripePaymentIntentId,
+        reason
+      );
+
+      // Update settlement payment record
+      await this.prisma.settlementPayment.update({
+        where: { id: settlementPaymentId },
+        data: {
+          status: 'refunded',
+          escrowStatus: 'refunded',
+          refundedAt: new Date(),
+          refundReason: reason
+        }
+      });
+
+      // Update debt status
+      await this.prisma.debt.update({
+        where: { id: settlementPayment.debtId },
+        data: {
+          status: 'settlement_rejected'
+        }
+      });
+
+      this.logger.info('Vipps settlement payment refunded', {
+        settlementPaymentId,
+        orderId: settlementPayment.stripePaymentIntentId,
+        refundAmount: settlementPayment.totalAmount,
+        reason
+      });
+
+      return {
+        success: true,
+        refundAmount: settlementPayment.totalAmount
+      };
+
+    } catch (error) {
+      this.logger.error('Failed to refund Vipps settlement payment', {
+        error: error.message,
+        settlementPaymentId
+      });
+
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Handle Vipps settlement payment callback
+   */
+  async handleVippsSettlementCallback(orderId: string): Promise<void> {
+    try {
+      // Get payment details from Vipps
+      const paymentDetails = await this.vipps.getPaymentDetails(orderId);
+
+      // Find settlement payment by order ID
+      const settlementPayment = await this.prisma.settlementPayment.findFirst({
+        where: { stripePaymentIntentId: orderId },
+        include: { user: true, debt: true }
+      });
+
+      if (!settlementPayment) {
+        this.logger.error('Settlement payment not found for Vipps callback', { orderId });
+        return;
+      }
+
+      // Update based on Vipps status
+      if (paymentDetails.status === 'RESERVE') {
+        // Payment reserved (held in escrow)
+        await this.prisma.settlementPayment.update({
+          where: { id: settlementPayment.id },
+          data: {
+            status: 'escrowed',
+            escrowStatus: 'funds_held',
+            paidAt: new Date(),
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+          }
+        });
+
+        await this.prisma.debt.update({
+          where: { id: settlementPayment.debtId },
+          data: { status: 'settlement_escrowed' }
+        });
+
+        this.logger.info('Vipps settlement payment reserved', {
+          orderId,
+          settlementPaymentId: settlementPayment.id,
+          amount: settlementPayment.totalAmount
+        });
+
+      } else if (paymentDetails.status === 'SALE') {
+        // Payment captured directly (shouldn't happen with our flow)
+        await this.prisma.settlementPayment.update({
+          where: { id: settlementPayment.id },
+          data: {
+            status: 'completed',
+            escrowStatus: 'funds_released',
+            releasedAt: new Date()
+          }
+        });
+
+        await this.prisma.debt.update({
+          where: { id: settlementPayment.debtId },
+          data: {
+            status: 'settled',
+            settledAt: new Date(),
+            settledAmount: settlementPayment.settlementAmount
+          }
+        });
+
+        this.logger.info('Vipps settlement payment completed', {
+          orderId,
+          settlementPaymentId: settlementPayment.id
+        });
+
+      } else if (paymentDetails.status === 'CANCEL' || paymentDetails.status === 'FAILED') {
+        // Payment cancelled or failed
+        await this.prisma.settlementPayment.update({
+          where: { id: settlementPayment.id },
+          data: {
+            status: 'failed',
+            escrowStatus: 'refunded'
+          }
+        });
+
+        this.logger.warn('Vipps settlement payment failed', {
+          orderId,
+          status: paymentDetails.status
+        });
+      }
+
+    } catch (error) {
+      this.logger.error('Vipps settlement callback handling failed', {
+        error: error.message,
+        orderId
+      });
+      throw error;
+    }
+  }
 }
