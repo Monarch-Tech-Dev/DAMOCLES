@@ -31,6 +31,7 @@ from services.datatilsynet_service import DatatilsynetService
 from services.transparency_service import TransparencyService
 from services.sword_service import SWORDService
 from services.creditor_portal_service import CreditorPortalService
+from services.monitoring_service import MonitoringService
 from database import Database
 
 load_dotenv()
@@ -77,6 +78,7 @@ datatilsynet_service = DatatilsynetService()
 transparency_service = TransparencyService()
 sword_service = SWORDService()
 creditor_portal_service = CreditorPortalService()
+monitoring_service = MonitoringService()
 
 @app.on_event("startup")
 async def startup():
@@ -100,6 +102,43 @@ async def health_check():
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Service unhealthy"
         )
+
+# Comprehensive system health (monitoring)
+@app.get("/monitoring/health")
+async def get_system_health():
+    """
+    Get comprehensive system health status.
+
+    Returns:
+    - System resources (CPU, memory, disk)
+    - All microservice statuses
+    - Database connectivity
+    - External service availability (Stripe, Vipps, Blockfrost)
+    - Performance metrics
+    - Recent alerts
+    """
+    try:
+        health = await monitoring_service.get_system_health()
+        logger.info("📊 System health check completed")
+        return health
+    except Exception as e:
+        logger.error(f"System health check failed: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+# Metrics endpoint
+@app.get("/monitoring/metrics")
+async def get_metrics():
+    """Get performance metrics"""
+    return monitoring_service._get_metrics_summary()
+
+# Alerts endpoint
+@app.get("/monitoring/alerts")
+async def get_alerts(limit: int = 50):
+    """Get recent alerts"""
+    return {
+        "alerts": monitoring_service._get_recent_alerts(limit=limit),
+        "total_alerts": len(monitoring_service.alerts)
+    }
 
 # Generate GDPR request
 @app.post("/gdpr/generate", response_model=Dict[str, Any])
