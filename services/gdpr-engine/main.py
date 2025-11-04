@@ -29,6 +29,7 @@ from services.settlement_service import SettlementService
 from services.negotiation_engine import NegotiationEngine
 from services.datatilsynet_service import DatatilsynetService
 from services.transparency_service import TransparencyService
+from services.sword_service import SWORDService
 from database import Database
 
 load_dotenv()
@@ -73,6 +74,7 @@ settlement_service = SettlementService()
 negotiation_engine = NegotiationEngine()
 datatilsynet_service = DatatilsynetService()
 transparency_service = TransparencyService()
+sword_service = SWORDService()
 
 @app.on_event("startup")
 async def startup():
@@ -956,6 +958,197 @@ async def get_industry_transparency_report(industry: str = "INKASSO"):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate industry report: {str(e)}"
+        )
+
+# Mint SWORD token for violation evidence
+@app.post("/sword/mint")
+async def mint_sword_token(sword_request: Dict[str, Any]):
+    """
+    Mint a SWORD (Systematic Whistleblower-Organized Record of Damage) token.
+
+    Creates immutable NFT evidence of GDPR violation on Cardano blockchain.
+
+    Request body:
+    {
+        "violation_id": "string",
+        "creditor_id": "string",
+        "gdpr_request_id": "string" (optional)
+    }
+
+    Returns:
+    - SWORD token with blockchain transaction hash
+    - Asset ID for verification
+    - Explorer URL
+    - Evidence hash (SHA-256)
+    - Immutability proof
+    """
+    try:
+        violation_id = sword_request.get("violation_id")
+        creditor_id = sword_request.get("creditor_id")
+        gdpr_request_id = sword_request.get("gdpr_request_id")
+
+        if not all([violation_id, creditor_id]):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing required fields: violation_id, creditor_id"
+            )
+
+        # Get violation data
+        violation = await db.get_violation(violation_id)
+        if not violation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Violation not found"
+            )
+
+        # Get creditor data
+        creditor = await db.get_creditor(creditor_id)
+        if not creditor:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Creditor not found"
+            )
+
+        # Get GDPR request if provided
+        gdpr_request = {}
+        if gdpr_request_id:
+            gdpr_request = await db.get_gdpr_request(gdpr_request_id) or {}
+
+        # Convert to dicts
+        violation_data = {
+            "id": violation.get("id"),
+            "type": violation.get("type"),
+            "severity": violation.get("severity"),
+            "description": violation.get("description"),
+            "legal_reference": violation.get("legal_reference"),
+            "confidence": violation.get("confidence"),
+            "detected_at": violation.get("detected_at")
+        }
+
+        creditor_data = {
+            "id": creditor.get("id"),
+            "name": creditor.get("name"),
+            "org_number": creditor.get("org_number"),
+            "type": creditor.get("type")
+        }
+
+        gdpr_request_data = {
+            "id": gdpr_request.get("id"),
+            "sent_at": gdpr_request.get("sent_at"),
+            "deadline": gdpr_request.get("response_due"),
+            "status": gdpr_request.get("status")
+        }
+
+        # Build evidence package
+        evidence_package = {
+            "violation": violation_data,
+            "creditor": creditor_data,
+            "gdpr_request": gdpr_request_data,
+            "platform": "DAMOCLES",
+            "generated_at": datetime.now().isoformat()
+        }
+
+        # Mint SWORD token
+        result = await sword_service.mint_violation_evidence(
+            violation=violation_data,
+            creditor_data=creditor_data,
+            gdpr_request=gdpr_request_data,
+            evidence_package=evidence_package
+        )
+
+        if not result.get("minted"):
+            return {
+                "minted": False,
+                "reason": result.get("reason")
+            }
+
+        sword_token = result["sword_token"]
+
+        # Store SWORD token in database
+        await db.create_sword_token(sword_token)
+
+        logger.info(f"⚔️  SWORD token minted and stored")
+        logger.info(f"   Asset ID: {sword_token['asset_id']}")
+        logger.info(f"   Blockchain TX: {sword_token['blockchain_tx']}")
+
+        return {
+            "minted": True,
+            "sword_token": sword_token
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error minting SWORD token: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to mint SWORD token: {str(e)}"
+        )
+
+# Verify SWORD token on blockchain
+@app.get("/sword/verify/{asset_id}")
+async def verify_sword_token(asset_id: str):
+    """
+    Verify a SWORD token exists on Cardano blockchain.
+
+    Used for legal proceedings to prove authenticity and immutability.
+
+    Returns:
+    - Verification status
+    - On-chain metadata
+    - Transaction hash
+    - Explorer URL
+    """
+    try:
+        # Verify on blockchain
+        verification = await sword_service.verify_sword_token(asset_id)
+
+        logger.info(f"🔍 SWORD token verification: {asset_id}")
+        logger.info(f"   Verified: {verification.get('verified')}")
+
+        return verification
+
+    except Exception as e:
+        logger.error(f"Error verifying SWORD token: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to verify SWORD token: {str(e)}"
+        )
+
+# Get all SWORD tokens for creditor
+@app.get("/sword/creditor/{creditor_id}")
+async def get_creditor_sword_tokens(creditor_id: str):
+    """
+    Get all SWORD tokens minted for a specific creditor.
+
+    Returns complete violation evidence history for legal proceedings.
+
+    Includes:
+    - All SWORD tokens
+    - Severity breakdown
+    - Violation type distribution
+    - Legal summary for court
+    """
+    try:
+        # Get all SWORD tokens for this creditor from database
+        sword_tokens = await db.get_creditor_sword_tokens(creditor_id)
+
+        # Get detailed analysis
+        analysis = await sword_service.get_creditor_sword_tokens(
+            creditor_id=creditor_id,
+            sword_tokens_db=sword_tokens if sword_tokens else []
+        )
+
+        logger.info(f"⚔️  Retrieved SWORD tokens for creditor {creditor_id}")
+        logger.info(f"   Total tokens: {analysis['total_sword_tokens']}")
+
+        return analysis
+
+    except Exception as e:
+        logger.error(f"Error retrieving SWORD tokens: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve SWORD tokens: {str(e)}"
         )
 
 def _get_severity_breakdown(violations: List[Dict]) -> Dict[str, int]:
