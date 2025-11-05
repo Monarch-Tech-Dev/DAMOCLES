@@ -126,7 +126,7 @@ export async function internalRoutes(fastify: FastifyInstance) {
     const pendingRequests = await prisma.gdprRequest.findMany({
       where: {
         status: {
-          in: ['sent', 'pending', 'draft']
+          in: ['SENT', 'PENDING', 'DRAFT']
         },
         sentAt: {
           not: null
