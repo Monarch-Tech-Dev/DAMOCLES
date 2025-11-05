@@ -1,0 +1,33 @@
+{
+  "id": "incomplete_002",
+  "metadata": {
+    "creditor_name": "QuickDebt Inkasso AS",
+    "creditor_type": "inkasso",
+    "jurisdiction": "norway",
+    "response_date": "2025-01-12",
+    "language": "no",
+    "document_length": 320,
+    "data_source": "synthetic"
+  },
+  "response_content": "Vi har mottatt din forespørsel om innsyn i personopplysninger.\n\nVi behandler kun nødvendige opplysninger i forbindelse med inkassosaken. Dette inkluderer navn, adresse og gjeldsbeløp.\n\nOpplysningene lagres i henhold til gjeldende lover.\n\nMed vennlig hilsen,\nQuickDebt Inkasso AS",
+  "ground_truth": {
+    "violations": [
+      {
+        "type": "incomplete_response",
+        "severity": "high",
+        "confidence": 0.92,
+        "legal_reference": "GDPR Article 12(3) and Article 15",
+        "evidence": "Missing: processing purposes details, specific retention periods, legal basis explanation, third-party sharing info, rights information. Response is only 320 characters and provides minimal detail.",
+        "estimated_damage": 300.0,
+        "notes": "Classic incomplete response. Provides bare minimum without substantive information required by GDPR Art. 15."
+      }
+    ],
+    "completeness_score": 0.25,
+    "overall_quality": "poor",
+    "is_legitimate_no_data": false,
+    "annotator": "human",
+    "annotation_date": "2025-01-15",
+    "review_status": "peer_reviewed",
+    "notes": "Response acknowledges data processing but fails to provide substantive details. Missing 5 of 6 required elements."
+  }
+}

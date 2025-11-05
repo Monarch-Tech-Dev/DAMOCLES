@@ -1,0 +1,23 @@
+{
+  "id": "complete_001",
+  "metadata": {
+    "creditor_name": "Nordic Bank AS",
+    "creditor_type": "bank",
+    "jurisdiction": "norway",
+    "response_date": "2025-01-10",
+    "language": "no",
+    "document_length": 2450,
+    "data_source": "synthetic"
+  },
+  "response_content": "Takk for din forespørsel etter GDPR Artikkel 15.\n\nVi behandler følgende personopplysninger om deg:\n\nKUNDEDATA:\n- Fullt navn: [Navn]\n- Fødselsdato: [Dato]\n- Adresse: [Adresse]\n- E-post: [E-post]\n- Telefonnummer: [Telefon]\n- Kontonummer: [Kontonummer]\n\nTRANSAKSJONSDATA:\n- Kontotransaksjoner for perioden 2023-2025\n- Betalingshistorikk\n- Lånedetaljer (hvis aktuelt)\n\nBEHANDLINGSFORMÅL:\n- Oppfyllelse av bankavtale (kontraktsmessig forpliktelse)\n- Overholdelse av hvitvaskingloven\n- Kredittanalyse og risikostyring\n\nOPPBEVARINGSTID:\n- Kundedata: Så lenge kundeforholdet består + 5 år etter avslutning\n- Transaksjonsdata: 5 år etter siste transaksjon\n- KYC-dokumentasjon: 5 år etter kundeforhold opphører (lovpålagt)\n\nJURIDISK GRUNNLAG:\n- Kontraktsmessig forpliktelse (GDPR Art. 6(1)(b))\n- Lovmessig forpliktelse (GDPR Art. 6(1)(c)) - Hvitvaskingsloven\n\nTREDJEPARTER:\n- Ingen personopplysninger er delt med tredjeparter uten ditt samtykke\n- Vi bruker IT-leverandører som databehandlere (med databehandleravtaler)\n\nDINE RETTIGHETER:\n- Rett til retting av uriktige opplysninger\n- Rett til sletting (når lovpålagt oppbevaring ikke lenger gjelder)\n- Rett til begrensning av behandling\n- Rett til dataportabilitet\n- Rett til å klage til Datatilsynet\n\nKontakt oss på privacy@nordicbank.no for spørsmål.\n\nMed vennlig hilsen,\nNordic Bank AS\nDatabeskyttelsesansvarlig",
+  "ground_truth": {
+    "violations": [],
+    "completeness_score": 1.0,
+    "overall_quality": "excellent",
+    "is_legitimate_no_data": false,
+    "annotator": "human",
+    "annotation_date": "2025-01-15",
+    "review_status": "peer_reviewed",
+    "notes": "Exemplary GDPR response with all required elements. Should produce ZERO violations. Use for false positive testing."
+  }
+}
