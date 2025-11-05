@@ -280,4 +280,65 @@ export async function internalRoutes(fastify: FastifyInstance) {
       count: violations.length
     });
   });
+
+  // Get all GDPR requests for a user (internal service-to-service)
+  // Used by GDPR engine to display user's request history
+  fastify.get('/gdpr-requests/user/:userId', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { userId } = request.params as { userId: string };
+    const { status, limit = '20', offset = '0' } = request.query as {
+      status?: string;
+      limit?: string;
+      offset?: string;
+    };
+
+    const whereClause: any = {
+      userId: userId
+    };
+
+    if (status) {
+      whereClause.status = status;
+    }
+
+    const gdprRequests = await prisma.gdprRequest.findMany({
+      where: whereClause,
+      orderBy: {
+        createdAt: 'desc'
+      },
+      take: parseInt(limit),
+      skip: parseInt(offset),
+      select: {
+        id: true,
+        userId: true,
+        creditorId: true,
+        referenceId: true,
+        content: true,
+        status: true,
+        sentAt: true,
+        responseDue: true,
+        responseReceivedAt: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    // Transform to snake_case for Python/Pydantic compatibility
+    const transformedRequests = gdprRequests.map(req => ({
+      id: req.id,
+      user_id: req.userId,
+      creditor_id: req.creditorId,
+      reference_id: req.referenceId,
+      content: req.content,
+      status: req.status,
+      sent_at: req.sentAt,
+      response_due: req.responseDue,
+      response_received_at: req.responseReceivedAt,
+      created_at: req.createdAt,
+      updated_at: req.updatedAt
+    }));
+
+    return reply.send({
+      requests: transformedRequests,
+      count: transformedRequests.length
+    });
+  });
 }
