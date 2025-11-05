@@ -148,9 +148,22 @@ export async function internalRoutes(fastify: FastifyInstance) {
       }
     });
 
+    // Transform to snake_case for Python/Pydantic compatibility
+    const transformedRequests = pendingRequests.map(req => ({
+      id: req.id,
+      user_id: req.userId,
+      creditor_id: req.creditorId,
+      reference_id: req.referenceId,
+      status: req.status,
+      created_at: req.createdAt,
+      sent_at: req.sentAt,
+      response_due: req.responseDue,
+      response_received_at: null
+    }));
+
     return reply.send({
-      requests: pendingRequests,
-      count: pendingRequests.length
+      requests: transformedRequests,
+      count: transformedRequests.length
     });
   });
 
