@@ -316,15 +316,19 @@ async def check_cooldown_status(
                 "message": "No previous request found. You can send a GDPR request."
             }
 
-        last_created_at = last_request.get('created_at')
-        if not last_created_at:
-            return {
-                "can_send": True,
-                "cooldown_active": False,
-                "message": "You can send a GDPR request."
-            }
+        # Use sentAt (when actually sent to creditor) instead of created_at (when record was created)
+        last_sent_at = last_request.get('sentAt')
+        if not last_sent_at:
+            # Fallback to created_at if sentAt is not set
+            last_sent_at = last_request.get('created_at')
+            if not last_sent_at:
+                return {
+                    "can_send": True,
+                    "cooldown_active": False,
+                    "message": "You can send a GDPR request."
+                }
 
-        time_since_last = datetime.now(last_created_at.tzinfo) - last_created_at
+        time_since_last = datetime.now(last_sent_at.tzinfo) - last_sent_at
         cooldown_period = timedelta(hours=GDPR_REQUEST_COOLDOWN_HOURS)
 
         if time_since_last < cooldown_period:
@@ -334,7 +338,7 @@ async def check_cooldown_status(
             remaining_days = remaining_hours // 24
             remaining_hours_in_day = remaining_hours % 24
 
-            cooldown_ends_at = last_created_at + cooldown_period
+            cooldown_ends_at = last_sent_at + cooldown_period
 
             # Sacred Architecture: Educational, not restrictive
             return {
@@ -346,7 +350,7 @@ async def check_cooldown_status(
                 "remaining_seconds": int(remaining_time.total_seconds()),
                 "remaining_hours": remaining_hours,
                 "remaining_days": remaining_days,
-                "last_request_date": last_created_at.isoformat(),
+                "last_request_date": last_sent_at.isoformat(),
                 "legal_deadline": "30 dager fra sending",
                 "what_happens_next": "Vi overvåker om kreditoren svarer. Hvis ikke, hjelper vi deg eskalere til Datatilsynet."
             }
@@ -355,7 +359,7 @@ async def check_cooldown_status(
                 "can_send": True,
                 "cooldown_active": False,
                 "message": "Du kan nå sende en ny GDPR-forespørsel hvis du trenger det.",
-                "last_request_date": last_created_at.isoformat(),
+                "last_request_date": last_sent_at.isoformat(),
                 "recommendation": "Sjekk først om du har fått svar på din forrige forespørsel."
             }
 
