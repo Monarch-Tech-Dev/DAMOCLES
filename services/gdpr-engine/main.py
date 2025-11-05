@@ -1509,8 +1509,11 @@ async def trigger_escalation_check():
         return result
 
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         logger.error(f"Error during escalation check: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        logger.error(f"Traceback: {error_details}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"{type(e).__name__}: {str(e) or 'No error message'}")
 
 def _get_severity_breakdown(violations: List[Dict]) -> Dict[str, int]:
     """Get breakdown of violations by severity"""
