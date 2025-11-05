@@ -219,19 +219,78 @@ class Database:
         limit: int = 20,
         offset: int = 0
     ) -> List[GDPRRequest]:
-        # Get from in-memory storage
-        request_ids = self._gdpr_by_user.get(user_id, [])
-        requests = []
+        """Fetch all GDPR requests for a user from user-service via HTTP API"""
+        import os
+        import aiohttp
+        import logging
+        from datetime import datetime
 
-        for req_id in request_ids:
-            if req_id in self._gdpr_requests:
-                req = self._gdpr_requests[req_id]
-                # Filter by status if specified
-                if status is None or req.get("status") == status:
-                    requests.append(DictObj(req))
+        try:
+            user_service_url = os.getenv('USER_SERVICE_URL', 'http://localhost:3001')
+            service_api_key = os.getenv('SERVICE_API_KEY', 'dev-service-key-12345')
 
-        # Apply pagination
-        return requests[offset:offset + limit]
+            url = f"{user_service_url}/api/internal/gdpr-requests/user/{user_id}"
+            headers = {'x-service-api-key': service_api_key}
+            params = {
+                'limit': str(limit),
+                'offset': str(offset)
+            }
+
+            if status:
+                params['status'] = status
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers, params=params) as response:
+                    if response.status == 404:
+                        logging.info(f"No GDPR requests found for user {user_id}")
+                        return []
+
+                    if response.status != 200:
+                        logging.error(f"Error fetching GDPR requests for user {user_id}: HTTP {response.status}")
+                        return []
+
+                    data = await response.json()
+                    requests_data = data.get('requests', [])
+
+                    # Convert to GDPRRequest objects
+                    requests = []
+                    for req_data in requests_data:
+                        # Parse datetime fields
+                        sent_at = None
+                        if req_data.get('sent_at'):
+                            sent_at = datetime.fromisoformat(req_data['sent_at'].replace('Z', '+00:00'))
+
+                        response_due = None
+                        if req_data.get('response_due'):
+                            response_due = datetime.fromisoformat(req_data['response_due'].replace('Z', '+00:00'))
+
+                        response_received_at = None
+                        if req_data.get('response_received_at'):
+                            response_received_at = datetime.fromisoformat(req_data['response_received_at'].replace('Z', '+00:00'))
+
+                        created_at = datetime.fromisoformat(req_data['created_at'].replace('Z', '+00:00'))
+                        updated_at = datetime.fromisoformat(req_data['updated_at'].replace('Z', '+00:00'))
+
+                        requests.append(GDPRRequest(
+                            id=req_data['id'],
+                            user_id=req_data['user_id'],
+                            creditor_id=req_data['creditor_id'],
+                            reference_id=req_data.get('reference_id'),
+                            content=req_data.get('content'),
+                            status=req_data['status'],
+                            sent_at=sent_at,
+                            response_due=response_due,
+                            response_received_at=response_received_at,
+                            tracking_pixel_viewed=False,  # Not stored in database yet
+                            created_at=created_at,
+                            updated_at=updated_at
+                        ))
+
+                    return requests
+
+        except Exception as e:
+            logging.error(f"Error fetching GDPR requests for user {user_id}: {e}")
+            return []
         
     async def get_user_violations(
         self,
