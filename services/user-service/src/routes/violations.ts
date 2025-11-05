@@ -279,7 +279,7 @@ export default async function violationRoutes(fastify: FastifyInstance) {
             select: {
               id: true,
               status: true,
-              responseText: true
+              content: true
             }
           },
           creditor: {
@@ -332,8 +332,7 @@ export default async function violationRoutes(fastify: FastifyInstance) {
             include: {
               gdprRequest: {
                 select: {
-                  responseText: true,
-                  requestText: true
+                  content: true
                 }
               },
               creditor: {
@@ -349,7 +348,7 @@ export default async function violationRoutes(fastify: FastifyInstance) {
 
       const trainingData = reviews.map(review => ({
         // Input features
-        response_content: review.violation.gdprRequest?.responseText || '',
+        response_content: review.violation.gdprRequest?.content || '',
         creditor_type: review.violation.creditor.type,
         detected_type: review.violation.type,
         detected_severity: review.violation.severity,
