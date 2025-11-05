@@ -156,9 +156,12 @@ class Database:
             creditor_id="creditor123",
             reference_id=f"REF-{request_id}",
             content="Mock GDPR request content...",
-            status="PENDING",
-            response_due=datetime.now() + timedelta(days=30),
-            created_at=datetime.now(),
+            status="SENT",
+            sent_at=datetime.now() - timedelta(days=30),
+            response_due=datetime.now() + timedelta(days=0),
+            response_received_at=None,
+            tracking_pixel_viewed=False,
+            created_at=datetime.now() - timedelta(days=30),
             updated_at=datetime.now()
         )
         
