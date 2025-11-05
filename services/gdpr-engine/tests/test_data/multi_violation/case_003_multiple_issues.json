@@ -1,0 +1,60 @@
+{
+  "id": "multi_003",
+  "metadata": {
+    "creditor_name": "OldTech Solutions AS",
+    "creditor_type": "default",
+    "jurisdiction": "norway",
+    "response_date": "2025-01-08",
+    "language": "no",
+    "document_length": 850,
+    "data_source": "synthetic"
+  },
+  "response_content": "Angående din GDPR-forespørsel:\n\nVi lagrer følgende informasjon:\n- Navn, adresse, telefon, e-post\n- Kjøpshistorikk fra 2015 til i dag\n- IP-adresser og nettleserdata\n- Kredittkortinformasjon\n\nVi beholder all data i 15 år for sikkerhetsformål og mulig revisjon.\n\nDine data er delt med våre markedsføringspartnere for å gi deg relevante tilbud. Vi samarbeider med ca. 25 selskaper globalt.\n\nKontakt oss hvis du har spørsmål.\n\nMed vennlig hilsen,\nOldTech Solutions AS",
+  "ground_truth": {
+    "violations": [
+      {
+        "type": "excessive_retention",
+        "severity": "high",
+        "confidence": 0.95,
+        "legal_reference": "GDPR Article 5(1)(e)",
+        "evidence": "States '15 år' (15 years) retention period for 'sikkerhetsformål og mulig revisjon' which is not a valid legal basis for such extended retention under Norwegian law.",
+        "estimated_damage": 250.0,
+        "notes": "15 years is excessive for customer data. Norwegian law typically allows 3-5 years unless specific legal obligation."
+      },
+      {
+        "type": "unauthorized_sharing",
+        "severity": "critical",
+        "confidence": 0.90,
+        "legal_reference": "GDPR Article 44",
+        "evidence": "States 'delt med våre markedsføringspartnere' and '25 selskaper globalt' without mentioning consent or legal basis for such sharing.",
+        "estimated_damage": 500.0,
+        "notes": "Sharing with 25 global companies for marketing without explicit consent is a critical GDPR violation."
+      },
+      {
+        "type": "missing_consent",
+        "severity": "medium",
+        "confidence": 0.75,
+        "legal_reference": "GDPR Article 6",
+        "evidence": "No mention of legal basis for processing or whether user consent was obtained for data sharing with third parties.",
+        "estimated_damage": 200.0,
+        "notes": "Lack of transparency about legal basis for processing and sharing."
+      },
+      {
+        "type": "incomplete_response",
+        "severity": "medium",
+        "confidence": 0.70,
+        "legal_reference": "GDPR Article 12(3) and Article 15",
+        "evidence": "Missing: specific processing purposes, details about rights to rectification/deletion/complaint, information about data protection officer.",
+        "estimated_damage": 150.0,
+        "notes": "While more complete than case_002, still missing key elements required by Art. 15."
+      }
+    ],
+    "completeness_score": 0.45,
+    "overall_quality": "poor",
+    "is_legitimate_no_data": false,
+    "annotator": "human",
+    "annotation_date": "2025-01-15",
+    "review_status": "peer_reviewed",
+    "notes": "Classic multi-violation case. Company appears to have poor GDPR compliance practices. Good test case for algorithm's ability to detect multiple issues in single response."
+  }
+}
