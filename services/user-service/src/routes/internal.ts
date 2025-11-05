@@ -195,6 +195,50 @@ export async function internalRoutes(fastify: FastifyInstance) {
     return reply.send({ debt });
   });
 
+  // Get GDPR request by ID (internal service-to-service)
+  // Used by GDPR engine for escalation
+  fastify.get('/gdpr-requests/:requestId', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { requestId } = request.params as { requestId: string };
+
+    const gdprRequest = await prisma.gdprRequest.findUnique({
+      where: { id: requestId },
+      select: {
+        id: true,
+        userId: true,
+        creditorId: true,
+        referenceId: true,
+        content: true,
+        status: true,
+        sentAt: true,
+        responseDue: true,
+        responseReceivedAt: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    if (!gdprRequest) {
+      return reply.status(404).send({ error: 'GDPR request not found' });
+    }
+
+    // Transform to snake_case for Python/Pydantic compatibility
+    return reply.send({
+      request: {
+        id: gdprRequest.id,
+        user_id: gdprRequest.userId,
+        creditor_id: gdprRequest.creditorId,
+        reference_id: gdprRequest.referenceId,
+        content: gdprRequest.content,
+        status: gdprRequest.status,
+        sent_at: gdprRequest.sentAt,
+        response_due: gdprRequest.responseDue,
+        response_received_at: gdprRequest.responseReceivedAt,
+        created_at: gdprRequest.createdAt,
+        updated_at: gdprRequest.updatedAt
+      }
+    });
+  });
+
   // Get violations for user-creditor pair (internal service-to-service)
   // Used by settlement service to analyze GDPR violations
   fastify.get('/violations/user-creditor', async (request: FastifyRequest, reply: FastifyReply) => {

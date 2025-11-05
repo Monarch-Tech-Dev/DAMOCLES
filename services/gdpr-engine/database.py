@@ -148,22 +148,69 @@ class Database:
             return None
         
     async def get_gdpr_request(self, request_id: str) -> Optional[GDPRRequest]:
-        # Mock GDPR request retrieval
-        from datetime import datetime, timedelta
-        return GDPRRequest(
-            id=request_id,
-            user_id="user123",
-            creditor_id="creditor123",
-            reference_id=f"REF-{request_id}",
-            content="Mock GDPR request content...",
-            status="SENT",
-            sent_at=datetime.now() - timedelta(days=30),
-            response_due=datetime.now() + timedelta(days=0),
-            response_received_at=None,
-            tracking_pixel_viewed=False,
-            created_at=datetime.now() - timedelta(days=30),
-            updated_at=datetime.now()
-        )
+        """Fetch GDPR request from user-service via HTTP API"""
+        import os
+        import aiohttp
+        import logging
+        from datetime import datetime
+
+        try:
+            user_service_url = os.getenv('USER_SERVICE_URL', 'http://localhost:3001')
+            service_api_key = os.getenv('SERVICE_API_KEY', 'dev-service-key-12345')
+
+            url = f"{user_service_url}/api/internal/gdpr-requests/{request_id}"
+            headers = {'x-service-api-key': service_api_key}
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, headers=headers) as response:
+                    if response.status == 404:
+                        logging.warning(f"GDPR request {request_id} not found")
+                        return None
+
+                    if response.status != 200:
+                        logging.error(f"Error fetching GDPR request {request_id}: HTTP {response.status}")
+                        return None
+
+                    data = await response.json()
+                    request_data = data.get('request')
+
+                    if not request_data:
+                        return None
+
+                    # Parse datetime fields
+                    sent_at = None
+                    if request_data.get('sent_at'):
+                        sent_at = datetime.fromisoformat(request_data['sent_at'].replace('Z', '+00:00'))
+
+                    response_due = None
+                    if request_data.get('response_due'):
+                        response_due = datetime.fromisoformat(request_data['response_due'].replace('Z', '+00:00'))
+
+                    response_received_at = None
+                    if request_data.get('response_received_at'):
+                        response_received_at = datetime.fromisoformat(request_data['response_received_at'].replace('Z', '+00:00'))
+
+                    created_at = datetime.fromisoformat(request_data['created_at'].replace('Z', '+00:00'))
+                    updated_at = datetime.fromisoformat(request_data['updated_at'].replace('Z', '+00:00'))
+
+                    return GDPRRequest(
+                        id=request_data['id'],
+                        user_id=request_data['user_id'],
+                        creditor_id=request_data['creditor_id'],
+                        reference_id=request_data.get('reference_id'),
+                        content=request_data.get('content'),
+                        status=request_data['status'],
+                        sent_at=sent_at,
+                        response_due=response_due,
+                        response_received_at=response_received_at,
+                        tracking_pixel_viewed=False,  # Not stored in database yet
+                        created_at=created_at,
+                        updated_at=updated_at
+                    )
+
+        except Exception as e:
+            logging.error(f"Error fetching GDPR request {request_id}: {e}")
+            return None
         
     async def get_user_gdpr_requests(
         self,
