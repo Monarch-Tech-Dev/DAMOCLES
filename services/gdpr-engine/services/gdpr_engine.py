@@ -524,8 +524,7 @@ class GDPREngine:
                 user.email,
                 creditor.name,
                 gdpr_request.reference_id,
-                gdpr_request.response_due,
-                tone="friendly"
+                gdpr_request.response_due
             )
             logger.info(f"✅ Sent friendly reminder for request {request_id}")
 
