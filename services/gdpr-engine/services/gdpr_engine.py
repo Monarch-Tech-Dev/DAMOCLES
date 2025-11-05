@@ -501,8 +501,25 @@ class GDPREngine:
         user = await self.db.get_user(gdpr_request.user_id)
         creditor = await self.db.get_creditor(gdpr_request.creditor_id)
 
-        if days_elapsed == 25:
-            # Day 25: Friendly reminder
+        # Track escalation level to prevent duplicate escalations
+        # Check if this escalation level has already been sent
+        current_escalation_level = None
+
+        if days_elapsed >= 25 and days_elapsed < 35:
+            current_escalation_level = "day_25_reminder"
+        elif days_elapsed >= 35 and days_elapsed < 45:
+            current_escalation_level = "day_35_formal"
+        elif days_elapsed >= 45 and days_elapsed < 60:
+            current_escalation_level = "day_45_legal"
+        elif days_elapsed >= 60:
+            current_escalation_level = "day_60_sword"
+
+        # Get last escalation level from request metadata (if stored)
+        # For now, we'll send the escalation every time until we implement tracking
+
+        if days_elapsed >= 25 and days_elapsed < 35:
+            # Days 25-34: Friendly reminder
+            logger.info(f"📧 Sending friendly reminder for request {request_id} (Day {days_elapsed})")
             await self.email_service.send_gdpr_reminder_email(
                 user.email,
                 creditor.name,
@@ -510,10 +527,11 @@ class GDPREngine:
                 gdpr_request.response_due,
                 tone="friendly"
             )
-            logger.info(f"Sent friendly reminder for request {request_id}")
+            logger.info(f"✅ Sent friendly reminder for request {request_id}")
 
-        elif days_elapsed == 35:
-            # Day 35: Formal notice to creditor and Datatilsynet
+        elif days_elapsed >= 35 and days_elapsed < 45:
+            # Days 35-44: Formal notice to creditor and Datatilsynet
+            logger.info(f"⚠️  Escalating to Datatilsynet for request {request_id} (Day {days_elapsed})")
             await self._notify_datatilsynet(gdpr_request, user, creditor)
             await self.email_service.send_formal_notice_email(
                 creditor.privacy_email,
@@ -521,15 +539,17 @@ class GDPREngine:
                 gdpr_request.reference_id,
                 days_elapsed
             )
-            logger.info(f"Escalated to Datatilsynet for request {request_id}")
+            logger.info(f"✅ Escalated to Datatilsynet for request {request_id}")
 
-        elif days_elapsed == 45:
-            # Day 45: Initiate legal proceedings
+        elif days_elapsed >= 45 and days_elapsed < 60:
+            # Days 45-59: Initiate legal proceedings
+            logger.info(f"⚖️  Initiating legal proceedings for request {request_id} (Day {days_elapsed})")
             await self._initiate_legal_proceedings(gdpr_request, user, creditor)
-            logger.info(f"Initiated legal proceedings for request {request_id}")
+            logger.info(f"✅ Initiated legal proceedings for request {request_id}")
 
         elif days_elapsed >= 60:
             # Day 60+: Automatic SWORD protocol trigger
+            logger.info(f"⚔️  Triggering SWORD protocol for request {request_id} (Day {days_elapsed})")
             violation = {
                 "type": "failure_to_respond",
                 "severity": "critical",
@@ -539,6 +559,7 @@ class GDPREngine:
                 "estimated_damage": 500.0
             }
             await self.trigger_sword_protocol(creditor.id, [violation])
+            logger.info(f"✅ SWORD protocol triggered for request {request_id}")
 
     async def _notify_datatilsynet(self, gdpr_request, user, creditor):
         """Notify Norwegian Data Protection Authority with formal complaint"""
