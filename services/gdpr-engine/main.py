@@ -1439,14 +1439,16 @@ async def trigger_escalation_check():
         escalations_triggered = []
 
         for request in pending_requests:
-            sent_at_str = request.get('sentAt')
+            sent_at_str = request.get('sent_at')  # Changed from sentAt to sent_at (snake_case)
             if not sent_at_str:
+                logger.warning(f"Request {request.get('id')} missing sent_at field, skipping")
                 continue
 
             # Calculate days elapsed
             try:
                 sent_at = datetime.fromisoformat(sent_at_str.replace('Z', '+00:00'))
                 days_elapsed = (datetime.now(sent_at.tzinfo) - sent_at).days
+                logger.info(f"📅 Request {request.get('id')}: sent_at={sent_at_str}, days_elapsed={days_elapsed}")
             except Exception as e:
                 logger.error(f"Error calculating days for request {request.get('id')}: {e}")
                 continue
