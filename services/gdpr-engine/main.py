@@ -1402,6 +1402,116 @@ async def request_improvement_plan(creditor_id: str, plan_request: Dict[str, Any
         logger.error(f"Error generating improvement plan: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
+# Escalation System: Manual trigger for testing
+@app.post("/escalation/check-now")
+async def trigger_escalation_check():
+    """
+    Manually trigger escalation check for all pending GDPR requests.
+
+    Checks for requests at escalation checkpoints:
+    - Day 25: Friendly reminder
+    - Day 35: Formal notice + Datatilsynet
+    - Day 45: Legal proceedings
+    - Day 60+: SWORD protocol
+
+    This endpoint is for testing and manual triggering.
+    In production, use the escalation scheduler service.
+    """
+    try:
+        logger.info("🔧 Manual escalation check triggered")
+
+        # Get all pending requests from user-service
+        user_service_url = os.getenv('USER_SERVICE_URL', 'http://localhost:3001')
+        service_api_key = os.getenv('SERVICE_API_KEY', 'dev-service-key-12345')
+
+        async with aiohttp.ClientSession() as session:
+            headers = {'x-service-api-key': service_api_key}
+            async with session.get(f"{user_service_url}/api/internal/gdpr-requests/pending", headers=headers) as response:
+                if response.status != 200:
+                    raise HTTPException(status_code=500, detail=f"Failed to fetch pending requests: HTTP {response.status}")
+
+                data = await response.json()
+                pending_requests = data.get('requests', [])
+
+        logger.info(f"Found {len(pending_requests)} pending GDPR requests")
+
+        # Check each request for escalation
+        escalations_triggered = []
+
+        for request in pending_requests:
+            sent_at_str = request.get('sentAt')
+            if not sent_at_str:
+                continue
+
+            # Calculate days elapsed
+            try:
+                sent_at = datetime.fromisoformat(sent_at_str.replace('Z', '+00:00'))
+                days_elapsed = (datetime.now(sent_at.tzinfo) - sent_at).days
+            except Exception as e:
+                logger.error(f"Error calculating days for request {request.get('id')}: {e}")
+                continue
+
+            # Define escalation checkpoints
+            checkpoints = [25, 35, 45, 60]
+
+            # Check if we're at an escalation checkpoint
+            should_escalate = False
+            escalation_level = None
+
+            if days_elapsed == 25 or (days_elapsed > 25 and days_elapsed < 35):
+                should_escalate = True
+                escalation_level = "day_25_reminder"
+            elif days_elapsed >= 35 and days_elapsed < 45:
+                should_escalate = True
+                escalation_level = "day_35_formal"
+            elif days_elapsed >= 45 and days_elapsed < 60:
+                should_escalate = True
+                escalation_level = "day_45_legal"
+            elif days_elapsed >= 60:
+                should_escalate = True
+                escalation_level = "day_60_sword"
+
+            if should_escalate:
+                logger.info(f"⚠️  Request {request['id']} at Day {days_elapsed} - triggering {escalation_level}")
+
+                # Trigger escalation
+                try:
+                    await gdpr_engine._escalate_non_response(request['id'], days_elapsed)
+
+                    escalations_triggered.append({
+                        "request_id": request['id'],
+                        "reference_id": request.get('referenceId'),
+                        "days_elapsed": days_elapsed,
+                        "escalation_level": escalation_level,
+                        "status": "triggered"
+                    })
+                except Exception as e:
+                    logger.error(f"Failed to escalate request {request['id']}: {e}")
+                    escalations_triggered.append({
+                        "request_id": request['id'],
+                        "reference_id": request.get('referenceId'),
+                        "days_elapsed": days_elapsed,
+                        "escalation_level": escalation_level,
+                        "status": "failed",
+                        "error": str(e)
+                    })
+
+        result = {
+            "check_completed": True,
+            "timestamp": datetime.now().isoformat(),
+            "pending_requests_checked": len(pending_requests),
+            "escalations_triggered": len(escalations_triggered),
+            "escalations": escalations_triggered
+        }
+
+        logger.info(f"✅ Escalation check complete: {len(escalations_triggered)} escalations triggered")
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error during escalation check: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
 def _get_severity_breakdown(violations: List[Dict]) -> Dict[str, int]:
     """Get breakdown of violations by severity"""
     breakdown = {"critical": 0, "high": 0, "medium": 0, "low": 0}
