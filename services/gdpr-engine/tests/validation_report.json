@@ -1,0 +1,111 @@
+{
+  "overall": {
+    "precision": 1.0,
+    "recall": 0.4,
+    "f1_score": 0.5714285714285715,
+    "accuracy": 0.5,
+    "false_positive_rate": 0.0,
+    "true_positives": 2,
+    "false_positives": 0,
+    "false_negatives": 3,
+    "true_negatives": 1
+  },
+  "per_violation_type": {
+    "incomplete_response": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "true_positives": 2,
+      "false_positives": 0,
+      "false_negatives": 0
+    },
+    "unauthorized_sharing": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "true_positives": 0,
+      "false_positives": 0,
+      "false_negatives": 1
+    },
+    "excessive_retention": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "true_positives": 0,
+      "false_positives": 0,
+      "false_negatives": 1
+    },
+    "missing_consent": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "true_positives": 0,
+      "false_positives": 0,
+      "false_negatives": 1
+    }
+  },
+  "confidence_calibration": {
+    "0.7-0.85": {
+      "accuracy": 1.0,
+      "sample_count": 2,
+      "correct": 2,
+      "incorrect": 0
+    }
+  },
+  "test_results": [
+    {
+      "test_case_id": "complete_001",
+      "detected_count": 0,
+      "ground_truth_count": 0,
+      "matches": [],
+      "false_positives": [],
+      "false_negatives": []
+    },
+    {
+      "test_case_id": "multi_003",
+      "detected_count": 1,
+      "ground_truth_count": 4,
+      "matches": [
+        {
+          "type": "incomplete_response",
+          "detected_confidence": 0.8333333333333334,
+          "ground_truth_confidence": 0.7,
+          "severity_match": false
+        }
+      ],
+      "false_positives": [],
+      "false_negatives": [
+        {
+          "type": "unauthorized_sharing",
+          "expected_severity": "critical",
+          "notes": "Sharing with 25 global companies for marketing without explicit consent is a critical GDPR violation."
+        },
+        {
+          "type": "excessive_retention",
+          "expected_severity": "high",
+          "notes": "15 years is excessive for customer data. Norwegian law typically allows 3-5 years unless specific legal obligation."
+        },
+        {
+          "type": "missing_consent",
+          "expected_severity": "medium",
+          "notes": "Lack of transparency about legal basis for processing and sharing."
+        }
+      ]
+    },
+    {
+      "test_case_id": "incomplete_002",
+      "detected_count": 1,
+      "ground_truth_count": 1,
+      "matches": [
+        {
+          "type": "incomplete_response",
+          "detected_confidence": 0.8333333333333334,
+          "ground_truth_confidence": 0.92,
+          "severity_match": true
+        }
+      ],
+      "false_positives": [],
+      "false_negatives": []
+    }
+  ]
+}

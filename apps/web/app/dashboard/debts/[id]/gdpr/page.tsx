@@ -130,7 +130,7 @@ export default function GDPRRequestPage() {
     setApiUrl(url);
 
     const gdprUrl = typeof window !== 'undefined'
-      ? `${window.location.origin}/gdpr-api`
+      ? `${window.location.origin}/api/gdpr`
       : (process.env.NEXT_PUBLIC_GDPR_ENGINE_URL || '');
     setGdprApiUrl(gdprUrl);
   }, []);
@@ -140,7 +140,7 @@ export default function GDPRRequestPage() {
 
     try {
       const response = await fetch(
-        `${gdprApiUrl}/gdpr/cooldown-status?user_id=${userId}&creditor_id=${creditorId}`,
+        `${gdprApiUrl}/cooldown-status?user_id=${userId}&creditor_id=${creditorId}`,
         {
           headers: { 'Content-Type': 'application/json' }
         }
@@ -200,7 +200,7 @@ export default function GDPRRequestPage() {
         await checkCooldownStatus(userId, debtData.debt.creditor.id)
 
         // Get GDPR requests for this user
-        const gdprResponse = await fetch(`${gdprApiUrl}/gdpr/requests/${userId}`, {
+        const gdprResponse = await fetch(`${gdprApiUrl}/requests/${userId}`, {
           headers: { 'Content-Type': 'application/json' }
         })
 
@@ -259,7 +259,7 @@ export default function GDPRRequestPage() {
 
       console.log('Generating GDPR request...', { userId, creditorId: debt.creditor.id, gdprApiUrl })
 
-      const response = await fetch(`${gdprApiUrl}/gdpr/generate`, {
+      const response = await fetch(`${gdprApiUrl}/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
