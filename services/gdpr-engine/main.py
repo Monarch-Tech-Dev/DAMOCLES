@@ -328,6 +328,10 @@ async def check_cooldown_status(
                     "message": "You can send a GDPR request."
                 }
 
+        # Parse sentAt if it's a string (from database API response)
+        if isinstance(last_sent_at, str):
+            last_sent_at = datetime.fromisoformat(last_sent_at.replace('Z', '+00:00'))
+
         time_since_last = datetime.now(last_sent_at.tzinfo) - last_sent_at
         cooldown_period = timedelta(hours=GDPR_REQUEST_COOLDOWN_HOURS)
 
