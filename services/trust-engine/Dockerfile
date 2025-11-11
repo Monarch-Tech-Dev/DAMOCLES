@@ -13,14 +13,14 @@ LABEL sacred.architecture="true"
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
-COPY tsconfig.json ./
+COPY services/trust-engine/package*.json ./
+COPY services/trust-engine/tsconfig.json ./
 
 # Install dependencies
 RUN npm install --omit=dev && npm cache clean --force
 
 # Copy source code
-COPY src/ ./src/
+COPY services/trust-engine/src/ ./src/
 
 # Build TypeScript
 RUN npm run build || echo "Build step - compiling TypeScript"
@@ -44,7 +44,7 @@ WORKDIR /app
 # Copy built application
 COPY --from=builder --chown=damocles:damocles /app/node_modules ./node_modules
 COPY --from=builder --chown=damocles:damocles /app/package*.json ./
-COPY --chown=damocles:damocles src/ ./src/
+COPY --chown=damocles:damocles services/trust-engine/src/ ./src/
 
 # Switch to non-root user
 USER damocles

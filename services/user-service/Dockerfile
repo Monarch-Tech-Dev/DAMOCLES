@@ -2,10 +2,10 @@ FROM node:18
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY services/user-service/package*.json ./
 RUN npm install
 
-COPY . .
+COPY services/user-service/. .
 
 # Generate Prisma client
 RUN npx prisma generate
