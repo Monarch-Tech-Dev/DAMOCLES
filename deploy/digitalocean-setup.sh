@@ -369,33 +369,8 @@ server {
 }
 EOF
 
-# Create environment file template
-cat > /tmp/.env.production << 'EOF'
-# DAMOCLES Sacred Architecture Production Environment
-
-# Database
-DB_PASSWORD=change_this_secure_password
-
-# BankID Integration (Norway)
-BANKID_CLIENT_ID=your_bankid_client_id
-BANKID_CLIENT_SECRET=your_bankid_client_secret
-BANKID_ENVIRONMENT=production
-
-# Email Configuration
-SMTP_HOST=smtp.mailgun.com
-SMTP_USER=your_smtp_user
-SMTP_PASS=your_smtp_password
-
-# JWT Secret
-JWT_SECRET=your_jwt_secret_change_this
-
-# Redis
-REDIS_URL=redis://localhost:6379
-
-# Sacred Architecture
-SACRED_ARCHITECTURE=true
-CONSCIOUSNESS_LEVEL=production
-KINDNESS_ALGORITHM=enabled
+# Create environment file from example
+cp .env.example /tmp/.env.production
 EOF
 
 echo "📦 Deploying Sacred Architecture files..."

@@ -165,28 +165,14 @@ cp ../.env.production ./.env
 
 ### 4. Environment Configuration
 
-Edit `/opt/damocles/app/.env`:
+Copy the example environment file and edit it with your production secrets:
 
-```env
-# Database
-DB_PASSWORD=your_secure_password_here
-
-# BankID Integration (Norway)
-BANKID_CLIENT_ID=your_bankid_client_id
-BANKID_CLIENT_SECRET=your_bankid_client_secret
-BANKID_ENVIRONMENT=production
-
-# Email Configuration
-SMTP_HOST=smtp.mailgun.com
-SMTP_USER=your_smtp_user
-SMTP_PASS=your_smtp_password
-
-# JWT Secret
-JWT_SECRET=your_jwt_secret_minimum_32_characters
-
-# API URLs
-NEXT_PUBLIC_API_URL=https://api.damocles.no
+```bash
+cp .env.example .env
+nano .env
 ```
+
+Ensure you have secrets for all the services, including the database, BankID, SMTP, and JWT.
 
 ### 5. SSL Certificate Setup
 

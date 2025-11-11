@@ -54,9 +54,11 @@ if [ ! -f .next/prerender-manifest.json ]; then
   "dynamicRoutes": {},
   "notFoundRoutes": [],
   "preview": {
+# In a real production environment, these keys should be secure and stored in environment variables
+# You can generate secure keys using: openssl rand -base64 32
     "previewModeId": "production",
-    "previewModeSigningKey": "production",
-    "previewModeEncryptionKey": "production"
+    "previewModeSigningKey": process.env.PREVIEW_MODE_SIGNING_KEY || "default-signing-key-for-build-process",
+    "previewModeEncryptionKey": process.env.PREVIEW_MODE_ENCRYPTION_KEY || "default-encryption-key-for-build-process"
   }
 }
 MANIFEST

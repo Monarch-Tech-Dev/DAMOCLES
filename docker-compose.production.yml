@@ -4,8 +4,8 @@ services:
   # Next.js Web App
   web:
     build:
-      context: ./apps/web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./apps/web/Dockerfile
     ports:
       - "3000:3000"
     environment:
@@ -17,7 +17,9 @@ services:
 
   # User Service
   user-service:
-    build: ./services/user-service
+    build:
+      context: .
+      dockerfile: ./services/user-service/Dockerfile
     ports:
       - "3001:3001"
     environment:
@@ -28,7 +30,9 @@ services:
 
   # Payment Service
   payment-service:
-    build: ./services/payment-service
+    build:
+      context: .
+      dockerfile: ./services/payment-service/Dockerfile
     ports:
       - "3002:3002"
     environment:
@@ -40,7 +44,9 @@ services:
 
   # PDI Engine
   pdi-engine:
-    build: ./services/pdi-engine
+    build:
+      context: .
+      dockerfile: ./services/pdi-engine/Dockerfile
     ports:
       - "3003:3003"
     environment:
@@ -50,7 +56,9 @@ services:
 
   # Trust Engine
   trust-engine:
-    build: ./services/trust-engine
+    build:
+      context: .
+      dockerfile: ./services/trust-engine/Dockerfile
     ports:
       - "3004:3004"
     environment:
@@ -60,7 +68,9 @@ services:
 
   # GDPR Engine (Python)
   gdpr-engine:
-    build: ./services/gdpr-engine
+    build:
+      context: .
+      dockerfile: ./services/gdpr-engine/Dockerfile
     ports:
       - "8000:8000"
     environment:
