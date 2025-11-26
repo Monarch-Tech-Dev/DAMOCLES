@@ -455,7 +455,8 @@ SECURITY_AUDIT_REPORT_*.md
 # Internal documentation with sensitive information
 docs/internal/
 
-# Deployment scripts with production credentials
+# Deployment scripts and infrastructure (INTERNAL ONLY)
+deploy/
 deploy-coming-soon.sh
 COMING-SOON-README.md
 LANGUAGE_AUDIT_SUMMARY.md
