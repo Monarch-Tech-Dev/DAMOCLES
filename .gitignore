@@ -473,3 +473,11 @@ founder-certificate-*.json
 nginx.conf
 docker-compose.production.yml
 temp-tx.json
+
+# Personal legal documents
+*_GDPR_REQUEST.md
+*_SETTLEMENT_PROPOSAL.md
+*_DATATILSYNET_COMPLAINT.md
+*_SETTLEMENT_ANALYSIS.md
+EMAIL_TO_*.md
+*_response_analysis.txt
