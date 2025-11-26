@@ -459,3 +459,17 @@ docs/internal/
 deploy-coming-soon.sh
 COMING-SOON-README.md
 LANGUAGE_AUDIT_SUMMARY.md
+
+# Claude Code settings (CRITICAL - contains server credentials)
+.claude/
+.claude/settings.local.json
+
+# Cardano wallet addresses and certificates (SENSITIVE)
+addresses/
+founder-certificate-*.json
+*-certificate-*.json
+
+# Production configuration files (SENSITIVE)
+nginx.conf
+docker-compose.production.yml
+temp-tx.json
