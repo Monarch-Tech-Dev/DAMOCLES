@@ -105,7 +105,7 @@ SSH into production server and update the GDPR engine environment:
 
 ```bash
 # SSH into production
-ssh -i ~/.ssh/damocles_deploy damocles-admin@157.245.65.184
+ssh -i ~/.ssh/your_deploy_key your-admin@your.server.ip.here
 
 # Navigate to project directory
 cd ~/damocles-platform
