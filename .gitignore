@@ -461,6 +461,17 @@ deploy-coming-soon.sh
 COMING-SOON-README.md
 LANGUAGE_AUDIT_SUMMARY.md
 
+# Security and deployment utility scripts (INTERNAL ONLY)
+security-remediation.sh
+security-audit.sh
+git-history-cleaner.sh
+production-fix.sh
+scripts/deploy-digitalocean.sh
+scripts/deploy-mainnet-*.sh
+scripts/setup-founder.sh
+scripts/transfer-*.sh
+scripts/verify-mainnet-deployment.sh
+
 # Claude Code settings (CRITICAL - contains server credentials)
 .claude/
 .claude/settings.local.json
