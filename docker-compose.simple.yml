@@ -11,7 +11,7 @@ services:
     environment:
       POSTGRES_DB: damocles
       POSTGRES_USER: damocles_user
-      POSTGRES_PASSWORD: damocles_password
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-CHANGE_ME_BEFORE_USE}
     ports:
       - "5432:5432"
     volumes:
@@ -46,7 +46,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://damocles_user:damocles_password@postgres:5432/damocles
+      - DATABASE_URL=postgresql://damocles_user:${DB_PASSWORD:-CHANGE_ME_BEFORE_USE}@postgres:5432/damocles
       - NEXT_PUBLIC_API_URL=http://localhost:3001
       - REDIS_URL=redis://redis:6379
     depends_on:
@@ -70,7 +70,7 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3001
-      - DATABASE_URL=postgresql://damocles_user:damocles_password@postgres:5432/damocles
+      - DATABASE_URL=postgresql://damocles_user:${DB_PASSWORD:-CHANGE_ME_BEFORE_USE}@postgres:5432/damocles
       - JWT_SECRET=development-jwt-secret-change-in-production
       - REDIS_URL=redis://redis:6379
     depends_on:
