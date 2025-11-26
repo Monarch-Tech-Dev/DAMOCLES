@@ -2,6 +2,16 @@
 
 **Decentralized Automated MOney CLaims Enforcement System**
 
+---
+
+## Sacred Architecture Covenant
+
+This platform is built under the [Developer Vow of Use](VOW.md) — a commitment to build technology that serves consciousness and preserves human dignity.
+
+Read our [Manifesto](docs/MANIFESTO.md).
+
+---
+
 ## The Core Idea
 
 GDPR gives you a legal right to request all data a creditor holds about you. They must comply or face penalties.
